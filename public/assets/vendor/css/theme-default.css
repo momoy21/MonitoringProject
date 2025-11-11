@@ -106,6 +106,38 @@ body {
   color: #2c3e50; /* Dark blue-gray */
 }
 
+/* Scrollbar */
+/* Chrome, Edge and Safari */
+*::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+*::-webkit-scrollbar-track {
+  border-radius: 5px;
+  background-color: #DFE9EB;
+}
+
+*::-webkit-scrollbar-track:hover {
+  background-color: #B8C0C2;
+}
+
+*::-webkit-scrollbar-track:active {
+  background-color: #B8C0C2;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background-color: #BABABA;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #555555;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: #009dd4;
+}
+
 /* Header Styles - Page Specific */
 .sticky-header {
   position: sticky;
@@ -1683,7 +1715,7 @@ body {
 
 /* Progress Proyek Form Styles */
 .progressproyek-form .form-control[readonly] {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
     cursor: not-allowed;
 }
 
@@ -2428,7 +2460,7 @@ body {
 
 /* Progress Project Form Styles */
 .progressproyek-form .form-control[readonly] {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
     cursor: not-allowed;
 }
 
@@ -4354,4 +4386,429 @@ a:hover {
 
 .shrink-0 {
     flex-shrink: 0 !important;
+}
+
+/* =================================
+   PENDAPATAN PROYEK STYLES
+================================= */
+
+.pendapatan-container {
+    margin-top: 1.5rem;
+}
+
+/* BA Info Section */
+.info-group {
+    margin-bottom: 0.75rem;
+}
+
+.info-group label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.813rem;
+}
+
+.info-group div {
+    font-size: 0.938rem;
+}
+
+/* Header Controls */
+#pendapatanHeaderControls {
+    padding: 0.75rem 0;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e7e7e7;
+}
+
+#pendapatanHeaderControls h5 {
+    color: #566a7f;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+/* Pendapatan Table Container */
+.pendapatan-table-container {
+    max-height: calc(100vh - 400px);
+    overflow: auto;
+    border-radius: 3px;
+    margin-top: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.pendapatan-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.pendapatan-table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.pendapatan-table-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.pendapatan-table-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Pendapatan Table Base Styles */
+.pendapatan-container .form-control[readonly],
+.pendapatan-container .form-control.readonly-field {
+    background-color: #ffffff;
+    cursor: not-allowed;
+}
+
+.pendapatan-table {
+    width: 100%;
+    min-width: 1099px;
+    table-layout: fixed;
+    margin-bottom: 0;
+}
+
+.pendapatan-table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: left;
+    vertical-align: middle;
+    height: 50px;
+    padding: 12px !important;
+    border-bottom: 2px solid #e7e7e7;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.pendapatan-table tbody tr {
+    height: 60px !important;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #e7e7e7;
+}
+
+.pendapatan-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.pendapatan-table tbody td {
+    height: 60px !important;
+    padding: 8px 12px !important;
+    vertical-align: middle !important;
+}
+
+/* Pendapatan Table Column Widths */
+.pendapatan-table th:nth-child(1),
+.pendapatan-table td:nth-child(1) { /* No */
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    text-align: left;
+}
+
+
+.pendapatan-table th:nth-child(3),
+.pendapatan-table td:nth-child(3) { /* Tanggal */
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    text-align: left;
+}
+
+.pendapatan-table th:nth-child(4),
+.pendapatan-table td:nth-child(4) { /* No. Dokumen */
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    text-align: left;
+}
+
+.pendapatan-table th:nth-child(5),
+.pendapatan-table td:nth-child(5) { /* Periode */
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    text-align: left;
+}
+
+.pendapatan-table th:nth-child(6),
+.pendapatan-table td:nth-child(6) { /* Nilai */
+    width: 210px;
+    min-width: 210px;
+    max-width: 210px;
+    text-align: left;
+}
+
+.pendapatan-table th:nth-child(7),
+.pendapatan-table td:nth-child(7) { /* Dokumen */
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    text-align: center;
+}
+
+.pendapatan-table th:nth-child(8),
+.pendapatan-table td:nth-child(8) { /* Aksi */
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    text-align: center;
+}
+
+/* No Urut Cell - Pendapatan */
+.pendapatan-table .pendapatan-no-urut {
+    cursor: pointer !important;
+    color: #00a0d4 !important;
+    font-weight: 600 !important;
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    background-color: transparent;
+    text-decoration: none !important;
+}
+
+.pendapatan-table .pendapatan-no-urut:hover {
+    color: #ffffff !important;
+    background-color: #00a0d4 !important;
+    box-shadow: 0 0 0 2px rgba(0, 160, 212, 0.15) !important;
+    text-decoration: none !important;
+}
+
+/* Truncate text */
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Currency display */
+.currency-display-pd {
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+    color: #00a0d4;
+}
+
+/* Dropdown Action Button */
+.pendapatan-table .dropdown-toggle {
+    padding: 0.375rem 0.5rem;
+    border-color: #d9dee3;
+}
+
+.pendapatan-table .dropdown-toggle:hover {
+    background-color: #f8f9fa;
+    border-color: #c1c1c1;
+}
+
+.pendapatan-table .dropdown-menu {
+    font-size: 0.875rem;
+    min-width: 150px;
+}
+
+.pendapatan-table .dropdown-item {
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+}
+
+.pendapatan-table .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.pendapatan-table .dropdown-item i {
+    font-size: 1rem;
+    vertical-align: middle;
+}
+
+
+
+/* Pendapatan Modal Styles */
+#pendapatanModal .modal-dialog {
+    max-width: 800px;
+}
+
+#pendapatanModal .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e7e7e7;
+    padding: 1rem 1.5rem;
+}
+
+#pendapatanModal .modal-title {
+    color: #566a7f;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+#pendapatanModal .modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+#pendapatanModal .form-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e7e7e7;
+}
+
+#pendapatanModal .form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+#pendapatanModal .form-section h6 {
+    color: #566a7f;
+    font-weight: 600;
+    font-size: 0.938rem;
+    margin-bottom: 1rem;
+}
+
+#pendapatanModal .form-label {
+    font-weight: 600;
+    color: #566a7f;
+    font-size: 0.938rem;
+    margin-bottom: 0.5rem;
+}
+
+#pendapatanModal .form-control,
+#pendapatanModal .form-select {
+    font-size: 0.938rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.375rem;
+    border: 1px solid #d9dee3;
+}
+
+#pendapatanModal .form-control:focus,
+#pendapatanModal .form-select:focus {
+    border-color: #00a0d4;
+    box-shadow: 0 0 0 0.2rem rgba(0, 160, 212, 0.15);
+}
+
+#pendapatanModal .form-control.readonly-field {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+#pendapatanModal .modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e7e7e7;
+    padding: 1rem 1.5rem;
+}
+
+/* Date Picker Styles */
+.date-input-group {
+    position: relative;
+}
+
+.date-input-group .form-control {
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.date-input-group .date-picker-btn {
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    background-color: #f8f9fa;
+    border-color: #d9dee3;
+    color: #697a8d;
+    padding: 0.625rem 0.875rem;
+}
+
+.date-input-group .date-picker-btn:hover {
+    background-color: #e7e7e7;
+    color: #566a7f;
+}
+
+.date-input-group .form-control:focus {
+    border-right: 0;
+    box-shadow: none;
+}
+
+.date-input-group .form-control:focus + input + .date-picker-btn {
+    border-color: #00a0d4;
+}
+
+.date-input-group .date-picker-btn:focus {
+    box-shadow: none;
+}
+
+.date-picker-hidden {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Select2 Styling */
+.select2-container--bootstrap-5 .select2-selection--single {
+    height: calc(2.5rem + 2px);
+    padding: 0.5rem 0.875rem;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5;
+    padding-left: 0;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: calc(2.5rem);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1400px) {
+    .pendapatan-table {
+        min-width: 1300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pendapatan-table-container {
+        max-height: calc(100vh - 450px);
+    }
+
+    #pendapatanModal .modal-dialog {
+        max-width: 95%;
+        margin: 0.5rem auto;
+    }
+
+    .info-group {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Alert Custom */
+.alert-custom {
+    position: relative;
+    margin-bottom: 1rem;
+    border-radius: 0.375rem;
+}
+
+.alert-custom .btn-close {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+}
+
+/* Loading State */
+.pendapatan-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    color: #8592a3;
+}
+
+.pendapatan-loading i {
+    font-size: 2rem;
+    margin-right: 0.5rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

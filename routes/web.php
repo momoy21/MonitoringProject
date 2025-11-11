@@ -14,6 +14,7 @@ use App\Http\Controllers\SummaryRABController;
 use App\Http\Controllers\ProgressProyekController;
 use App\Http\Controllers\BeritaAcaraProjectController;
 use App\Http\Controllers\IssueProyekController;
+use App\Http\Controllers\PendapatanProyekController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -242,7 +243,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/update-status', [IssueProyekController::class, 'updateStatus'])->name('updatestatus');
             Route::delete('/destroy/{noIssue}', [IssueProyekController::class, 'destroy'])->name('destroy');
         });
-        });
-});
 
+        // ---------------------------------------------------------------
+        // Pendapatan Proyek - CRUD & AJAX Routes
+        // ---------------------------------------------------------------
+        Route::prefix('pendapatan')->name('pendapatan.')->group(function () {
+            // Main index page
+            Route::get('/', [PendapatanProyekController::class, 'index'])->name('index');
+
+            // Get approved BA for dropdown
+            Route::get('/approved-ba', [PendapatanProyekController::class, 'getApprovedBeritaAcara'])->name('getApprovedBA');
+
+            // Get pendapatan by BA
+            Route::get('/by-ba', [PendapatanProyekController::class, 'getPendapatanByBA'])->name('getByBA');
+
+            // CRUD operations
+            Route::post('/store', [PendapatanProyekController::class, 'store'])->name('store');
+            Route::put('/{noPendapatan}', [PendapatanProyekController::class, 'update'])->name('update');
+            Route::delete('/{noPendapatan}', [PendapatanProyekController::class, 'destroy'])->name('destroy');
+
+            // Download file
+            Route::get('/{noPendapatan}/download', [PendapatanProyekController::class, 'download'])->name('download');
+        });
+    });
+});
 require __DIR__.'/auth.php';

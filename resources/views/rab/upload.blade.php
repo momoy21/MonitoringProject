@@ -90,12 +90,12 @@
 
                         <!-- Action Buttons -->
                         <div class="row">
-                            <div class="col-12">
-                                <button type="button" id="btnUpload" class="btn btn-primary btn-upload" disabled>
-                                    <i class="bx bx-upload me-1"></i> Upload RAB
-                                </button>
+                            <div class="col-12 d-flex justify-content-end align-items-center">
                                 <button type="button" id="btnResetForm" class="btn btn-outline-secondary ms-2">
                                     <i class="bx bx-refresh me-1"></i> Reset
+                                </button>
+                                <button type="button" id="btnUpload" class="btn btn-primary btn-upload" disabled>
+                                    <i class="bx bx-upload me-1"></i> Upload RAB
                                 </button>
                             </div>
                         </div>

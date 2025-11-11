@@ -138,6 +138,23 @@ class HistoryProyek extends Model
         return $this->belongsTo(DataProyek::class, 'id_project', 'id_project');
     }
 
+    /**
+     * Relationship to Header Progress Proyek
+     */
+    public function headerProgressProyek()
+    {
+        return $this->hasOne(HeaderProgressProyek::class, 'id_rab', 'id_rab');
+    }
+
+    /**
+     * Relationship to Header RAB
+     */
+    public function headerRAB()
+    {
+        return $this->hasOne(HeaderRAB::class, 'id_project', 'id_project')
+                    ->where('norut', $this->norut);
+    }
+
     // Accessor for jarak lokasi description
     public function getJarakLokasiTextAttribute()
     {

@@ -181,7 +181,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBABtn">Ya</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBABtn">Hapus</button>
                 </div>
             </div>
         </div>
@@ -243,7 +243,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteIssueBtn">Ya</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteIssueBtn">Hapus</button>
                 </div>
             </div>
         </div>

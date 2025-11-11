@@ -107,7 +107,15 @@
         <li class="menu-item {{ request()->routeIs('progressproyek.*') ? 'active' : '' }}">
             <a href="{{ route('progressproyek.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
-                <div>Progress Project</div>
+                <div>Progress Proyek</div>
+            </a>
+        </li>
+
+        <!-- Pendapatan Proyek -->
+        <li class="menu-item {{ request()->routeIs('pendapatan.*') ? 'active' : '' }}">
+            <a href="{{ route('pendapatan.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-money"></i>
+                <div>Pendapatan Proyek</div>
             </a>
         </li>
 
