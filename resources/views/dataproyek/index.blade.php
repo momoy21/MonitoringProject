@@ -219,6 +219,7 @@
     </div>
 
     @push('scripts')
+        <script src="{{ asset('js/file-preview.js') }}"></script>
         <script src="{{ asset('js/dataproyek.js') }}"></script>
         <script>
         $(document).ready(function() {

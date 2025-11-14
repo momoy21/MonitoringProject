@@ -338,24 +338,24 @@ body {
     vertical-align: middle !important;
 }
 
-/* Bidang Jasa Table Column Widths */
+/* Bidang Jasa Table Column Widths - Updated for 3 columns only */
 .bidangjasa-table th:nth-child(1), .bidangjasa-table td:nth-child(1) { /* ID Bidang Jasa */
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
 }
 
 .bidangjasa-table th:nth-child(2), .bidangjasa-table td:nth-child(2) { /* Deskripsi Bidang Jasa */
-    width: calc(100% - 270px);
+    width: calc(100% - 320px);
     min-width: 300px;
     word-wrap: break-word;
     word-break: break-word;
 }
 
 .bidangjasa-table th:nth-child(3), .bidangjasa-table td:nth-child(3) { /* Status */
-    width: 120px;
-    min-width: 120px;
-    max-width: 120px;
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
     text-align: center;
 }
 

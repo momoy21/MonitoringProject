@@ -384,6 +384,7 @@
     </div>
 
     @push('scripts')
+        <script src="{{ asset('js/file-preview.js') }}"></script>
         <script src="{{ asset('js/dataproyek.js') }}"></script>
         <script>
         // Function untuk edit data proyek utama (double click pada ID)

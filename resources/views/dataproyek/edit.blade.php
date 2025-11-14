@@ -1,4 +1,10 @@
 <x-layout title="Edit Data Proyek">
+    @push('styles')
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    @endpush
+
     <x-slot name="breadcrumbs">
         @php
         $breadcrumbs = [
@@ -417,11 +423,17 @@
                                             <i class="bx bx-file me-2"></i>
                                             {{ basename($project->dokumen_path) }}
                                         </div>
-                                        <a href="{{ route('dataproyek.download', $project->id_project) }}?v={{ time() }}"
-                                           class="btn btn-sm btn-outline-primary"
-                                           target="_blank">
-                                            <i class="bx bx-download"></i> Download
-                                        </a>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info"
+                                                    onclick="window.filePreview.showPreview('{{ asset('storage/' . $project->dokumen_path) }}', '{{ basename($project->dokumen_path) }}', '{{ route('dataproyek.download', $project->id_project) }}?v={{ time() }}')">
+                                                <i class="bx bx-show me-1"></i> Preview
+                                            </button>
+                                            <a href="{{ route('dataproyek.download', $project->id_project) }}?v={{ time() }}"
+                                               class="btn btn-sm btn-outline-primary"
+                                               target="_blank">
+                                                <i class="bx bx-download me-1"></i> Download
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             @endif
@@ -482,6 +494,15 @@
     </div>
 
     @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+        <!-- Searchable Select Handler -->
+        <script src="{{ asset('js/searchable-select.js') }}"></script>
+
+        <!-- File Preview Handler -->
+        <script src="{{ asset('js/file-preview.js') }}"></script>
+
         <script src="{{ asset('js/dataproyek.js') }}"></script>
     @endpush
 </x-layout>

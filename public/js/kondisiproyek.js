@@ -275,7 +275,7 @@ class KondisiProyekManager {
         if (data.length === 0) {
             tbody.html(`
                 <tr>
-                    <td colspan="3" class="text-center py-4">
+                    <td colspan="4" class="text-center py-4">
                         <div class="d-flex flex-column align-items-center">
                             <i class="bx bx-search-alt-2 mb-2 empty-state-icon" style="font-size: 48px;"></i>
                             <p class="mb-0 empty-state-text">Tidak ada data kondisi proyek</p>
@@ -287,6 +287,10 @@ class KondisiProyekManager {
         }
 
         data.forEach(item => {
+            // Determine status badge
+            const statusBadge = item.status === 'A' ? 'badge bg-success' : 'badge bg-secondary';
+            const statusText = item.status === 'A' ? 'Aktif' : 'Non Aktif';
+
             tbody.append(`
                 <tr>
                     <td>
@@ -294,10 +298,13 @@ class KondisiProyekManager {
                             ${item.id_kondisi_proyek}
                         </span>
                     </td>
-                    <td class="fw-semibold">
+                    <td>
                         <div class="truncate-text" title="${this.escapeHtml(item.desc_kondisi_proyek)}">
                             ${this.escapeHtml(item.desc_kondisi_proyek)}
                         </div>
+                    </td>
+                    <td>
+                        <span class="${statusBadge}">${statusText}</span>
                     </td>
                     <td>
                         <div class="dropdown">
@@ -560,6 +567,9 @@ class KondisiProyekManager {
     }
 
     displayKondisiProyekDetails(data) {
+        const statusText = data.status === 'A' ? 'Aktif' : 'Non Aktif';
+        const statusBadge = data.status === 'A' ? 'badge bg-success' : 'badge bg-secondary';
+
         const content = `
             <div class="modal-info-section">
                 <div class="row">
@@ -568,7 +578,8 @@ class KondisiProyekManager {
                             <h6>Informasi Kondisi Proyek</h6>
                             <table class="table table-sm">
                                 <tr><td width="150">ID Kondisi Proyek:</td><td><strong>${data.id_kondisi_proyek}</strong></td></tr>
-                                <tr><td>Deskripsi:</td><td><strong">${data.desc_kondisi_proyek}</strong></td></tr>
+                                <tr><td>Deskripsi:</td><td><strong>${data.desc_kondisi_proyek}</strong></td></tr>
+                                <tr><td>Status:</td><td><span class="${statusBadge}">${statusText}</span></td></tr>
                             </table>
                         </div>
                     </div>

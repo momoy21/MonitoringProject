@@ -632,6 +632,21 @@ class DataProyekManager {
             const norut = $(this).data('norut');
             window.dataProyekManager.showProjectDetail(idProject, fromHistory, norut);
         });
+
+        // File preview handler untuk modal
+        $(document).on('click', '.btn-preview-file', function(e) {
+            e.preventDefault();
+            const fileUrl = $(this).data('file-url');
+            const fileName = $(this).data('file-name');
+            const downloadUrl = $(this).data('download-url');
+
+            if (window.filePreview) {
+                window.filePreview.showPreview(fileUrl, fileName, downloadUrl);
+            } else {
+                console.error('FilePreview not loaded');
+                alert('File preview tidak tersedia');
+            }
+        });
     }
 
     // ========================================
@@ -1204,9 +1219,15 @@ class DataProyekManager {
                     </div>
                     <div class="row">
                         <div class="col-12">
-                            <a href="/dataproyek/download/${project.id_project}?norut=${project.norut}&v=${Date.now()}" class="btn btn-outline-primary btn-sm" target="_blank">
-                                <i class="bx bx-download me-2"></i>Download Dokumen
-                            </a>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-info btn-sm"
+                                        onclick="if(window.filePreview) { window.filePreview.showPreview('${window.location.origin}/storage/${project.dokumen_path}', '${project.dokumen_path.split('/').pop()}', '/dataproyek/download/${project.id_project}?norut=${project.norut}&v=${Date.now()}'); } else { alert('File preview tidak tersedia. Silakan refresh halaman.'); console.error('FilePreview not loaded'); }">
+                                    <i class="bx bx-show me-1"></i> Preview
+                                </button>
+                                <a href="/dataproyek/download/${project.id_project}?norut=${project.norut}&v=${Date.now()}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    <i class="bx bx-download me-1"></i> Download
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1310,9 +1331,15 @@ class DataProyekManager {
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        <a href="/dataproyek/download/${project.id_project}?v=${Date.now()}" class="btn btn-outline-primary btn-sm" target="_blank">
-                            <i class="bx bx-download me-2"></i>Download Dokumen
-                        </a>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-info btn-sm"
+                                    onclick="if(window.filePreview) { window.filePreview.showPreview('${window.location.origin}/storage/${project.dokumen_path}', '${project.dokumen_path.split('/').pop()}', '/dataproyek/download/${project.id_project}?v=${Date.now()}'); } else { alert('File preview tidak tersedia. Silakan refresh halaman.'); console.error('FilePreview not loaded'); }">
+                                <i class="bx bx-show me-1"></i> Preview
+                            </button>
+                            <a href="/dataproyek/download/${project.id_project}?v=${Date.now()}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                <i class="bx bx-download me-1"></i> Download
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

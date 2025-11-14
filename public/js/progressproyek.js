@@ -6,7 +6,12 @@
 $(document).ready(function() {
     let selectedHeaderRABData = null;
 
-    // Initialize Select2 for Cost Center - Nama Proyek
+    // Destroy any existing Select2 instance first to prevent conflicts
+    if ($('#cost_center_proyek').hasClass('select2-hidden-accessible')) {
+        $('#cost_center_proyek').select2('destroy');
+    }
+
+    // Initialize Select2 for Cost Center - Nama Proyek with AJAX
     $('#cost_center_proyek').select2({
         theme: 'bootstrap-5',
         placeholder: 'Ketik atau pilih Cost Center - Nama Proyek',
@@ -22,6 +27,7 @@ $(document).ready(function() {
                 };
             },
             processResults: function (data) {
+                console.log('getHeaderRAB response:', data);
                 return {
                     results: data
                 };

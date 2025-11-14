@@ -668,7 +668,7 @@ class DataPeluangManager {
                             ${item.id_datapeluang}
                         </span>
                     </td>
-                    <td class="fw-semibold">
+                    <td>
                         <div class="truncate-text" title="${this.escapeHtml(item.peluang)}">
                             ${this.escapeHtml(item.peluang)}
                         </div>

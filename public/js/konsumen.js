@@ -479,7 +479,7 @@ class KonsumenManager {
                             ${item.id_konsumen}
                         </span>
                     </td>
-                    <td class="fw-semibold">
+                    <td>
                         <div class="truncate-text" title="${this.escapeHtml(item.konsumen)}">
                             ${this.escapeHtml(item.konsumen)}
                         </div>

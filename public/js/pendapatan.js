@@ -178,11 +178,19 @@ $(document).ready(function() {
             const periode = (periodeM && periodeA) ? `${periodeM} - ${periodeA}` : (periodeM || periodeA || '-');
             const noUrut = pendapatan.norut_display || (index + 1);
 
+            console.log('Processing pendapatan row:', pendapatan.no_pendapatan, 'file_ba:', pendapatan.file_ba, 'hasFile:', !!pendapatan.file_ba);
+
             const hasFile = pendapatan.file_ba ? true : false;
             const fileIcon = hasFile ?
-                `<a href="${window.routes.downloadPendapatan.replace(':noPendapatan', pendapatan.no_pendapatan)}?id_project=${pendapatan.id_project}&norut=${pendapatan.norut}&no_ba=${encodeURIComponent(pendapatan.no_ba)}" class="btn btn-sm btn-outline-primary" title="Download">
-                    <i class="bx bx-download"></i>
-                </a>` :
+                `<div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-info" title="Preview"
+                            onclick="if(window.filePreview) { window.filePreview.showPreview('${window.location.origin}/storage/${pendapatan.file_ba}', '${pendapatan.file_ba.split('/').pop()}', '${window.routes.downloadPendapatan.replace(':noPendapatan', pendapatan.no_pendapatan)}?id_project=${pendapatan.id_project}&norut=${pendapatan.norut}&no_ba=${encodeURIComponent(pendapatan.no_ba)}'); } else { alert('File preview tidak tersedia. Silakan refresh halaman.'); console.error('FilePreview not loaded'); }">
+                        <i class="bx bx-show"></i>
+                    </button>
+                    <a href="${window.routes.downloadPendapatan.replace(':noPendapatan', pendapatan.no_pendapatan)}?id_project=${pendapatan.id_project}&norut=${pendapatan.norut}&no_ba=${encodeURIComponent(pendapatan.no_ba)}" class="btn btn-sm btn-outline-primary" title="Download">
+                        <i class="bx bx-download"></i>
+                    </a>
+                </div>` :
                 '<span class="text-muted">-</span>';
 
             tableHTML += `
@@ -381,9 +389,13 @@ $(document).ready(function() {
                                         <div class="col-md-6 mb-3">
                                             <label for="pend_file_ba" class="form-label ms-2" style="font-size: 0.875rem; margin-bottom: 0.4rem;">Upload Dokumen BA</label>
                                             ${viewMode && pendapatan && pendapatan.file_ba ?
-                                                `<div>
-                                                    <a href="${window.routes.downloadPendapatan.replace(':noPendapatan', pendapatan.no_pendapatan)}?id_project=${pendapatan.id_project}&norut=${pendapatan.norut}&no_ba=${encodeURIComponent(pendapatan.no_ba)}" class="btn btn-outline-primary btn-sm ms-2" style="font-size: 0.875rem;">
-                                                        <i class="bx bx-download me-1"></i>Download Dokumen
+                                                `<div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-info btn-sm ms-2" style="font-size: 0.875rem;"
+                                                            onclick="if(window.filePreview) { window.filePreview.showPreview('${window.location.origin}/storage/${pendapatan.file_ba}', '${pendapatan.file_ba.split('/').pop()}', '${window.routes.downloadPendapatan.replace(':noPendapatan', pendapatan.no_pendapatan)}?id_project=${pendapatan.id_project}&norut=${pendapatan.norut}&no_ba=${encodeURIComponent(pendapatan.no_ba)}'); } else { alert('File preview tidak tersedia. Silakan refresh halaman.'); console.error('FilePreview not loaded'); }">
+                                                        <i class="bx bx-show me-1"></i>Preview
+                                                    </button>
+                                                    <a href="${window.routes.downloadPendapatan.replace(':noPendapatan', pendapatan.no_pendapatan)}?id_project=${pendapatan.id_project}&norut=${pendapatan.norut}&no_ba=${encodeURIComponent(pendapatan.no_ba)}" class="btn btn-outline-primary btn-sm" style="font-size: 0.875rem;">
+                                                        <i class="bx bx-download me-1"></i>Download
                                                     </a>
                                                 </div>` :
                                                 !viewMode ?

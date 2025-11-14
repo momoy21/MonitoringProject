@@ -271,6 +271,10 @@
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- File Preview Handler -->
+    <script src="{{ asset('js/file-preview.js') }}"></script>
+
     <script>
         // Setup global variables for the uploadrab.js module
         window.routes = {

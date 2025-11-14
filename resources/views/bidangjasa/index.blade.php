@@ -61,7 +61,7 @@
                     @forelse($bidangjasa as $item)
                     <tr>
                         <td>
-                            <span class="bidangjasa-id" data-id="{{ $item->id_bidjasa }}" ondblclick="editBidangJasa('{{ $item->id_bidjasa }}')" title="Double-click untuk edit">
+                            <span class="bidangjasa-id fw-bold" data-id="{{ $item->id_bidjasa }}">
                                 {{ $item->id_bidjasa }}
                             </span>
                         </td>
@@ -128,42 +128,6 @@
             <button type="button" class="btn btn-outline-secondary btn-sm d-none d-sm-inline-block" id="lastPageBtn" title="Halaman Terakhir">
                 <i class="bx bx-chevrons-right"></i>
             </button>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <!-- View Modal -->
-    <div class="modal fade" id="viewBidangJasaModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Detail Bidang Jasa</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="viewBidangJasaContent">
-                    <!-- Content loaded via AJAX -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Konfirmasi Hapus</h5>
-                    <hr />
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body border-top border-bottom">
-                    <p>Yakin akan dihapus?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Ya</button>
-                </div>
-            </div>
         </div>
     </div>
 

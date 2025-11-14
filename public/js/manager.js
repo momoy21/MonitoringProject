@@ -334,7 +334,7 @@ class ManagerManager {
                             ${item.nik}
                         </span>
                     </td>
-                    <td class="fw-semibold">
+                    <td>
                         <div class="truncate-text" title="${this.escapeHtml(namaDisplay)}">
                             ${this.escapeHtml(namaDisplay)}
                         </div>

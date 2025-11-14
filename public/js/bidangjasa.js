@@ -2,7 +2,6 @@ class BidangJasaManager {
     constructor() {
         this.isSubmitting = false;
         this.searchTimeout = null;
-        this.deleteTargetId = null;
 
         // Pagination variables (for index page)
         this.currentPage = 1;
@@ -26,10 +25,7 @@ class BidangJasaManager {
         // URL configuration
         this.urls = {
             index: window.routes?.bidangjasa?.index || '/bidangjasa',
-            store: window.routes?.bidangjasa?.store || '/bidangjasa',
-            show: window.routes?.bidangjasa?.show || '/bidangjasa',
-            update: window.routes?.bidangjasa?.update || '/bidangjasa',
-            destroy: window.routes?.bidangjasa?.destroy || '/bidangjasa'
+            store: window.routes?.bidangjasa?.store || '/bidangjasa'
         };
     }
 
@@ -86,11 +82,6 @@ class BidangJasaManager {
                 last: $('#lastPageBtn'),
                 numbers: $('#pageNumbersContainer')
             };
-            this.elements.modals = {
-                view: $('#viewBidangJasaModal'),
-                delete: $('#deleteConfirmModal')
-            };
-            this.elements.confirmDeleteBtn = $('#confirmDeleteBtn');
         }
     }
 
@@ -210,12 +201,7 @@ class BidangJasaManager {
     }
 
     initializeModalHandlers() {
-        // Delete confirmation handler
-        $('#confirmDeleteBtn').on('click', () => {
-            if (this.deleteTargetId) {
-                this.performDelete(this.deleteTargetId);
-            }
-        });
+        // No modal handlers needed as there are no action buttons
     }
 
     // ========================================
@@ -280,31 +266,24 @@ class BidangJasaManager {
         }
 
         data.forEach(item => {
+            const statusBadge = item.status === 'A' ?
+                '<span class="badge bg-success">Aktif</span>' :
+                '<span class="badge bg-secondary">Non Aktif</span>';
+
             tbody.append(`
                 <tr>
                     <td>
-                        <span class="bidangjasa-id fw-bold" data-id="${item.id_bidjasa}" ondblclick="window.bidangJasaManager.editBidangJasa('${item.id_bidjasa}')">
+                        <span class="bidangjasa-id fw-bold" data-id="${item.id_bidjasa}">
                             ${item.id_bidjasa}
                         </span>
                     </td>
-                    <td class="fw-semibold">
+                    <td>
                         <div class="truncate-text" title="${this.escapeHtml(item.desc_bidjasa)}">
                             ${this.escapeHtml(item.desc_bidjasa)}
                         </div>
                     </td>
                     <td>
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="bx bx-dots-vertical-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.bidangJasaManager.viewBidangJasa('${item.id_bidjasa}')">
-                                    <i class="bx bx-show me-1"></i> Lihat Detail</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="window.bidangJasaManager.deleteBidangJasa('${item.id_bidjasa}')">
-                                    <i class="bx bx-trash me-1"></i> Hapus</a></li>
-                            </ul>
-                        </div>
+                        ${statusBadge}
                     </td>
                 </tr>
             `);
@@ -523,106 +502,6 @@ class BidangJasaManager {
     }
 
     // ========================================
-    // MODAL & ACTION METHODS
-    // ========================================
-
-    editBidangJasa(id) {
-        window.location.href = `${this.urls.index}/${id}/edit`;
-    }
-
-    viewBidangJasa(id) {
-        $.ajax({
-            url: `${this.urls.show}/${id}`,
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: (response) => {
-                if (response.success) {
-                    this.displayBidangJasaDetails(response.data);
-                    $('#viewBidangJasaModal').modal('show');
-                } else {
-                    this.showAlert('Data tidak ditemukan', 'error');
-                }
-            },
-            error: (xhr) => {
-                console.error('View error:', xhr);
-                this.showAlert('Terjadi kesalahan saat memuat detail', 'error');
-            }
-        });
-    }
-
-    displayBidangJasaDetails(data) {
-        const content = `
-            <div class="modal-info-section">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="modal-info-section">
-                            <h6>Informasi Bidang Jasa</h6>
-                            <table class="table table-sm">
-                                <tr><td>ID Bidang Jasa:</td><td><strong>${data.id_bidjasa}</strong></td></tr>
-                                <tr><td>Deskripsi:</td><td><strong>${data.desc_bidjasa}</strong></td></tr>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="modal-info-section">
-                            <h6>Informasi Timestamp</h6>
-                            <table class="table table-sm">
-                                <tr><td>Dibuat:</td><td>${new Date(data.created_at).toLocaleString('id-ID')}</td></tr>
-                                <tr><td>Diperbarui:</td><td>${new Date(data.updated_at).toLocaleString('id-ID')}</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        $('#viewBidangJasaContent').html(content);
-    }
-
-    deleteBidangJasa(id) {
-        this.deleteTargetId = id;
-        $('#deleteConfirmModal').modal('show');
-    }
-
-    performDelete(id) {
-        $.ajax({
-            url: `${this.urls.destroy}/${id}`,
-            method: 'DELETE',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            beforeSend: () => {
-                $('#confirmDeleteBtn').prop('disabled', true).html(`
-                    <span class="spinner-border spinner-border-sm me-2"></span>
-                    Menghapus...
-                `);
-            },
-            success: (response) => {
-                $('#deleteConfirmModal').modal('hide');
-                if (response.success) {
-                    this.showAlert(response.message, 'success');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    this.showAlert(response.message || 'Terjadi kesalahan saat menghapus data', 'error');
-                }
-            },
-            error: (xhr) => {
-                $('#deleteConfirmModal').modal('hide');
-                console.error('Delete error:', xhr);
-                this.showAlert('Terjadi kesalahan saat menghapus data', 'error');
-            },
-            complete: () => {
-                $('#confirmDeleteBtn').prop('disabled', false).html('Ya');
-                this.deleteTargetId = null;
-            }
-        });
-    }
-
-    // ========================================
     // UTILITY METHODS
     // ========================================
 
@@ -721,25 +600,7 @@ class BidangJasaManager {
 // GLOBAL FUNCTIONS (for onclick handlers)
 // ========================================
 
-// Global functions for onclick handlers
-window.editBidangJasa = function(id) {
-    if (window.bidangJasaManager) {
-        window.bidangJasaManager.editBidangJasa(id);
-    }
-};
-
-window.viewBidangJasa = function(id) {
-    if (window.bidangJasaManager) {
-        window.bidangJasaManager.viewBidangJasa(id);
-    }
-};
-
-window.deleteBidangJasa = function(id) {
-    if (window.bidangJasaManager) {
-        window.bidangJasaManager.deleteBidangJasa(id);
-    }
-};
-
+// Reset form function
 window.resetForm = function() {
     if (window.bidangJasaManager) {
         const originalData = window.originalFormData || {};
