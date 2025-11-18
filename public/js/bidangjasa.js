@@ -273,7 +273,7 @@ class BidangJasaManager {
             tbody.append(`
                 <tr>
                     <td>
-                        <span class="bidangjasa-id fw-bold" data-id="${item.id_bidjasa}">
+                        <span class="bidangjasa-id fw-bold" data-id="${item.id_bidjasa}" ondblclick="editBidangJasa('${item.id_bidjasa}')" title="Double-click untuk edit" style="cursor: pointer;">
                             ${item.id_bidjasa}
                         </span>
                     </td>

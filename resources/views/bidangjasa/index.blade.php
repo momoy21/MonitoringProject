@@ -61,7 +61,7 @@
                     @forelse($bidangjasa as $item)
                     <tr>
                         <td>
-                            <span class="bidangjasa-id fw-bold" data-id="{{ $item->id_bidjasa }}">
+                            <span class="bidangjasa-id fw-bold" data-id="{{ $item->id_bidjasa }}" ondblclick="editBidangJasa('{{ $item->id_bidjasa }}')" title="Double-click untuk edit">
                                 {{ $item->id_bidjasa }}
                             </span>
                         </td>
@@ -146,6 +146,11 @@
             currentSearch: '{{ request('search') }}'
         });
     });
+
+    // Function untuk edit bidang jasa (double click)
+    window.editBidangJasa = function(idBidJasa) {
+        window.location.href = '{{ route('bidangjasa.index') }}/' + idBidJasa + '/edit';
+    };
     </script>
     @endpush
 </x-layout>
