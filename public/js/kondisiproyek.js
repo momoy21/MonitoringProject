@@ -292,9 +292,9 @@ class KondisiProyekManager {
             const statusText = item.status === 'A' ? 'Aktif' : 'Non Aktif';
 
             tbody.append(`
-                <tr>
+                <tr class="editable-row" ondblclick="window.kondisiProyekManager.editKondisiProyek('${item.id_kondisi_proyek}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>
-                        <span class="kondisiproyek-id fw-bold" data-id="${item.id_kondisi_proyek}" ondblclick="window.kondisiProyekManager.editKondisiProyek('${item.id_kondisi_proyek}')">
+                        <span class="kondisiproyek-id fw-bold" data-id="${item.id_kondisi_proyek}">
                             ${item.id_kondisi_proyek}
                         </span>
                     </td>
@@ -303,10 +303,10 @@ class KondisiProyekManager {
                             ${this.escapeHtml(item.desc_kondisi_proyek)}
                         </div>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <span class="${statusBadge}">${statusText}</span>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="bx bx-dots-vertical-rounded"></i>

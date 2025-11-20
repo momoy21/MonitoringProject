@@ -15,7 +15,7 @@ class RABStreamImport
 
     /**
      * Baca file Excel secara langsung dengan PhpSpreadsheet
-     * Fokus pada sheet "Profit&Loss"
+     * Fokus pada sheet "Sheet1"
      * Optimized untuk speed dengan rangeToArray
      * Support kolom F untuk Summary Detail RAB
      */
@@ -26,12 +26,12 @@ class RABStreamImport
             $spreadsheet = IOFactory::load($filePath);
             $spreadsheet->getCalculationEngine()->disableCalculationCache();
 
-            // Cari sheet dengan nama "Profit&Loss"
+            // Cari sheet dengan nama "Sheet1"
             $sheet = null;
             $sheetNames = $spreadsheet->getSheetNames();
 
             foreach ($sheetNames as $sheetName) {
-                if (strcasecmp(trim($sheetName), 'Profit&Loss') === 0) {
+                if (strcasecmp(trim($sheetName), 'Sheet1') === 0) {
                     $sheet = $spreadsheet->getSheetByName($sheetName);
                     break;
                 }
@@ -40,7 +40,7 @@ class RABStreamImport
             // Jika tidak ditemukan dengan nama persis, cari yang mirip
             if ($sheet === null) {
                 foreach ($sheetNames as $sheetName) {
-                    if (stripos($sheetName, 'Profit') !== false && stripos($sheetName, 'Loss') !== false) {
+                    if (stripos($sheetName, 'Sheet') !== false && stripos($sheetName, '1') !== false) {
                         $sheet = $spreadsheet->getSheetByName($sheetName);
                         break;
                     }
@@ -48,7 +48,7 @@ class RABStreamImport
             }
 
             if ($sheet === null) {
-                throw new \Exception("Sheet 'Profit&Loss' tidak ditemukan. Sheet yang tersedia: " . implode(', ', $sheetNames));
+                throw new \Exception("Sheet 'Sheet1' tidak ditemukan. Sheet yang tersedia: " . implode(', ', $sheetNames));
             }
 
             // Baca data dari baris 12 ke bawah

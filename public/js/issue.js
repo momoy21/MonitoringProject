@@ -153,7 +153,7 @@ $(document).ready(function() {
             `;
 
             const actionColumn = (!isReadOnly && !isPM) ? `
-                <td class="text-center">
+                <td class="text-center" onclick="event.stopPropagation();">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bx bx-dots-vertical-rounded"></i>
@@ -166,8 +166,8 @@ $(document).ready(function() {
             ` : '';
 
             tableHTML += `
-                <tr>
-                    <td${!isReadOnly ? ` ondblclick="editIssue('${issue.no_issue}')" style="cursor: pointer;" title="Double klik untuk edit"` : ''}>
+                <tr class="editable-row"${!isReadOnly ? ` ondblclick="editIssue('${issue.no_issue}')" title="Double-click untuk edit" style="cursor: pointer;"` : ''}>
+                    <td>
                         <span class="issue-no-urut">
                             ${noUrut}
                         </span>
@@ -175,7 +175,7 @@ $(document).ready(function() {
                     <td>${formatDate(issue.tanggal)}</td>
                     <td><div class="issue-desc-cell">${escapeHtml(issue.issue)}</div></td>
                     <td><div class="issue-desc-cell">${escapeHtml(issue.mitigasi)}</div></td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         ${isReadOnly ? statusBadge : `
                             <select class="form-select form-select-sm status-dropdown" onchange="handleStatusChange(this, '${issue.no_issue}')" onclick="event.stopPropagation()">
                                 ${statusOptions}

@@ -194,9 +194,9 @@ $(document).ready(function() {
                 '<span class="text-muted">-</span>';
 
             tableHTML += `
-                <tr data-no-pendapatan="${pendapatan.no_pendapatan}">
+                <tr data-no-pendapatan="${pendapatan.no_pendapatan}" class="editable-row"${!isReadOnly ? ` ondblclick="editPendapatan('${pendapatan.no_pendapatan}')" title="Double-click untuk edit" style="cursor: pointer;"` : ''}>
                     <td>
-                        <span class="pendapatan-no-urut" data-no-pendapatan="${pendapatan.no_pendapatan}"${!isReadOnly ? ` ondblclick="editPendapatan('${pendapatan.no_pendapatan}')" title="Double klik untuk edit"` : ''}>
+                        <span class="pendapatan-no-urut" data-no-pendapatan="${pendapatan.no_pendapatan}">
                             ${noUrut}
                         </span>
                     </td>
@@ -210,9 +210,9 @@ $(document).ready(function() {
                     <td class="text-start">
                         <small class="currency-display">${nilaiFormatted}</small>
                     </td>
-                    <td class="text-center">${fileIcon}</td>
+                    <td class="text-center" onclick="event.stopPropagation();">${fileIcon}</td>
                     ${!isReadOnly ? `
-                    <td class="text-center">
+                    <td class="text-center" onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="bx bx-dots-vertical-rounded"></i>

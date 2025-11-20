@@ -64,9 +64,9 @@
                 </thead>
                 <tbody id="konsumenTableBody">
                     @forelse($konsumen as $item)
-                    <tr>
+                    <tr class="editable-row" ondblclick="editKonsumen('{{ $item->id_konsumen }}')" title="Double-click untuk edit" style="cursor: pointer;">
                         <td>
-                            <span class="konsumen-id" data-id="{{ $item->id_konsumen }}" ondblclick="editKonsumen('{{ $item->id_konsumen }}')" title="Double-click untuk edit">
+                            <span class="konsumen-id" data-id="{{ $item->id_konsumen }}">
                                 {{ $item->id_konsumen }}
                             </span>
                         </td>

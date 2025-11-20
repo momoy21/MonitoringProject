@@ -473,9 +473,9 @@ class KonsumenManager {
                 '<span class="badge bg-secondary">Non Aktif</span>';
 
             tbody.append(`
-                <tr>
+                <tr class="editable-row" ondblclick="window.konsumenManager.editKonsumen('${item.id_konsumen}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>
-                        <span class="konsumen-id" data-id="${item.id_konsumen}" ondblclick="window.konsumenManager.editKonsumen('${item.id_konsumen}')">
+                        <span class="konsumen-id" data-id="${item.id_konsumen}">
                             ${item.id_konsumen}
                         </span>
                     </td>
@@ -500,8 +500,8 @@ class KonsumenManager {
                         </small>
                     </td>
                     <td><small class="multiline-text">${kontak}</small></td>
-                    <td>${statusBadge}</td>
-                    <td>
+                    <td onclick="event.stopPropagation();">${statusBadge}</td>
+                    <td onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="bx bx-dots-vertical-rounded"></i>

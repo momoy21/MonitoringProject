@@ -281,9 +281,9 @@ class SpesifikasiRABManager {
                 : '<span class="badge bg-secondary">Non Aktif</span>';
 
             const row = `
-                <tr>
+                <tr class="editable-row" ondblclick="editSpesifikasiRAB('${item.id_spec}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>
-                        <span class="norutspec-value" data-id_spec="${item.id_spec}" ondblclick="editSpesifikasiRAB('${item.id_spec}')" title="Double-click untuk edit">
+                        <span class="norutspec-value" data-id_spec="${item.id_spec}">
                             ${this.escapeHtml(item.norutspec)}
                         </span>
                     </td>
@@ -292,13 +292,13 @@ class SpesifikasiRABManager {
                             ${this.escapeHtml(item.spec_rab)}
                         </div>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <span class="badge ${kategoriClass}">${kategoriLabel}</span>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         ${statusBadge}
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="bx bx-dots-vertical-rounded"></i>

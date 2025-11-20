@@ -174,24 +174,24 @@
                         </thead>
                         <tbody>
                             @foreach($historyProjects as $index => $project)
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="norut-edit" ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" title="Double-click untuk edit">{{ $project->norut }}</span>
+                                <tr class="editable-row">
+                                    <td class="text-center" ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" style="cursor: pointer;" title="Double-click untuk edit">
+                                        <span class="norut-edit">{{ $project->norut }}</span>
                                     </td>
-                                    <td>
+                                    <td ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" style="cursor: pointer;" title="Double-click untuk edit">
                                         <div class="truncate-text" style="max-width: 250px;" title="{{ $project->namaproject }}">
                                             {{ $project->namaproject }}
                                         </div>
                                     </td>
-                                    <td>{{ $project->no_kontrak ?: '-' }}</td>
-                                    <td class="text-start">
+                                    <td ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" style="cursor: pointer;" title="Double-click untuk edit">{{ $project->no_kontrak ?: '-' }}</td>
+                                    <td class="text-start" ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" style="cursor: pointer;" title="Double-click untuk edit">
                                         @if($project->nilai_proyek)
                                             <small class="currency-display">{{ $project->nilai_proyek_formatted }}</small>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" style="cursor: pointer;" title="Double-click untuk edit">
                                         <div class="small">
                                             @if($project->tgl_kontrak)
                                                 <div><strong>Kontrak:</strong> {{ \Carbon\Carbon::parse($project->tgl_kontrak)->format('d/m/Y') }}</div>
@@ -218,8 +218,10 @@
                                                     data-from-history="true">
                                                     <i class="bx bx-info-circle me-1"></i> Lihat Detail</button></li>
                                                 <li><hr class="dropdown-divider"></li>
-                                                <li><button type="button" class="dropdown-item text-danger"
-                                                    onclick="deleteHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})">
+                                                <li><button type="button" class="dropdown-item text-danger btn-delete-history"
+                                                    data-id="{{ $project->id_project }}"
+                                                    data-norut="{{ $project->norut }}"
+                                                    data-nama="{{ $project->namaproject }}">
                                                     <i class="bx bx-trash me-1"></i> Hapus</button></li>
                                             </ul>
                                         </div>
@@ -296,18 +298,18 @@
             <div class="col-md-4">
                 <div class="card bg-light">
                     <div class="card-body text-center">
-                        <h5 class="card-title">Total Proyek</h5>
-                        <h3 class="text-primary">{{ $historyProjects->total() + 1 }}</h3>
-                        <small class="text-muted">Termasuk proyek utama</small>
+                        <h5 class="card-title">Total History Proyek</h5>
+                        <h3 class="text-primary">{{ $historyProjects->total() }}</h3>
+                        <small class="text-muted">Jumlah history proyek</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card bg-light">
                     <div class="card-body text-center">
-                        <h5 class="card-title">Total Nilai</h5>
+                        <h5 class="card-title">Total Nilai History</h5>
                         @php
-                            $totalNilai = $mainProject->nilai_proyek + $historyProjects->sum('nilai_proyek');
+                            $totalNilai = $historyProjects->sum('nilai_proyek');
                         @endphp
                         <h3 class="text-success">
                             @if($totalNilai > 0)
@@ -316,20 +318,19 @@
                                 -
                             @endif
                         </h3>
-                        <small class="text-muted">Semua proyek</small>
+                        <small class="text-muted">Total nilai history proyek</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card bg-light">
                     <div class="card-body text-center">
-                        <h5 class="card-title">Status Aktif</h5>
+                        <h5 class="card-title">Status Aktif (History)</h5>
                         @php
                             $activeCount = $historyProjects->where('status', 'I')->count();
-                            if ($mainProject->status == 'I') $activeCount++;
                         @endphp
                         <h3 class="text-warning">{{ $activeCount }}</h3>
-                        <small class="text-muted">Proyek sedang berjalan</small>
+                        <small class="text-muted">History proyek sedang berjalan</small>
                     </div>
                 </div>
             </div>
@@ -372,8 +373,8 @@
                 </div>
                 <div class="modal-body">
                     <p>Apakah Anda yakin ingin menghapus proyek <strong id="deleteProjectName"></strong> dari history?</p>
-                    <p class="text-warning small"><i class="bx bx-warning me-1"></i> Tindakan ini tidak dapat dibatalkan.</p>
                     <input type="hidden" id="deleteProjectId">
+                    <input type="hidden" id="deleteProjectNorut">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>

@@ -21,12 +21,12 @@ class ExcelRABProcessor
             // Set memory limit
             ini_set('memory_limit', '1G');
 
-            // 1. Import data Excel dari sheet "Profit&Loss"
+            // 1. Import data Excel dari sheet "Sheet1"
             $importer = new RABStreamImport($lamaBulan);
             $excelData = $importer->import($filePath);
 
             if (empty($excelData)) {
-                throw new \Exception("Tidak ada data yang berhasil dibaca dari sheet 'Profit&Loss'. Pastikan sheet dengan nama tersebut ada dan memiliki data mulai dari baris 12.");
+                throw new \Exception("Tidak ada data yang berhasil dibaca dari sheet 'Sheet1'. Pastikan sheet dengan nama tersebut ada dan memiliki data mulai dari baris 12.");
             }
 
             // Free memory
@@ -181,35 +181,48 @@ class ExcelRABProcessor
 
         $summaryDetailRABData = [];
         $currentIdSummaryRAB = 1;
-        $startRow = 30; // Baris 30 di Excel (index 30-12 = 18 dalam array karena mulai dari baris 12)
-        $arrayStartIndex = $startRow - 12; // Convert Excel row to array index
 
-        // FOR i = 1 TO jmlsummary LOOP
-        for ($i = 0; $i < $jmlsummary; $i++) {
-            $configSummary = $configSummaryRAB[$i];
-            $excelRowIndex = $arrayStartIndex + $i;
+        // Mulai dari baris 30 di Excel sampai akhir data
+        // Cari berdasarkan keterangan di kolom B yang match dengan ketsummaryrab
+        foreach ($configSummaryRAB as $configSummary) {
+            $found = false;
+            $nilai = 0;
 
-            // Ambil data Excel untuk baris ini
-            $excelRow = $excelData[$excelRowIndex] ?? null;
+            // Cari di seluruh excelData untuk menemukan keterangan yang match
+            foreach ($excelData as $excelRow) {
+                if (!$excelRow || !isset($excelRow['keterangan'])) {
+                    continue;
+                }
 
-            // Jika baris Excel tidak ada atau kolom F benar-benar kosong (null), skip entry
-            if (!$excelRow || !array_key_exists('nilai_kolom_f', $excelRow) || $excelRow['nilai_kolom_f'] === null) {
-                // Jangan menambahkan entry dan jangan menaikkan id summary
-                continue;
+                // Trim dan normalize keterangan
+                $excelKeterangan = trim(strtolower($excelRow['keterangan']));
+                $configKeterangan = trim(strtolower($configSummary->ketsummaryrab));
+
+                // Check if keterangan matches (case-insensitive, trimmed)
+                if ($excelKeterangan === $configKeterangan) {
+                    // Found matching row
+                    $found = true;
+
+                    // Ambil nilai dari kolom F jika ada dan tidak null
+                    if (array_key_exists('nilai_kolom_f', $excelRow) && $excelRow['nilai_kolom_f'] !== null) {
+                        $nilai = $excelRow['nilai_kolom_f'] * 1000;
+
+                        // Simpan data
+                        $summaryDetailRABData[] = [
+                            'id_rab' => $idRAB,
+                            'id_summary_rab' => $currentIdSummaryRAB,
+                            'idsummary' => $configSummary->idsummary,
+                            'nilai' => $nilai,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ];
+                    }
+
+                    break; // Stop searching once found
+                }
             }
 
-            // Ambil nilai dari kolom F (sudah di-parse di RABStreamImport)
-            $nilai = $excelRow['nilai_kolom_f'] * 1000;
-
-            $summaryDetailRABData[] = [
-                'id_rab' => $idRAB,
-                'id_summary_rab' => $currentIdSummaryRAB,
-                'idsummary' => $configSummary->idsummary,
-                'nilai' => $nilai,
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-
+            // Selalu naikkan id_summary_rab untuk menjaga konsistensi urutan
             $currentIdSummaryRAB++;
         }
 

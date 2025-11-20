@@ -276,9 +276,9 @@ class SummaryRABManager {
                 : '<span class="badge bg-secondary">Non Aktif</span>';
 
             const row = `
-                <tr>
+                <tr class="editable-row" ondblclick="editSummaryRAB('${item.idsummary}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>
-                        <span class="norutsummary-value" data-idsummary="${item.idsummary}" ondblclick="editSummaryRAB('${item.idsummary}')" title="Double-click untuk edit">
+                        <span class="norutsummary-value" data-idsummary="${item.idsummary}">
                             ${this.escapeHtml(item.norutsummary)}
                         </span>
                     </td>
@@ -287,10 +287,10 @@ class SummaryRABManager {
                             ${this.escapeHtml(item.ketsummaryrab)}
                         </div>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         ${statusBadge}
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="bx bx-dots-vertical-rounded"></i>

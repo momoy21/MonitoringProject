@@ -60,9 +60,9 @@
                 </thead>
                 <tbody id="summaryRABTableBody">
                     @forelse($summaryrab as $item)
-                    <tr>
+                    <tr class="editable-row" ondblclick="editSummaryRAB('{{ $item->idsummary }}')" title="Double-click untuk edit" style="cursor: pointer;">
                         <td>
-                            <span class="norutsummary-value" data-idsummary="{{ $item->idsummary }}" ondblclick="editSummaryRAB('{{ $item->idsummary }}')" title="Double-click untuk edit">
+                            <span class="norutsummary-value" data-idsummary="{{ $item->idsummary }}">
                                 {{ $item->norutsummary }}
                             </span>
                         </td>
@@ -71,12 +71,12 @@
                                 {{ $item->ketsummaryrab }}
                             </div>
                         </td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             <span class="badge {{ $item->status === 'A' ? 'bg-success' : 'bg-secondary' }}">
                                 {{ $item->status === 'A' ? 'Aktif' : 'Non Aktif' }}
                             </span>
                         </td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             <div class="dropdown">
                                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                     <i class="bx bx-dots-vertical-rounded"></i>

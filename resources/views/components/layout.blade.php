@@ -32,6 +32,19 @@
     <!-- Additional Styles -->
     @stack('styles')
 
+    <!-- Global Styles for Editable Rows -->
+    <style>
+        /* Editable row hover effect */
+        .editable-row:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+        }
+
+        /* Prevent text selection on double click */
+        .editable-row {
+            user-select: none;
+        }
+    </style>
+
     <script src="{{ asset('assets/vendor/js/helpers.js') }}"></script>
     <script src="{{ asset('assets/js/config.js') }}"></script>
 </head>

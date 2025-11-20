@@ -328,9 +328,9 @@ class ManagerManager {
             const namaDisplay = item.nama || '';
 
             const row = `
-                <tr>
+                <tr class="editable-row" ondblclick="editManager('${item.nik}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>
-                        <span class="manager-nik fw-semibold" data-nik="${item.nik}" ondblclick="editManager('${item.nik}')">
+                        <span class="manager-nik fw-semibold" data-nik="${item.nik}">
                             ${item.nik}
                         </span>
                     </td>
@@ -339,8 +339,8 @@ class ManagerManager {
                             ${this.escapeHtml(namaDisplay)}
                         </div>
                     </td>
-                    <td>${statusBadge}</td>
-                    <td class="text-center">
+                    <td onclick="event.stopPropagation();">${statusBadge}</td>
+                    <td class="text-center" onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="bx bx-dots-vertical-rounded"></i>

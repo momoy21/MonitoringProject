@@ -163,9 +163,9 @@ $(document).ready(function() {
             const noUrut = ba.norut_display || (index + 1);
 
             tableHTML += `
-                <tr data-no-ba="${ba.no_ba}" data-norut="${ba.norut}" data-id-project="${ba.id_project}">
+                <tr data-no-ba="${ba.no_ba}" data-norut="${ba.norut}" data-id-project="${ba.id_project}" class="editable-row"${!isReadOnly ? ` ondblclick="editBeritaAcara('${ba.no_ba}')" title="Double-click untuk edit" style="cursor: pointer;"` : ''}>
                     <td>
-                        <span class="ba-no-urut" data-no-ba="${ba.no_ba}"${!isReadOnly ? ` ondblclick="editBeritaAcara('${ba.no_ba}')" title="Double klik untuk edit"` : ''}>
+                        <span class="ba-no-urut" data-no-ba="${ba.no_ba}">
                             ${noUrut}
                         </span>
                     </td>
@@ -176,11 +176,11 @@ $(document).ready(function() {
                     </td>
                     <td>${periodeBA}</td>
                     <td class="text-start">${nilaiBA}</td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         ${isReadOnly ? statusBadge : getStatusDropdown(ba)}
                     </td>
                     ${!isReadOnly ? `
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bx bx-dots-vertical-rounded"></i>

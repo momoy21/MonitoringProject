@@ -940,28 +940,58 @@ class DataProyekController extends Controller
 
                 // Verify the update
                 $project->refresh();
-                // CASCADE UPDATE: Update all related history projects with auto-fill fields
-                // Only update fields that are "inherited" from parent project
-                $cascadeFields = [
-                    'id_project' => $project->id_project, // Reference to parent (in case it changes)
-                    'cost_center' => $project->cost_center, // Use refreshed value after update
-                    'id_konsumen' => $project->id_konsumen,
-                    'id_datapeluang' => $project->id_datapeluang,
-                    'id_bidjasa' => $project->id_bidjasa,
-                    'id_kondisi_proyek' => $project->id_kondisi_proyek,
-                    'lokasi_proyek' => $project->lokasi_proyek,
-                    'jarak_lokasi' => $project->jarak_lokasi,
-                ];
 
-                // Find all history projects with the SAME id_project
-                // History projects share the same id_project as their parent
-                $historyProjects = HistoryProyek::where('id_project', $idProject)->get();
+                // CASCADE UPDATE: Update only the initial history project (norut = 1)
+                // Only cascade if keterangan = 2 (Bukan Kontrak Induk)
+                if ($project->keterangan == 2) {
+                    // For "Bukan Kontrak Induk", cascade ALL fields to history proyek with norut = 1
+                    // History with norut = 1 is the auto-created history when data proyek was first created
+                    // Manual histories (norut > 1) should NOT be updated
 
-                if ($historyProjects->count() > 0) {
-                    foreach ($historyProjects as $historyProject) {
-                        $historyProject->update($cascadeFields);
+                    // Prepare cascade data (semua field kecuali yang tidak boleh di-cascade)
+                    $cascadeFields = [
+                        'cost_center' => $project->cost_center,
+                        'dokumen_io' => $project->dokumen_io,
+                        'namaproject' => $project->namaproject,
+                        'id_konsumen' => $project->id_konsumen,
+                        'id_datapeluang' => $project->id_datapeluang,
+                        'id_bidjasa' => $project->id_bidjasa,
+                        'lokasi_proyek' => $project->lokasi_proyek,
+                        'jarak_lokasi' => $project->jarak_lokasi,
+                        'id_kondisi_proyek' => $project->id_kondisi_proyek,
+                        'no_kontrak' => $project->no_kontrak,
+                        'tgl_pengakuan' => $project->tgl_pengakuan,
+                        'tgl_kontrak' => $project->tgl_kontrak,
+                        'start_kontrak' => $project->start_kontrak,
+                        'finish_kontrak' => $project->finish_kontrak,
+                        'tgl_expire' => $project->tgl_expire,
+                        'penanggung_jawab' => $project->penanggung_jawab,
+                        'nilai_proyek' => $project->nilai_proyek,
+                        'status' => $project->status,
+                        'keterangan' => $project->keterangan,
+                        'dokumen_path' => $project->dokumen_path,
+                    ];
+
+                    // Find only the initial auto-created history project (norut = 1)
+                    $initialHistory = HistoryProyek::where('id_project', $idProject)
+                        ->where('norut', 1)
+                        ->first();
+
+                    if ($initialHistory) {
+                        $initialHistory->update($cascadeFields);
                     }
                 } else {
+                    // For "Kontrak Induk" (keterangan = 1), only update cost_center if changed
+                    // This maintains backward compatibility
+                    if ($project->cost_center !== $oldCostCenter) {
+                        $historyProjects = HistoryProyek::where('id_project', $idProject)->get();
+
+                        if ($historyProjects->count() > 0) {
+                            foreach ($historyProjects as $historyProject) {
+                                $historyProject->update(['cost_center' => $project->cost_center]);
+                            }
+                        }
+                    }
                 }
             } else {
                 // Updating history table project - direct update
@@ -1056,7 +1086,7 @@ class DataProyekController extends Controller
             DB::commit();
 
             return redirect()->route('dataproyek.show', $idProject)
-                ->with('success', 'History proyek berhasil dihapus.');
+                ->with('success', 'History proyek berhasil dihapus');
 
         } catch (\Exception $e) {
             DB::rollback();

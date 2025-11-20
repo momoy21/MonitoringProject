@@ -60,9 +60,9 @@
                 </thead>
                 <tbody id="kondisiProyekTableBody">
                     @forelse($kondisiproyek as $item)
-                    <tr>
+                    <tr class="editable-row" ondblclick="editKondisiProyek('{{ $item->id_kondisi_proyek }}')" title="Double-click untuk edit" style="cursor: pointer;">
                         <td>
-                            <span class="kondisiproyek-id" data-id="{{ $item->id_kondisi_proyek }}" ondblclick="editKondisiProyek('{{ $item->id_kondisi_proyek }}')" title="Double-click untuk edit">
+                            <span class="kondisiproyek-id" data-id="{{ $item->id_kondisi_proyek }}">
                                 {{ $item->id_kondisi_proyek }}
                             </span>
                         </td>
@@ -71,14 +71,14 @@
                                 {{ $item->desc_kondisi_proyek }}
                             </div>
                         </td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             @if($item->status === 'A')
                                 <span class="badge bg-success">Aktif</span>
                             @else
                                 <span class="badge bg-secondary">Non Aktif</span>
                             @endif
                         </td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             <div class="dropdown">
                                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                     <i class="bx bx-dots-vertical-rounded"></i>

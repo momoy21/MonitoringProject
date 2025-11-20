@@ -271,9 +271,9 @@ class BidangJasaManager {
                 '<span class="badge bg-secondary">Non Aktif</span>';
 
             tbody.append(`
-                <tr>
+                <tr class="editable-row" ondblclick="editBidangJasa('${item.id_bidjasa}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>
-                        <span class="bidangjasa-id fw-bold" data-id="${item.id_bidjasa}" ondblclick="editBidangJasa('${item.id_bidjasa}')" title="Double-click untuk edit" style="cursor: pointer;">
+                        <span class="bidangjasa-id fw-bold" data-id="${item.id_bidjasa}">
                             ${item.id_bidjasa}
                         </span>
                     </td>
@@ -282,7 +282,7 @@ class BidangJasaManager {
                             ${this.escapeHtml(item.desc_bidjasa)}
                         </div>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         ${statusBadge}
                     </td>
                 </tr>

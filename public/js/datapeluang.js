@@ -662,9 +662,9 @@ class DataPeluangManager {
             const paguFormatted = item.pagu_peluang_formatted || (item.pagu_peluang ? this.formatCurrency(item.pagu_peluang) : '-');
 
             tbody.append(`
-                <tr>
+                <tr class="editable-row" ondblclick="editDataPeluang('${item.id_datapeluang}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>
-                        <span class="datapeluang-id" data-id="${item.id_datapeluang}" ondblclick="editDataPeluang('${item.id_datapeluang}')">
+                        <span class="datapeluang-id" data-id="${item.id_datapeluang}">
                             ${item.id_datapeluang}
                         </span>
                     </td>
@@ -696,10 +696,10 @@ class DataPeluangManager {
                             </div>
                         </div>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <span class="${statusBadge}">${statusLabel}</span>
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="bx bx-dots-vertical-rounded"></i>

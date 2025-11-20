@@ -73,36 +73,34 @@
                         </thead>
                         <tbody>
                                                         @foreach($projects as $project)
-                                <tr>
-                                    <td>
-                                        <div class="costcenter-id" style="cursor: pointer;"
-                                             ondblclick="editDataProyek('{{ $project->id_project }}')"
-                                             title="Double-click untuk edit">
+                                <tr class="editable-row">
+                                    <td ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">
+                                        <div class="costcenter-id">
                                             {{ $project->cost_center }}
                                         </div>
-                                        <a href="{{ route('dataproyek.show', $project->id_project) }}" class="small" style="color: grey; margin-left: 15px;">
+                                        <a href="{{ route('dataproyek.show', $project->id_project) }}" class="small" style="color: grey; margin-left: 15px;" onclick="event.stopPropagation();">
                                             Detail
                                         </a>
                                     </td>
-                                    <td>
+                                    <td ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">
                                         <div class="truncate-text" title="{{ $project->namaproject }}">
                                             {{ $project->namaproject }}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">
                                         <div class="truncate-text" title="{{ $project->konsumen->konsumen ?? '-' }}">
                                             {{ $project->konsumen->konsumen ?? '-' }}
                                         </div>
                                     </td>
-                                    <td>{{ $project->no_kontrak ?: '-' }}</td>
-                                    <td class="text-start">
+                                    <td ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">{{ $project->no_kontrak ?: '-' }}</td>
+                                    <td class="text-start" ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">
                                         @if($project->nilai_proyek)
                                             <small class="currency-display">{{ $project->nilai_proyek_formatted }}</small>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">
                                         <div class="small">
                                             @if($project->tgl_kontrak)
                                                 <div><strong>Kontrak:</strong> {{ \Carbon\Carbon::parse($project->tgl_kontrak)->format('d/m/Y') }}</div>

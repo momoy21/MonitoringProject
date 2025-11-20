@@ -53,9 +53,9 @@
                 </thead>
                 <tbody>
                     @forelse($users as $user)
-                    <tr>
+                    <tr class="editable-row" ondblclick="editPM({{ $user->id }})" title="Double-click untuk edit" style="cursor: pointer;">
                         <td>
-                            <span class="pm-name" data-id="{{ $user->id }}" ondblclick="editPM({{ $user->id }})" title="Double-click untuk edit">
+                            <span class="pm-name" data-id="{{ $user->id }}">
                                 <div class="truncate-text">{{ $user->name }}</div>
                             </span>
                         </td>
@@ -78,7 +78,7 @@
                             @endif
                         </td>
                         <td>{{ $user->created_at->format('d/m/Y') }}</td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             <div class="dropdown">
                                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                     <i class="bx bx-dots-vertical-rounded"></i>
@@ -142,7 +142,6 @@
                 </div>
                 <div class="modal-body">
                     <p>Apakah Anda yakin ingin menghapus Project Manager <strong id="pmName"></strong>?</p>
-                    <p class="text-danger mb-0"><small>Tindakan ini tidak dapat dibatalkan!</small></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>

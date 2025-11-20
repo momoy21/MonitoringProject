@@ -625,12 +625,41 @@ class DataProyekManager {
     }
 
     initializeModalHandlers() {
-        // Detail modal handler
-        $(document).on('click', '.btn-detail', function() {
+        // Detail modal handler - menggunakan event delegation
+        $(document).off('click', '.btn-detail').on('click', '.btn-detail', function(e) {
+            e.preventDefault();
             const idProject = $(this).data('id');
             const fromHistory = $(this).data('from-history');
             const norut = $(this).data('norut');
+            console.log('Detail button clicked:', { idProject, fromHistory, norut });
             window.dataProyekManager.showProjectDetail(idProject, fromHistory, norut);
+        });
+
+        // Delete confirmation handler - menggunakan modal
+        $(document).off('click', '.btn-delete-history').on('click', '.btn-delete-history', function(e) {
+            e.preventDefault();
+            const idProject = $(this).data('id');
+            const norut = $(this).data('norut');
+            const namaProject = $(this).data('nama') || 'proyek ini';
+
+            // Set data ke modal
+            $('#deleteProjectName').text(namaProject);
+            $('#deleteProjectId').val(idProject);
+            $('#deleteProjectNorut').val(norut);
+
+            // Show modal
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        });
+
+        // Confirm delete button handler
+        $('#confirmDeleteBtn').off('click').on('click', function() {
+            const idProject = $('#deleteProjectId').val();
+            const norut = $('#deleteProjectNorut').val();
+
+            if (idProject && norut) {
+                deleteHistoryProyek(idProject, norut);
+            }
         });
 
         // File preview handler untuk modal
@@ -1440,29 +1469,29 @@ class DataProyekManager {
 
             tbody.append(`
                 <tr>
-                    <td>
-                        <div class="costcenter-id" style="cursor: pointer;" ondblclick="editDataProyek('${item.id_project}')" title="Double-click untuk edit">
+                    <td ondblclick="editDataProyek('${item.id_project}')" style="cursor: pointer;" title="Double-click untuk edit">
+                        <div class="costcenter-id">
                             ${item.cost_center}
                         </div>
-                        <a href="/dataproyek/${item.id_project}" class="small" style="color: grey; margin-left: 15px;">
+                        <a href="/dataproyek/${item.id_project}" class="small" style="color: grey; margin-left: 15px;" onclick="event.stopPropagation();">
                             Detail
                         </a>
                     </td>
-                    <td>
+                    <td ondblclick="editDataProyek('${item.id_project}')" style="cursor: pointer;" title="Double-click untuk edit">
                         <div class="truncate-text" title="${this.escapeHtml(item.namaproject)}">
                             ${this.escapeHtml(item.namaproject)}
                         </div>
                     </td>
-                    <td>
+                    <td ondblclick="editDataProyek('${item.id_project}')" style="cursor: pointer;" title="Double-click untuk edit">
                         <div class="truncate-text" title="${this.escapeHtml(konsumenNama)}">
                             ${this.escapeHtml(konsumenNama)}
                         </div>
                     </td>
-                    <td>${item.no_kontrak || '-'}</td>
-                    <td class="text-start">
+                    <td ondblclick="editDataProyek('${item.id_project}')" style="cursor: pointer;" title="Double-click untuk edit">${item.no_kontrak || '-'}</td>
+                    <td class="text-start" ondblclick="editDataProyek('${item.id_project}')" style="cursor: pointer;" title="Double-click untuk edit">
                         ${nilaiFormatted !== '-' ? `<small class="currency-display">${nilaiFormatted}</small>` : '<span class="text-muted">-</span>'}
                     </td>
-                    <td>
+                    <td ondblclick="editDataProyek('${item.id_project}')" style="cursor: pointer;" title="Double-click untuk edit">
                         <div class="small">
                             ${item.tgl_kontrak ? `<div><strong>Kontrak:</strong> ${this.formatDate(item.tgl_kontrak)}</div>` : ''}
                             ${item.start_kontrak && item.finish_kontrak ? `<div><strong>Periode:</strong> ${this.formatDate(item.start_kontrak)} - ${this.formatDate(item.finish_kontrak)}</div>` : ''}
@@ -1692,19 +1721,19 @@ class DataProyekManager {
             // FIX: Update ondblclick to use composite key (id_project + norut)
             tbody.append(`
                 <tr>
-                    <td class="text-center">
-                        <span class="norut-edit" ondblclick="editHistoryProyek('${project.id_project}', ${project.norut})" title="Double-click untuk edit">${project.norut}</span>
+                    <td class="text-center" ondblclick="editHistoryProyek('${project.id_project}', ${project.norut})" style="cursor: pointer;" title="Double-click untuk edit">
+                        <span class="norut-edit">${project.norut}</span>
                     </td>
-                    <td>
+                    <td ondblclick="editHistoryProyek('${project.id_project}', ${project.norut})" style="cursor: pointer;" title="Double-click untuk edit">
                         <div class="truncate-text" style="max-width: 250px;" title="${this.escapeHtml(project.namaproject)}">
                             ${this.escapeHtml(project.namaproject)}
                         </div>
                     </td>
-                    <td>${project.no_kontrak || '-'}</td>
-                    <td class="text-start">
+                    <td ondblclick="editHistoryProyek('${project.id_project}', ${project.norut})" style="cursor: pointer;" title="Double-click untuk edit">${project.no_kontrak || '-'}</td>
+                    <td class="text-start" ondblclick="editHistoryProyek('${project.id_project}', ${project.norut})" style="cursor: pointer;" title="Double-click untuk edit">
                         ${nilaiFormatted !== '-' ? `<small class="currency-display">${nilaiFormatted}</small>` : '<span class="text-muted">-</span>'}
                     </td>
-                    <td>
+                    <td ondblclick="editHistoryProyek('${project.id_project}', ${project.norut})" style="cursor: pointer;" title="Double-click untuk edit">
                         <div class="small">
                             ${project.tgl_kontrak ? `<div><strong>Kontrak:</strong> ${project.tgl_kontrak}</div>` : ''}
                             ${project.start_kontrak && project.finish_kontrak ? `<div><strong>Periode:</strong> ${project.start_kontrak} - ${project.finish_kontrak}</div>` : ''}
@@ -1725,8 +1754,10 @@ class DataProyekManager {
                                     data-from-history="true">
                                     <i class="bx bx-info-circle me-1"></i> Lihat Detail</button></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><button type="button" class="dropdown-item text-danger"
-                                    onclick="deleteHistoryProyek('${project.id_project}', ${project.norut})">
+                                <li><button type="button" class="dropdown-item text-danger btn-delete-history"
+                                    data-id="${project.id_project}"
+                                    data-norut="${project.norut}"
+                                    data-nama="${this.escapeHtml(project.namaproject)}">
                                     <i class="bx bx-trash me-1"></i> Hapus</button></li>
                             </ul>
                         </div>
@@ -1854,29 +1885,27 @@ function editDataProyek(idProject) {
  * Delete history proyek using composite key
  */
 function deleteHistoryProyek(idProject, norut) {
-    if (confirm('Apakah Anda yakin ingin menghapus history proyek ini?')) {
-        // Create form and submit
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/dataproyek/history/${idProject}/${norut}`;
+    // Create form and submit (modal confirmation handled by initializeModalHandlers)
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/dataproyek/history/${idProject}/${norut}`;
 
-        // Add CSRF token
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = '_token';
-        csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
+    // Add CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
 
-        // Add method override for DELETE
-        const methodInput = document.createElement('input');
-        methodInput.type = 'hidden';
-        methodInput.name = '_method';
-        methodInput.value = 'DELETE';
+    // Add method override for DELETE
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = 'DELETE';
 
-        form.appendChild(csrfInput);
-        form.appendChild(methodInput);
-        document.body.appendChild(form);
-        form.submit();
-    }
+    form.appendChild(csrfInput);
+    form.appendChild(methodInput);
+    document.body.appendChild(form);
+    form.submit();
 }
 
 // ========================================

@@ -62,9 +62,9 @@
                 </thead>
                 <tbody id="spesifikasiRABTableBody">
                     @forelse($spesifikasirab as $item)
-                    <tr>
+                    <tr class="editable-row" ondblclick="editSpesifikasiRAB('{{ $item->id_spec }}')" title="Double-click untuk edit" style="cursor: pointer;">
                         <td>
-                            <span class="norutspec-value" data-id_spec="{{ $item->id_spec }}" ondblclick="editSpesifikasiRAB('{{ $item->id_spec }}')" title="Double-click untuk edit">
+                            <span class="norutspec-value" data-id_spec="{{ $item->id_spec }}">
                                 {{ $item->norutspec }}
                             </span>
                         </td>
@@ -76,19 +76,19 @@
                                 {{ $item->spec_rab }}
                             </div>
                         </td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             @if($item->kategori === 'PDP')
                                 <span class="badge bg-success">Pendapatan</span>
                             @else
                                 <span class="badge bg-info">Harga Pokok Penjualan</span>
                             @endif
                         </td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             <span class="badge {{ $item->status === 'A' ? 'bg-success' : 'bg-secondary' }}">
                                 {{ $item->status === 'A' ? 'Aktif' : 'Non Aktif' }}
                             </span>
                         </td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             <div class="dropdown">
                                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                     <i class="bx bx-dots-vertical-rounded"></i>

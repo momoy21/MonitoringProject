@@ -34,7 +34,7 @@ class SummaryRabSeeder extends Seeder
             ],
             [
                 'idsummary' => '0004',
-                'ketsummaryrab' => 'Data Insentif Sales',
+                'ketsummaryrab' => 'Dana Insentif Sales',
                 'norutsummary' => '04',
                 'status' => 'A'
             ],
