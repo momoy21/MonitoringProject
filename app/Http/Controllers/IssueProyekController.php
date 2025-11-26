@@ -131,20 +131,19 @@ class IssueProyekController extends Controller
         try {
             DB::beginTransaction();
 
-            // CRITICAL: Find existing issue by composite key (sama seperti BA)
-            // Filter berdasarkan norut + id_project + no_issue
-            $issue = IssueProyek::where('norut', $request->norut)
+            // CRITICAL: Find existing issue by composite key
+            // Query harus exact match dengan ketiga key
+            $issue = IssueProyek::where('no_issue', $noIssue)
                 ->where('id_project', $request->id_project)
-                ->where('no_issue', $noIssue)
+                ->where('norut', $request->norut)
                 ->firstOrFail();
 
             // CRITICAL: Update data yang sudah ada (JANGAN buat record baru)
             // Tanggal TIDAK diupdate karena tanggal tidak boleh berubah saat edit
-            $issue->update([
-                'issue' => $request->issue ?: 'Tidak ada issue',
-                'mitigasi' => $request->mitigasi ?: 'Tidak ada mitigasi',
-                'status' => $request->status
-            ]);
+            $issue->issue = $request->issue ?: 'Tidak ada issue';
+            $issue->mitigasi = $request->mitigasi ?: 'Tidak ada mitigasi';
+            $issue->status = $request->status;
+            $issue->save();
 
             DB::commit();
 

@@ -53,6 +53,7 @@ $(document).ready(function() {
         clearForm();
         selectedHeaderRABData = null;
         $('#tabsSection').slideUp();
+        $('#default-message').show();
     });
 
     // Fill form with Header RAB data
@@ -105,6 +106,11 @@ $(document).ready(function() {
                     // Header Progress already exists
                     // Show tabs section
                     $('#tabsSection').slideDown();
+
+                    // Hide default message dan langsung activate tab Berita Acara
+                    $('#default-message').hide();
+                    $('#tab-ba').tab('show');
+
                     showAlert('Data header progress berhasil dimuat', 'success');
 
                     // Initialize Berita Acara if function exists
@@ -157,6 +163,10 @@ $(document).ready(function() {
 
                     // Show tabs section
                     $('#tabsSection').slideDown();
+
+                    // Hide default message dan langsung activate tab Berita Acara
+                    $('#default-message').hide();
+                    $('#tab-ba').tab('show');
 
                     // Initialize Berita Acara if function exists
                     if (typeof window.initBeritaAcara === 'function') {

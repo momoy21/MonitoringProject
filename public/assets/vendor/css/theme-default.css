@@ -2565,12 +2565,27 @@ body {
     overflow: auto;
     border-radius: 3px;
     margin-top: 0;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: #b0b0b0 #f0f0f0;
 }
 
 .issue-table-container::-webkit-scrollbar {
-    display: none;
+    width: 8px;
+    height: 8px;
+}
+
+.issue-table-container::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.issue-table-container::-webkit-scrollbar-thumb {
+    background: #b0b0b0;
+    border-radius: 4px;
+}
+
+.issue-table-container::-webkit-scrollbar-thumb:hover {
+    background: #888;
 }
 
 /* Issue Table Base Styles */
@@ -2692,17 +2707,32 @@ body {
     word-break: break-word;
     line-height: 1.4;
     padding: 0;
+    padding-right: 4px;
     margin: 0;
     font-size: 0.875rem;
     color: #566a7f;
     text-align: left;
     display: block;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: #b0b0b0 #f0f0f0;
 }
 
 .issue-desc-cell::-webkit-scrollbar {
-    display: none;
+    width: 6px;
+}
+
+.issue-desc-cell::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.issue-desc-cell::-webkit-scrollbar-thumb {
+    background: #b0b0b0;
+    border-radius: 3px;
+}
+
+.issue-desc-cell::-webkit-scrollbar-thumb:hover {
+    background: #888;
 }
 
 /* Issue Status Badges */

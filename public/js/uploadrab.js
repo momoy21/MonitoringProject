@@ -712,7 +712,7 @@ function displaySummaryDetailRABTable(data, idRAB) {
     let tableHeaders = `
         <th class="fw-bold text-start" style="width: 5%;">No</th>
         <th class="fw-bold text-start ket-kol" style="width: 75%;">Keterangan</th>
-        <th class="fw-bold text-start bulan-col" style="width: 20%;">Nilai</th>
+        <th class="fw-bold text-end bulan-col" style="width: 20%;">Nilai</th>
     `;
 
     // Generate table rows
@@ -724,7 +724,7 @@ function displaySummaryDetailRABTable(data, idRAB) {
             <tr>
                 <td class="text-start">${index + 1}</td>
                 <td class="text-start ket-kol">${escapeHtml(item.keterangan || '-')}</td>
-                <td class="text-start nilai-col">${escapeHtml(item.formatted_nilai || '-')}</td>
+                <td class="text-end nilai-col">${escapeHtml(item.formatted_nilai || '-')}</td>
             </tr>
         `;
     });
