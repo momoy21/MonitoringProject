@@ -58,19 +58,20 @@ class SummaryRabSeeder extends Seeder
             ],
         ];
 
-        DB::table('summary_rab')->delete();
-
+        // Gunakan updateOrInsert untuk menghindari masalah foreign key
         foreach ($summaryRAB as $summary) {
-            DB::table('summary_rab')->insert([
-                'idsummary' => $summary['idsummary'],
-                'ketsummaryrab' => $summary['ketsummaryrab'],
-                'norutsummary' => $summary['norutsummary'],
-                'status' => $summary['status'],
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            DB::table('summary_rab')->updateOrInsert(
+                ['idsummary' => $summary['idsummary']],
+                [
+                    'ketsummaryrab' => $summary['ketsummaryrab'],
+                    'norutsummary' => $summary['norutsummary'],
+                    'status' => $summary['status'],
+                    'updated_at' => now(),
+                    'created_at' => DB::raw('COALESCE(created_at, NOW())')
+                ]
+            );
         }
 
-        $this->command->info('SummaryRAB seeder completed. Inserted ' . count($summaryRAB) . ' records.');
+        $this->command->info('SummaryRAB seeder completed. Processed ' . count($summaryRAB) . ' records.');
     }
 }
