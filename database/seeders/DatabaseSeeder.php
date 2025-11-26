@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ProvincesCitiesSeeder::class,
             SpesifikasiRABSeeder::class,
+            SummaryRabSeeder::class,
         ]);
 
         // Reset cached roles and permissions
