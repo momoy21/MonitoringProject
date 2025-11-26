@@ -89,9 +89,17 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="row">
-                            <div class="col-12 d-flex justify-content-end align-items-center">
-                                <button type="button" id="btnResetForm" class="btn btn-outline-secondary ms-2">
+                        <div class="row align-items-center">
+                            <!-- Kiri -->
+                            <div class="col d-flex justify-content-start">
+                                <button type="button" id="btnEditHeaderRAB" class="btn btn-primary ms-2" style="display: none;">
+                                    <i class="bx bx-edit me-1"></i> Edit
+                                </button>
+                            </div>
+
+                            <!-- Kanan -->
+                            <div class="col d-flex justify-content-end">
+                                <button type="button" id="btnResetForm" class="btn btn-outline-secondary me-2">
                                     <i class="bx bx-refresh me-1"></i> Reset
                                 </button>
                                 <button type="button" id="btnUpload" class="btn btn-primary btn-upload" disabled>
@@ -99,6 +107,8 @@
                                 </button>
                             </div>
                         </div>
+
+
                     </form>
                 </div>
             </div>
@@ -210,6 +220,46 @@
                     </button>
                     <button type="button" id="btnSaveHeaderRAB" class="btn btn-primary">
                         <i class="bx bx-check me-1"></i> Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Header RAB -->
+    <div class="modal fade" id="editHeaderRABModal" tabindex="-1" aria-labelledby="editHeaderRABModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editHeaderRABModalLabel">Edit Mulai & Lama Header RAB</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editHeaderRABForm">
+                        <input type="hidden" id="edit_project_id">
+
+                        <div class="mb-3">
+                            <label for="edit_mulai" class="form-label">Mulai <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_mulai" placeholder="dd/mm/yyyy" required>
+                            <small class="text-muted">Format: dd/mm/yyyy (contoh: 01/01/2025)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_lama" class="form-label">Lama <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="edit_lama" min="1" max="999" required>
+                                <span class="input-group-text">Bulan</span>
+                            </div>
+                            <small class="text-muted">Masukkan jumlah bulan (1-999)</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bx bx-x me-1"></i> Batal
+                    </button>
+                    <button type="button" id="btnSaveEditHeaderRAB" class="btn btn-primary">
+                        <i class="bx bx-check me-1"></i> Simpan Perubahan
                     </button>
                 </div>
             </div>

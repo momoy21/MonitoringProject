@@ -98,6 +98,9 @@ $(document).ready(function() {
         // Enable buttons when data is loaded
         $('#btnUpload').prop('disabled', false);
 
+        // Show edit button
+        showEditButton();
+
         // Auto-load Detail RAB if Header RAB exists
         setTimeout(() => {
             loadDetailRABData();
@@ -744,5 +747,113 @@ function displaySummaryDetailRABTable(data, idRAB) {
 
     $('#summaryDetailRABContainer').html(tableHtml);
 }
+
+// ==================== EDIT HEADER RAB ====================
+// Show/hide edit button when data loaded
+function showEditButton() {
+    // Show button if mulai and lama fields have values (means Header RAB exists)
+    const mulai = $('#mulai').val();
+    const lama = $('#lama').val();
+
+    if (mulai && lama) {
+        $('#btnEditHeaderRAB').show();
+    } else {
+        $('#btnEditHeaderRAB').hide();
+    }
+}
+
+// Handle Edit button click
+$('#btnEditHeaderRAB').click(function() {
+    if (!selectedProjectData) {
+        showAlert('Data proyek tidak ditemukan', 'error');
+        return;
+    }
+
+    // Fill edit form with current values
+    $('#edit_project_id').val(selectedProjectData.id);
+    $('#edit_mulai').val($('#mulai').val());
+    $('#edit_lama').val($('#lama').val());
+
+    // Show edit modal
+    $('#editHeaderRABModal').modal('show');
+});
+
+// Handle Save Edit button click
+$('#btnSaveEditHeaderRAB').click(function() {
+    const form = $('#editHeaderRABForm')[0];
+
+    // Simple validation
+    const mulai = $('#edit_mulai').val().trim();
+    const lama = $('#edit_lama').val().trim();
+
+    if (!mulai || !lama) {
+        showAlert('Mohon lengkapi semua field', 'error');
+        return;
+    }
+
+    // Validate date format (dd/mm/yyyy)
+    const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    if (!datePattern.test(mulai)) {
+        showAlert('Format tanggal harus dd/mm/yyyy (contoh: 01/01/2025)', 'error');
+        return;
+    }
+
+    // Validate lama is number between 1-999
+    const lamaNum = parseInt(lama);
+    if (isNaN(lamaNum) || lamaNum < 1 || lamaNum > 999) {
+        showAlert('Lama harus berupa angka antara 1-999', 'error');
+        return;
+    }
+
+    // Show loading
+    const btnSave = $(this);
+    const originalText = btnSave.html();
+    btnSave.prop('disabled', true).html('<i class="bx bx-loader bx-spin me-1"></i> Menyimpan...');
+
+    // Send update request
+    $.ajax({
+        url: window.routes.updateHeaderRAB,
+        method: 'PUT',
+        data: {
+            _token: window.csrfToken,
+            project_id: $('#edit_project_id').val(),
+            periode_rab: mulai,
+            lama: lamaNum
+        },
+        success: function(response) {
+            if (response.success) {
+                // Update form fields
+                $('#mulai').val(response.periode_rab);
+                $('#lama').val(response.lama);
+
+                // Update selectedProjectData
+                if (selectedProjectData) {
+                    selectedProjectData.mulai = response.periode_rab;
+                    selectedProjectData.lama = response.lama;
+                }
+
+                showAlert('Header RAB berhasil diperbarui', 'success');
+                $('#editHeaderRABModal').modal('hide');
+
+                // Reload data to reflect changes
+                setTimeout(() => {
+                    loadDetailRABData();
+                }, 500);
+            } else {
+                showAlert(response.message || 'Gagal memperbarui Header RAB', 'error');
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Terjadi kesalahan saat memperbarui Header RAB';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            showAlert(errorMsg, 'error');
+        },
+        complete: function() {
+            btnSave.prop('disabled', false).html(originalText);
+        }
+    });
+});
 
 });
