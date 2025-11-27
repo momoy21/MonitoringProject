@@ -507,8 +507,10 @@ $(document).ready(function() {
             tableHeaders += `<th class="fw-bold bulan-col text-center">Bulan ke ${index}<br><small class="text-muted">${escapeHtml(bulan)}</small></th>`;
         });
 
-        // Generate table rows
+        // Generate table rows and calculate totals per column
         let tableRows = '';
+        const columnTotals = new Array(bulanHeaders.length).fill(0);
+
         data.forEach((item, index) => {
             let row = `<tr><td>${index + 1}</td><td>${escapeHtml(item.keterangan)}</td>`;
 
@@ -517,6 +519,9 @@ $(document).ready(function() {
                 if (value) {
                     // add class nama 'nilai-col' so CSS can widen this column
                     row += `<td class="text-center nilai-col">${escapeHtml(value.formatted_nilai)}</td>`;
+                    // Add to column total (remove currency formatting and parse)
+                    const numericValue = parseFloat(value.nilai || 0);
+                    columnTotals[i] += numericValue;
                 } else {
                     row += `<td class="text-center nilai-col text-muted">-</td>`;
                 }
@@ -526,6 +531,24 @@ $(document).ready(function() {
             tableRows += row;
         });
 
+        // Generate total row
+        let totalRow = '<tr class="fw-bold"><td></td><td>TOTAL</td>';
+        for (let i = 0; i < bulanHeaders.length; i++) {
+            const total = columnTotals[i];
+            if (total > 0) {
+                const formattedTotal = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(total);
+                totalRow += `<td class="text-center nilai-col">${formattedTotal}</td>`;
+            } else {
+                totalRow += `<td class="text-center nilai-col text-muted">-</td>`;
+            }
+        }
+        totalRow += '</tr>';
+
         const tableHtml = `
             <div class="table-responsive rab-detail-table-container">
                 <table class="table table-striped table-hover rab-detail-table">
@@ -534,6 +557,7 @@ $(document).ready(function() {
                     </thead>
                     <tbody>
                         ${tableRows}
+                        ${totalRow}
                     </tbody>
                 </table>
             </div>

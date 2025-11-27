@@ -8,6 +8,18 @@
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-3">
+                    <!-- Search -->
+                    <div class="position-relative">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bx bx-search"></i></span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Cari nama atau email..." value="{{ request('search') }}" autocomplete="off">
+                            <div class="loading-spinner" style="display: none;">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Add Button -->
                     <a href="{{ route('register.create') }}" class="btn btn-primary">
                         <i class="bx bx-plus me-1"></i> Tambah PM
@@ -324,9 +336,8 @@
         }
 
         function navigateToPage(page) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('page', page);
-            window.location.href = url.toString();
+            const searchValue = document.getElementById('searchInput')?.value.trim() || '';
+            loadPMData(searchValue, page);
         }
 
         // Per page selector handler
@@ -336,6 +347,74 @@
             url.searchParams.delete('page'); // Reset to page 1
             window.location.href = url.toString();
         });
+
+        // Search functionality - AJAX search (searches all data without reload)
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        const loadingSpinner = document.querySelector('.loading-spinner');
+        const tableBody = document.querySelector('.register-table tbody');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const searchValue = this.value.trim();
+
+                // Show loading indicator
+                if (loadingSpinner) {
+                    loadingSpinner.style.display = 'flex';
+                }
+
+                // Debounce search - wait 300ms after user stops typing
+                searchTimeout = setTimeout(() => {
+                    loadPMData(searchValue, 1);
+                }, 300);
+            });
+        }
+
+        function loadPMData(search = '', page = 1) {
+            const url = new URL(window.location.href);
+            const params = new URLSearchParams(url.search);
+
+            if (search) {
+                params.set('search', search);
+            } else {
+                params.delete('search');
+            }
+            params.set('page', page);
+
+            $.ajax({
+                url: '{{ route("register.index") }}',
+                type: 'GET',
+                data: params.toString(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update table body
+                        tableBody.innerHTML = response.html;
+
+                        // Update pagination
+                        updatePaginationInfo(response.pagination);
+                        initPagination(response.pagination.current_page, response.pagination.last_page);
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error loading data:', xhr);
+                },
+                complete: function() {
+                    if (loadingSpinner) {
+                        loadingSpinner.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        function updatePaginationInfo(pagination) {
+            document.getElementById('entriesFrom').textContent = pagination.from;
+            document.getElementById('entriesTo').textContent = pagination.to;
+            document.getElementById('entriesTotal').textContent = pagination.total;
+        }
 
         function editPM(id) {
             window.location.href = `/register/${id}/edit`;

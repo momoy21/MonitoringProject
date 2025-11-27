@@ -20,6 +20,15 @@ class RegisterController extends Controller
             $query->where('name', 'Project Manager');
         });
 
+        // Search by name or email (searches all data in database)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+
         // Filter by bidang jasa if provided
         if ($request->filled('bidang_jasa')) {
             $bidangJasaId = $request->bidang_jasa;
@@ -35,6 +44,22 @@ class RegisterController extends Controller
 
         // Get all bidang jasa for filter dropdown
         $bidangJasas = BidangJasa::active()->orderBy('desc_bidjasa')->get();
+
+        // If AJAX request, return JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('register.partials.table-rows', compact('users'))->render(),
+                'pagination' => [
+                    'current_page' => $users->currentPage(),
+                    'last_page' => $users->lastPage(),
+                    'per_page' => $users->perPage(),
+                    'total' => $users->total(),
+                    'from' => $users->firstItem() ?? 0,
+                    'to' => $users->lastItem() ?? 0
+                ]
+            ]);
+        }
 
         return view('register.index', compact('users', 'bidangJasas'));
     }
