@@ -517,8 +517,17 @@ $(document).ready(function() {
             for (let i = 0; i < bulanHeaders.length; i++) {
                 const value = item.values[i];
                 if (value) {
-                    // add class nama 'nilai-col' so CSS can widen this column
-                    row += `<td class="text-center nilai-col">${escapeHtml(value.formatted_nilai)}</td>`;
+                    // Format nilai dengan Rp di kiri dan angka di kanan
+                    let nilaiFormatted = '<div class="text-center text-muted">-</div>';
+                    if (value.formatted_nilai && value.formatted_nilai !== '-') {
+                        const cleanValue = value.formatted_nilai.replace(/[^\d]/g, '');
+                        if (cleanValue && parseInt(cleanValue) > 0) {
+                            const numericValue = parseInt(cleanValue);
+                            const formattedNumber = new Intl.NumberFormat('id-ID').format(numericValue);
+                            nilaiFormatted = `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
+                        }
+                    }
+                    row += `<td class="nilai-col">${nilaiFormatted}</td>`;
                     // Add to column total (remove currency formatting and parse)
                     const numericValue = parseFloat(value.nilai || 0);
                     columnTotals[i] += numericValue;
@@ -536,13 +545,9 @@ $(document).ready(function() {
         for (let i = 0; i < bulanHeaders.length; i++) {
             const total = columnTotals[i];
             if (total > 0) {
-                const formattedTotal = new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                }).format(total);
-                totalRow += `<td class="text-center nilai-col">${formattedTotal}</td>`;
+                const formattedNumber = new Intl.NumberFormat('id-ID').format(total);
+                const totalFormatted = `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
+                totalRow += `<td class="nilai-col">${totalFormatted}</td>`;
             } else {
                 totalRow += `<td class="text-center nilai-col text-muted">-</td>`;
             }
@@ -738,8 +743,8 @@ function displaySummaryDetailRABTable(data, idRAB) {
     // Generate table headers: make No narrower and Keterangan closer; Nilai header left-aligned
     let tableHeaders = `
         <th class="fw-bold text-start" style="width: 5%;">No</th>
-        <th class="fw-bold text-start ket-kol" style="width: 75%;">Keterangan</th>
-        <th class="fw-bold text-end bulan-col" style="width: 20%;">Nilai</th>
+        <th class="fw-bold text-start ket-kol" style="width: 55%;">Keterangan</th>
+        <th class="fw-bold text-center bulan-col" style="width: 40%;">Nilai</th>
     `;
 
     // Generate table rows
@@ -747,11 +752,23 @@ function displaySummaryDetailRABTable(data, idRAB) {
     data.forEach((item, index) => {
         console.log('Item ' + (index + 1) + ':', item);
 
+        // Format nilai dengan Rp di kiri dan angka di kanan
+        let nilaiFormatted = '<div class="text-center text-muted">-</div>';
+        if (item.formatted_nilai && item.formatted_nilai !== '-') {
+            // Remove Rp and currency formatting, then reformat
+            const cleanValue = item.formatted_nilai.replace(/[^\d]/g, '');
+            if (cleanValue && parseInt(cleanValue) > 0) {
+                const numericValue = parseInt(cleanValue);
+                const formattedNumber = new Intl.NumberFormat('id-ID').format(numericValue);
+                nilaiFormatted = `<div class="d-flex justify-content-between align-items-center"><span>Rp</span><span>${formattedNumber}</span></div>`;
+            }
+        }
+
         tableRows += `
             <tr>
                 <td class="text-start">${index + 1}</td>
                 <td class="text-start ket-kol">${escapeHtml(item.keterangan || '-')}</td>
-                <td class="text-end nilai-col">${escapeHtml(item.formatted_nilai || '-')}</td>
+                <td class="nilai-col">${nilaiFormatted}</td>
             </tr>
         `;
     });
