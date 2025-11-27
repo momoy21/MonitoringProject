@@ -29,7 +29,9 @@ class RegisterController extends Controller
         // Order by newest first
         $query->orderBy('created_at', 'desc');
 
-        $users = $query->paginate(10)->appends($request->except('page'));
+        // Get per_page from request, default 10
+        $perPage = $request->get('per_page', 10);
+        $users = $query->paginate($perPage)->appends($request->except('page'));
 
         // Get all bidang jasa for filter dropdown
         $bidangJasas = BidangJasa::active()->orderBy('desc_bidjasa')->get();

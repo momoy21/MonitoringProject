@@ -16,10 +16,23 @@
             </div>
         </div>
 
-        <!-- Filter Section -->
+        <!-- Per Page & Filter Section -->
         <div class="row mt-3 align-items-center">
             <div class="col-md-6">
                 <div class="d-flex align-items-center gap-2">
+                    <label for="perPageSelect" class="form-label mb-0">Tampilkan:</label>
+                    <select id="perPageSelect" class="form-select per-page-selector">
+                        <option value="5" {{ request('per_page') == 5 ? 'selected' : '' }}>5</option>
+                        <option value="10" {{ request('per_page') == 10 || !request('per_page') ? 'selected' : '' }}>10</option>
+                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                    </select>
+                    <span>data per halaman</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2 justify-content-md-end">
                     <label for="bidangJasaFilter" class="form-label mb-0">Filter Bidang Jasa:</label>
                     <select id="bidangJasaFilter" class="form-select per-page-selector">
                         <option value="">Semua Bidang Jasa</option>
@@ -104,12 +117,44 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
-        @if($users->hasPages())
-        <div class="card-footer">
-            {{ $users->links() }}
+    <!-- Pagination Controls - Responsive -->
+    <div class="pagination-controls d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mt-3 gap-2" id="paginationControls">
+        <!-- Left: Showing entries info -->
+        <div class="pagination-info">
+            <span class="text-muted medium">
+                Menampilkan <span id="entriesFrom">{{ $users->firstItem() ?? 0 }}</span> hingga <span id="entriesTo">{{ $users->lastItem() ?? 0 }}</span> dari <span id="entriesTotal">{{ $users->total() }}</span> data
+            </span>
         </div>
-        @endif
+
+        <!-- Right: Navigation buttons -->
+        <div class="d-flex align-items-center gap-1 flex-wrap justify-content-center justify-content-md-end">
+            <!-- First Page - Hidden on small screens -->
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none d-sm-inline-block" id="firstPageBtn" title="Halaman Pertama">
+                <i class="bx bx-chevrons-left"></i>
+            </button>
+
+            <!-- Previous Page -->
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="prevPageBtn" title="Halaman Sebelumnya">
+                <i class="bx bx-chevron-left"></i>
+            </button>
+
+            <!-- Page Numbers Container -->
+            <div class="d-flex align-items-center gap-1 mx-1 mx-md-2" id="pageNumbersContainer">
+                <!-- Page numbers will be generated here -->
+            </div>
+
+            <!-- Next Page -->
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="nextPageBtn" title="Halaman Selanjutnya">
+                <i class="bx bx-chevron-right"></i>
+            </button>
+
+            <!-- Last Page - Hidden on small screens -->
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none d-sm-inline-block" id="lastPageBtn" title="Halaman Terakhir">
+                <i class="bx bx-chevrons-right"></i>
+            </button>
+        </div>
     </div>
 
     <!-- View Detail Modal -->
@@ -157,6 +202,141 @@
 
     @push('scripts')
     <script>
+        // Pagination Data from Laravel
+        const paginationData = {
+            current_page: {{ $users->currentPage() }},
+            last_page: {{ $users->lastPage() }},
+            per_page: {{ $users->perPage() }},
+            total: {{ $users->total() }},
+            from: {{ $users->firstItem() ?? 0 }},
+            to: {{ $users->lastItem() ?? 0 }}
+        };
+
+        // Initialize pagination on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initPagination();
+        });
+
+        function initPagination() {
+            const { current_page, last_page } = paginationData;
+
+            // Generate page numbers
+            generatePageNumbers(current_page, last_page);
+
+            // Setup button states
+            setupPaginationButtons(current_page, last_page);
+        }
+
+        function generatePageNumbers(currentPage, lastPage) {
+            const container = document.getElementById('pageNumbersContainer');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            // Calculate range
+            let startPage, endPage;
+            const maxVisible = 5;
+
+            if (lastPage <= maxVisible) {
+                startPage = 1;
+                endPage = lastPage;
+            } else {
+                if (currentPage <= 3) {
+                    startPage = 1;
+                    endPage = maxVisible;
+                } else if (currentPage >= lastPage - 2) {
+                    startPage = lastPage - maxVisible + 1;
+                    endPage = lastPage;
+                } else {
+                    startPage = currentPage - 2;
+                    endPage = currentPage + 2;
+                }
+            }
+
+            // Add first page and ellipsis if needed
+            if (startPage > 1) {
+                addPageButton(container, 1, currentPage);
+                if (startPage > 2) {
+                    addEllipsis(container);
+                }
+            }
+
+            // Add page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                addPageButton(container, i, currentPage);
+            }
+
+            // Add ellipsis and last page if needed
+            if (endPage < lastPage) {
+                if (endPage < lastPage - 1) {
+                    addEllipsis(container);
+                }
+                addPageButton(container, lastPage, currentPage);
+            }
+        }
+
+        function addPageButton(container, pageNum, currentPage) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `btn btn-sm ${pageNum === currentPage ? 'btn-primary' : 'btn-outline-secondary'}`;
+            btn.textContent = pageNum;
+            btn.onclick = () => navigateToPage(pageNum);
+            if (pageNum === currentPage) {
+                btn.disabled = true;
+            }
+            container.appendChild(btn);
+        }
+
+        function addEllipsis(container) {
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'px-2';
+            ellipsis.textContent = '...';
+            container.appendChild(ellipsis);
+        }
+
+        function setupPaginationButtons(currentPage, lastPage) {
+            const firstBtn = document.getElementById('firstPageBtn');
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            const lastBtn = document.getElementById('lastPageBtn');
+
+            // First and Previous buttons
+            if (currentPage <= 1) {
+                firstBtn.disabled = true;
+                prevBtn.disabled = true;
+            } else {
+                firstBtn.disabled = false;
+                prevBtn.disabled = false;
+                firstBtn.onclick = () => navigateToPage(1);
+                prevBtn.onclick = () => navigateToPage(currentPage - 1);
+            }
+
+            // Next and Last buttons
+            if (currentPage >= lastPage) {
+                nextBtn.disabled = true;
+                lastBtn.disabled = true;
+            } else {
+                nextBtn.disabled = false;
+                lastBtn.disabled = false;
+                nextBtn.onclick = () => navigateToPage(currentPage + 1);
+                lastBtn.onclick = () => navigateToPage(lastPage);
+            }
+        }
+
+        function navigateToPage(page) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', page);
+            window.location.href = url.toString();
+        }
+
+        // Per page selector handler
+        document.getElementById('perPageSelect')?.addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', this.value);
+            url.searchParams.delete('page'); // Reset to page 1
+            window.location.href = url.toString();
+        });
+
         function editPM(id) {
             window.location.href = `/register/${id}/edit`;
         }
