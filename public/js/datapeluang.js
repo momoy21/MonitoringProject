@@ -678,12 +678,8 @@ class DataPeluangManager {
                             ${this.escapeHtml(item.konsumen?.konsumen || '-')}
                         </div>
                     </td>
-                    <td>
-                        <small class="currency-display">${biayaFormatted}</small>
-                    </td>
-                    <td>
-                        <small class="currency-display">${paguFormatted}</small>
-                    </td>
+                    <td class="currency-display">${biayaFormatted}</td>
+                    <td class="currency-display">${paguFormatted}</td>
                     <td>
                         <div class="date-container">
                             <div class="date-row">
@@ -963,10 +959,11 @@ class DataPeluangManager {
     }
 
     formatCurrency(value) {
-        if (!value) return '-';
+        if (!value) return '<div class="text-center text-muted">-</div>';
         const number = typeof value === 'string' ? parseFloat(value.replace(/[^\d]/g, '')) : value;
-        if (isNaN(number) || number === 0) return '-';
-        return 'Rp ' + new Intl.NumberFormat('id-ID').format(number);
+        if (isNaN(number) || number === 0) return '<div class="text-center text-muted">-</div>';
+        const formattedNumber = number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
     }
 
     formatCurrencyInput(value) {

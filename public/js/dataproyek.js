@@ -1081,7 +1081,7 @@ class DataProyekManager {
     // checkCostCenterExists() method removed - validation now handled on server side only
 
     formatCurrency(value) {
-        if (!value) return '-';
+        if (!value) return '<div class="text-center text-muted">-</div>';
         // Handle both string and numeric values
         let number;
         if (typeof value === 'string') {
@@ -1091,9 +1091,10 @@ class DataProyekManager {
             number = parseFloat(value);
         }
 
-        if (isNaN(number) || number === 0) return '-';
-        // Use thousands separator = '.', decimal separator = ','
-        return 'Rp ' + number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        if (isNaN(number) || number === 0) return '<div class="text-center text-muted">-</div>';
+        // Format with Rp on left and value on right
+        const formattedNumber = number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
     }
 
     formatCurrencyInput(value) {

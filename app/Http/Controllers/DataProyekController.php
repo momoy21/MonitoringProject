@@ -63,7 +63,12 @@ class DataProyekController extends Controller
         // Format each project for display - NO GROUPING, NO OVERRIDE
         foreach ($projects as $project) {
             // Format nilai proyek
-            $project->nilai_proyek_formatted = $project->nilai_proyek ? 'Rp ' . number_format((float)$project->nilai_proyek, 0, ',', '.') : '-';
+            if ($project->nilai_proyek && $project->nilai_proyek > 0) {
+                $formattedNumber = number_format((float)$project->nilai_proyek, 0, ',', '.');
+                $project->nilai_proyek_formatted = '<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>' . $formattedNumber . '</span></div>';
+            } else {
+                $project->nilai_proyek_formatted = '<div class="text-center text-muted">-</div>';
+            }
 
             // Add status attributes
             $project->status_text = $this->getStatusText($project->status);
@@ -89,7 +94,9 @@ class DataProyekController extends Controller
                     'status_badge' => $this->getStatusBadge($project->status),
                     'konsumen' => $project->konsumen,
                     'bidangJasa' => $project->bidangJasa,
-                    'nilai_proyek_formatted' => $project->nilai_proyek ? 'Rp ' . number_format((float)$project->nilai_proyek, 0, ',', '.') : '-'
+                    'nilai_proyek_formatted' => $project->nilai_proyek && $project->nilai_proyek > 0
+                        ? '<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>' . number_format((float)$project->nilai_proyek, 0, ',', '.') . '</span></div>'
+                        : '<div class="text-center text-muted">-</div>'
                 ];
             });
 

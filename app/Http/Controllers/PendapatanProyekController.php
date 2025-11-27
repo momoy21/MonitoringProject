@@ -35,6 +35,7 @@ class PendapatanProyekController extends Controller
                 'ba.norut',
                 'ba.id_project',
                 'ba.no_ba',
+                'ba.desc',
                 'ba.periode_mulai',
                 'ba.periode_akhir',
                 'ba.nilai_ba',
@@ -77,21 +78,23 @@ class PendapatanProyekController extends Controller
             $namaProyek = $ba->namaproject ?? '-';
             $konsumenNama = $ba->konsumen ?? '-';
             $nilaiProyek = $ba->nilai_proyek ?? 0;
+            $keteranganBA = $ba->desc ?? '-';
 
             // Format periode Proyek dari History Proyek (start_kontrak - finish_kontrak)
             $periodeProyekMulai = $ba->start_kontrak ? \Carbon\Carbon::parse($ba->start_kontrak)->format('d/m/Y') : '-';
             $periodeProyekAkhir = $ba->finish_kontrak ? \Carbon\Carbon::parse($ba->finish_kontrak)->format('d/m/Y') : '-';
             $periodeProyek = "{$periodeProyekMulai} - {$periodeProyekAkhir}";
 
-            // Format periode BA (untuk data detail, bukan dropdown)
+            // Format periode BA (untuk dropdown)
             $periodeBaMulai = $ba->periode_mulai ? \Carbon\Carbon::parse($ba->periode_mulai)->format('d/m/Y') : '-';
             $periodeBAkhir = $ba->periode_akhir ? \Carbon\Carbon::parse($ba->periode_akhir)->format('d/m/Y') : '-';
+            $periodeBA = ($periodeBaMulai !== '-' && $periodeBAkhir !== '-') ? "{$periodeBaMulai} - {$periodeBAkhir}" : '-';
 
-            // Format nilai untuk dropdown text
-            $nilaiProyekFormatted = $nilaiProyek ? 'Rp ' . number_format($nilaiProyek, 0, ',', '.') : 'Rp 0';
+            // Format nilai BA untuk dropdown text
+            $nilaiBAFormatted = $ba->nilai_ba ? 'Rp ' . number_format($ba->nilai_ba, 0, ',', '.') : 'Rp 0';
 
-            // Dropdown text: Cost Center - Nama Proyek - Nilai Proyek - Periode Proyek (dari history_proyek)
-            $dropdownText = "{$costCenter} - {$namaProyek} - {$nilaiProyekFormatted} - {$periodeProyek}";
+            // Dropdown text: Cost Center - Keterangan BA - Periode BA - Nilai BA
+            $dropdownText = "{$costCenter} - {$keteranganBA} - {$periodeBA} - {$nilaiBAFormatted}";
 
             // Calculate mulai, lama, akhir from Header RAB
             $mulai = $ba->periode_rab ? \Carbon\Carbon::parse($ba->periode_rab)->format('d/m/Y') : '-';

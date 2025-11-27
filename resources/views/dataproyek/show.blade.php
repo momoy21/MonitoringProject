@@ -124,7 +124,7 @@
                         <div class="fw-semibold">
                             @if($mainProject->nilai_proyek)
                                 <span class="text-success">
-                                    <small class="currency-display">{{ $mainProject->nilai_proyek_formatted }}</small>
+                                    <small class="currency-display">{!! $mainProject->nilai_proyek_formatted !!}</small>
                                 </span>
                             @else
                                 <span class="text-muted">-</span>
@@ -186,7 +186,7 @@
                                     <td ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" style="cursor: pointer;" title="Double-click untuk edit">{{ $project->no_kontrak ?: '-' }}</td>
                                     <td class="text-start" ondblclick="editHistoryProyek('{{ $project->id_project }}', {{ $project->norut }})" style="cursor: pointer;" title="Double-click untuk edit">
                                         @if($project->nilai_proyek)
-                                            <small class="currency-display">{{ $project->nilai_proyek_formatted }}</small>
+                                            <small class="currency-display">{!! $project->nilai_proyek_formatted !!}</small>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif

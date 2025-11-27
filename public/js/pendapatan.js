@@ -83,7 +83,7 @@ $(document).ready(function() {
         $('#info_no_kontrak').val(data.no_kontrak || '-');
 
         // Baris 2: Nilai Proyek, Tanggal Kontrak, Akhir Kontrak
-        const nilaiProyek = data.nilai_proyek ? formatCurrencyNoDecimal(data.nilai_proyek) : '-';
+        const nilaiProyek = data.nilai_proyek ? formatCurrencyNoDecimalText(data.nilai_proyek) : '-';
         $('#info_nilai_proyek').val(nilaiProyek);
         $('#info_tanggal_kontrak').val(data.start_kontrak || '-');
         $('#info_akhir_kontrak').val(data.finish_kontrak || '-');
@@ -98,7 +98,7 @@ $(document).ready(function() {
             `${data.periode_mulai} - ${data.periode_akhir}` : '-';
         $('#info_periode_ba').val(periodBA);
 
-        const nilaiBA = data.nilai_ba ? formatCurrencyNoDecimal(data.nilai_ba) : '-';
+        const nilaiBA = data.nilai_ba ? formatCurrencyNoDecimalText(data.nilai_ba) : '-';
         $('#info_nilai_ba').val(nilaiBA);
     }
 
@@ -162,7 +162,7 @@ $(document).ready(function() {
                             <th>Tanggal</th>
                             <th>No. Dokumen</th>
                             <th>Periode Pendapatan</th>
-                            <th>Nilai Pendapatan</th>
+                            <th class="text-center">Nilai Pendapatan</th>
                             <th class="text-center">Dokumen</th>
                             ${!isReadOnly ? '<th class="text-center">Aksi</th>' : ''}
                         </tr>
@@ -669,17 +669,34 @@ $(document).ready(function() {
 
     // Helper functions
     function formatCurrency(amount) {
-        return 'Rp ' + parseFloat(amount).toLocaleString('id-ID', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+        if (!amount) return '<div class="text-center text-muted">-</div>';
+        const number = parseFloat(amount);
+        if (isNaN(number) || number === 0) return '<div class="text-center text-muted">-</div>';
+        const formattedNumber = number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
     }
 
     function formatCurrencyNoDecimal(amount) {
-        return 'Rp ' + parseFloat(amount).toLocaleString('id-ID', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
+        if (!amount) return '<div class="text-center text-muted">-</div>';
+        const number = parseFloat(amount);
+        if (isNaN(number) || number === 0) return '<div class="text-center text-muted">-</div>';
+        const formattedNumber = number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
+    }
+
+    // Text-only format for input fields
+    function formatCurrencyText(amount) {
+        if (!amount) return '-';
+        const number = parseFloat(amount);
+        if (isNaN(number) || number === 0) return '-';
+        return 'Rp ' + number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function formatCurrencyNoDecimalText(amount) {
+        if (!amount) return '-';
+        const number = parseFloat(amount);
+        if (isNaN(number) || number === 0) return '-';
+        return 'Rp ' + number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 
     function formatNumberNoDecimal(num) {

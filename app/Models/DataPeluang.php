@@ -113,11 +113,19 @@ class DataPeluang extends Model
 
     public function getBiayaPeluangFormattedAttribute()
     {
-        return $this->biaya_peluang ? 'Rp ' . number_format((float)$this->biaya_peluang, 0, ',', '.') : '-';
+        if (!$this->biaya_peluang || $this->biaya_peluang == 0) {
+            return '<div class="text-center text-muted">-</div>';
+        }
+        $formattedNumber = number_format((float)$this->biaya_peluang, 0, ',', '.');
+        return '<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>' . $formattedNumber . '</span></div>';
     }
 
     public function getPaguPeluangFormattedAttribute()
     {
-        return $this->pagu_peluang ? 'Rp ' . number_format((float)$this->pagu_peluang, 0, ',', '.') : '-';
+        if (!$this->pagu_peluang || $this->pagu_peluang == 0) {
+            return '<div class="text-center text-muted">-</div>';
+        }
+        $formattedNumber = number_format((float)$this->pagu_peluang, 0, ',', '.');
+        return '<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>' . $formattedNumber . '</span></div>';
     }
 }

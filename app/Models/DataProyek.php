@@ -138,16 +138,17 @@ class DataProyek extends Model
     public function getNilaiProyekFormattedAttribute()
     {
         if (!$this->nilai_proyek || $this->nilai_proyek == 0 || $this->nilai_proyek === '') {
-            return '-';
+            return '<div class="text-center text-muted">-</div>';
         }
 
         // Convert to float for formatting
         $nilai = (float) $this->nilai_proyek;
 
         if ($nilai <= 0) {
-            return '-';
+            return '<div class="text-center text-muted">-</div>';
         }
 
-        return 'Rp ' . number_format($nilai, 0, ',', '.');
+        $formattedNumber = number_format($nilai, 0, ',', '.');
+        return '<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>' . $formattedNumber . '</span></div>';
     }
 }

@@ -81,10 +81,10 @@
                             </div>
                         </td>
                         <td>
-                            <small class="currency-display">{{ $item->biaya_peluang_formatted }}</small>
+                            <small class="currency-display">{!! $item->biaya_peluang_formatted !!}</small>
                         </td>
                         <td>
-                            <small class="currency-display">{{ $item->pagu_peluang_formatted }}</small>
+                            <small class="currency-display">{!! $item->pagu_peluang_formatted !!}</small>
                         </td>
                         <td>
                             <div class="date-container">

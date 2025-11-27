@@ -175,7 +175,7 @@ $(document).ready(function() {
                         </div>
                     </td>
                     <td>${periodeBA}</td>
-                    <td class="text-start">${nilaiBA}</td>
+                    <td class="text-start"><small class="currency-display">${nilaiBA}</small></td>
                     <td onclick="event.stopPropagation();">
                         ${isReadOnly ? statusBadge : getStatusDropdown(ba)}
                     </td>
@@ -778,10 +778,11 @@ $(document).ready(function() {
     };
 
     function formatCurrency(amount) {
-        return 'Rp ' + parseFloat(amount).toLocaleString('id-ID', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+        if (!amount) return '<div class="text-center text-muted">-</div>';
+        const number = parseFloat(amount);
+        if (isNaN(number) || number === 0) return '<div class="text-center text-muted">-</div>';
+        const formattedNumber = number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
     }
 
     function formatNumber(num) {

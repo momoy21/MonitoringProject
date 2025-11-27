@@ -67,7 +67,7 @@ $(document).ready(function() {
         // Format and fill nilai proyek (from History Project via join)
         let nilaiProyek = '';
         if (data.nilai_proyek) {
-            nilaiProyek = 'Rp ' + parseFloat(data.nilai_proyek).toLocaleString('id-ID');
+            nilaiProyek = 'Rp ' + parseFloat(data.nilai_proyek).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         }
         $('#nilai_proyek').val(nilaiProyek);
 
@@ -207,13 +207,11 @@ $(document).ready(function() {
 
     // Format currency helper function
     function formatCurrency(amount) {
-        if (!amount) return '';
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount);
+        if (!amount) return '<div class="text-center text-muted">-</div>';
+        const number = parseFloat(amount);
+        if (isNaN(number) || number === 0) return '<div class="text-center text-muted">-</div>';
+        const formattedNumber = number.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `<div class="d-flex justify-content-between align-items-center" style="gap: 0.5rem;"><span>Rp</span><span>${formattedNumber}</span></div>`;
     }
 
     // Show alert function

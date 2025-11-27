@@ -95,7 +95,7 @@
                                     <td ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">{{ $project->no_kontrak ?: '-' }}</td>
                                     <td class="text-start" ondblclick="editDataProyek('{{ $project->id_project }}')" style="cursor: pointer;" title="Double-click untuk edit">
                                         @if($project->nilai_proyek)
-                                            <small class="currency-display">{{ $project->nilai_proyek_formatted }}</small>
+                                            <small class="currency-display">{!! $project->nilai_proyek_formatted !!}</small>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
