@@ -23,23 +23,17 @@ class PendapatanProyekController extends Controller
     }
 
     /**
-     * Get approved Berita Acara list for pendapatan dropdown
+     * Get Header Progress Proyek list that has at least one approved Berita Acara
      */
     public function getApprovedBeritaAcara(Request $request)
     {
         $search = $request->get('search', '');
 
-        // Get only approved BA (status = '03') with manual joins
-        $beritaAcaras = DB::table('berita_acara_project as ba')
+        // Get Header Progress Proyek that has at least one approved BA (status = '03')
+        $headerProgressList = DB::table('header_progress_proyek as hpp')
             ->select(
-                'ba.norut',
-                'ba.id_project',
-                'ba.no_ba',
-                'ba.periode_mulai',
-                'ba.periode_akhir',
-                'ba.nilai_ba',
-                'ba.status',
-                'ba.created_at',
+                'hpp.norut',
+                'hpp.id_project',
                 'hp.namaproject',
                 'hp.cost_center',
                 'hp.no_kontrak',
@@ -51,41 +45,42 @@ class PendapatanProyekController extends Controller
                 'hr.lama'
             )
             ->join('history_proyek as hp', function($join) {
-                $join->on('ba.id_project', '=', 'hp.id_project')
-                     ->on('ba.norut', '=', 'hp.norut');
+                $join->on('hpp.id_project', '=', 'hp.id_project')
+                     ->on('hpp.norut', '=', 'hp.norut');
             })
             ->leftJoin('konsumen as k', 'hp.id_konsumen', '=', 'k.id_konsumen')
             ->leftJoin('header_rab as hr', function($join) {
                 $join->on('hp.id_project', '=', 'hr.id_project')
                      ->on('hp.norut', '=', 'hr.norut');
             })
-            ->where('ba.status', '03')
+            ->whereExists(function($query) {
+                $query->select(DB::raw(1))
+                      ->from('berita_acara_project as ba')
+                      ->whereColumn('ba.id_project', 'hpp.id_project')
+                      ->whereColumn('ba.norut', 'hpp.norut')
+                      ->where('ba.status', '03'); // At least one approved BA
+            })
             ->where(function($query) use ($search) {
                 if ($search) {
-                    $query->where('ba.no_ba', 'LIKE', "%{$search}%")
-                          ->orWhere('ba.id_project', 'LIKE', "%{$search}%")
+                    $query->where('hpp.id_project', 'LIKE', "%{$search}%")
                           ->orWhere('hp.namaproject', 'LIKE', "%{$search}%")
                           ->orWhere('hp.cost_center', 'LIKE', "%{$search}%");
                 }
             })
-            ->orderBy('ba.created_at', 'desc')
+            ->orderBy('hpp.created_at', 'desc')
             ->limit(50)
             ->get();
 
-        $results = $beritaAcaras->map(function($ba) {
-            $costCenter = $ba->cost_center ?? '-';
-            $namaProyek = $ba->namaproject ?? '-';
-            $konsumenNama = $ba->konsumen ?? '-';
-            $nilaiProyek = $ba->nilai_proyek ?? 0;
+        $results = $headerProgressList->map(function($hpp) {
+            $costCenter = $hpp->cost_center ?? '-';
+            $namaProyek = $hpp->namaproject ?? '-';
+            $konsumenNama = $hpp->konsumen ?? '-';
+            $nilaiProyek = $hpp->nilai_proyek ?? 0;
 
             // Format periode Proyek dari History Proyek (start_kontrak - finish_kontrak)
-            $periodeProyekMulai = $ba->start_kontrak ? \Carbon\Carbon::parse($ba->start_kontrak)->format('d/m/Y') : '-';
-            $periodeProyekAkhir = $ba->finish_kontrak ? \Carbon\Carbon::parse($ba->finish_kontrak)->format('d/m/Y') : '-';
+            $periodeProyekMulai = $hpp->start_kontrak ? \Carbon\Carbon::parse($hpp->start_kontrak)->format('d/m/Y') : '-';
+            $periodeProyekAkhir = $hpp->finish_kontrak ? \Carbon\Carbon::parse($hpp->finish_kontrak)->format('d/m/Y') : '-';
             $periodeProyek = "{$periodeProyekMulai} - {$periodeProyekAkhir}";
-
-            // Format periode BA (untuk data detail, bukan dropdown)
-            $periodeBaMulai = $ba->periode_mulai ? \Carbon\Carbon::parse($ba->periode_mulai)->format('d/m/Y') : '-';
-            $periodeBAkhir = $ba->periode_akhir ? \Carbon\Carbon::parse($ba->periode_akhir)->format('d/m/Y') : '-';
 
             // Format nilai untuk dropdown text
             $nilaiProyekFormatted = $nilaiProyek ? 'Rp ' . number_format($nilaiProyek, 0, ',', '.') : 'Rp 0';
@@ -94,47 +89,41 @@ class PendapatanProyekController extends Controller
             $dropdownText = "{$costCenter} - {$namaProyek} - {$nilaiProyekFormatted} - {$periodeProyek}";
 
             // Calculate mulai, lama, akhir from Header RAB
-            $mulai = $ba->periode_rab ? \Carbon\Carbon::parse($ba->periode_rab)->format('d/m/Y') : '-';
-            $lama = $ba->lama ?? '-';
+            $mulai = $hpp->periode_rab ? \Carbon\Carbon::parse($hpp->periode_rab)->format('d/m/Y') : '-';
+            $lama = $hpp->lama ?? '-';
             $akhir = '-';
-            if ($ba->periode_rab && $ba->lama) {
-                $akhir = \Carbon\Carbon::parse($ba->periode_rab)
-                    ->addMonths($ba->lama - 1)
+            if ($hpp->periode_rab && $hpp->lama) {
+                $akhir = \Carbon\Carbon::parse($hpp->periode_rab)
+                    ->addMonths($hpp->lama - 1)
                     ->endOfMonth()
                     ->format('d/m/Y');
             }
 
             return [
-                'id' => $ba->no_ba . '|' . $ba->id_project . '|' . $ba->norut,
+                'id' => $hpp->id_project . '|' . $hpp->norut,
                 'text' => $dropdownText,
-                'no_ba' => $ba->no_ba,
-                'id_project' => $ba->id_project,
-                'norut' => $ba->norut,
+                'id_project' => $hpp->id_project,
+                'norut' => $hpp->norut,
 
                 // Data dari History Proyek
                 'cost_center' => $costCenter,
                 'namaproject' => $namaProyek,
                 'konsumen_nama' => $konsumenNama,
-                'no_kontrak' => $ba->no_kontrak ?? '-',
+                'no_kontrak' => $hpp->no_kontrak ?? '-',
                 'nilai_proyek' => $nilaiProyek,
-                'start_kontrak' => $ba->start_kontrak ?
-                    \Carbon\Carbon::parse($ba->start_kontrak)->format('d/m/Y') : '-',
-                'finish_kontrak' => $ba->finish_kontrak ?
-                    \Carbon\Carbon::parse($ba->finish_kontrak)->format('d/m/Y') : '-',
+                'start_kontrak' => $hpp->start_kontrak ?
+                    \Carbon\Carbon::parse($hpp->start_kontrak)->format('d/m/Y') : '-',
+                'finish_kontrak' => $hpp->finish_kontrak ?
+                    \Carbon\Carbon::parse($hpp->finish_kontrak)->format('d/m/Y') : '-',
 
                 // Data dari Header RAB
                 'mulai' => $mulai,
                 'lama' => $lama,
-                'akhir' => $akhir,
-
-                // Data dari Berita Acara
-                'periode_mulai' => $periodeBaMulai,
-                'periode_akhir' => $periodeBAkhir,
-                'nilai_ba' => $ba->nilai_ba
+                'akhir' => $akhir
             ];
         });
 
-        Log::info('Berita Acara data fetched', [
+        Log::info('Header Progress Proyek data fetched', [
             'count' => $results->count(),
             'search' => $search
         ]);
@@ -149,21 +138,19 @@ class PendapatanProyekController extends Controller
     {
         $idProject = $request->get('id_project');
         $norut = $request->get('norut');
-        $noBA = $request->get('no_ba');
 
-        if (!$idProject || !$norut || !$noBA) {
+        if (!$idProject || !$norut) {
             return response()->json([
                 'success' => false,
-                'message' => 'ID Project, Norut, dan No BA harus diisi'
+                'message' => 'ID Project dan Norut harus diisi'
             ], 400);
         }
 
         DB::enableQueryLog();
 
-        // Get pendapatan data, ordered by created_at DESC (newest first)
+        // Get all pendapatan data for this header progress, ordered by created_at DESC (newest first)
         $pendapatans = PendapatanProyek::where('id_project', $idProject)
             ->where('norut', $norut)
-            ->where('no_ba', $noBA)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -179,7 +166,6 @@ class PendapatanProyekController extends Controller
         Log::info('Pendapatan query result', [
             'id_project' => $idProject,
             'norut' => $norut,
-            'no_ba' => $noBA,
             'query' => $queries,
             'count' => $pendapatans->count()
         ]);
@@ -187,6 +173,48 @@ class PendapatanProyekController extends Controller
         return response()->json([
             'success' => true,
             'data' => $pendapatans
+        ]);
+    }
+
+    /**
+     * Get approved Berita Acara list for specific Header Progress Proyek
+     */
+    public function getApprovedBAByHeader(Request $request)
+    {
+        $idProject = $request->get('id_project');
+        $norut = $request->get('norut');
+
+        if (!$idProject || !$norut) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ID Project dan Norut harus diisi'
+            ], 400);
+        }
+
+        // Get all approved BA for this header progress
+        $beritaAcaras = DB::table('berita_acara_project')
+            ->where('id_project', $idProject)
+            ->where('norut', $norut)
+            ->where('status', '03') // Approved only
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $results = $beritaAcaras->map(function($ba) {
+            $periodeBaMulai = $ba->periode_mulai ? \Carbon\Carbon::parse($ba->periode_mulai)->format('d/m/Y') : '-';
+            $periodeBAkhir = $ba->periode_akhir ? \Carbon\Carbon::parse($ba->periode_akhir)->format('d/m/Y') : '-';
+
+            return [
+                'no_ba' => $ba->no_ba,
+                'desc' => $ba->desc ?? '-',
+                'periode_mulai' => $periodeBaMulai,
+                'periode_akhir' => $periodeBAkhir,
+                'nilai_ba' => $ba->nilai_ba
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $results
         ]);
     }
 
@@ -207,7 +235,7 @@ class PendapatanProyekController extends Controller
         $request->validate([
             'id_project' => 'required|string|max:10',
             'norut' => 'required|integer',
-            'no_ba' => 'required|string|max:9',
+            'no_ba' => 'nullable|string|max:9',
             'tanggal' => 'required|date',
             'no_dokumen' => 'required|string|max:100',
             'periode_mulai' => 'nullable|date',
@@ -219,19 +247,23 @@ class PendapatanProyekController extends Controller
         try {
             DB::beginTransaction();
 
-            // Verify BA exists and is approved
-            $beritaAcara = BeritaAcaraProject::where('id_project', $request->id_project)
+            // Verify Header Progress exists and has at least one approved BA
+            $approvedBA = DB::table('berita_acara_project')
+                ->where('id_project', $request->id_project)
                 ->where('norut', $request->norut)
-                ->where('no_ba', $request->no_ba)
                 ->where('status', '03')
+                ->orderBy('created_at', 'asc')
                 ->first();
 
-            if (!$beritaAcara) {
+            if (!$approvedBA) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Berita Acara tidak ditemukan atau belum disetujui'
+                    'message' => 'Tidak ada Berita Acara yang disetujui untuk proyek ini'
                 ], 404);
             }
+
+            // Use provided no_ba or use first approved BA
+            $noBA = $request->no_ba ?? $approvedBA->no_ba;
 
             // Handle file upload
             $filePath = null;
@@ -245,7 +277,7 @@ class PendapatanProyekController extends Controller
             $pendapatan = PendapatanProyek::create([
                 'norut' => $request->norut,
                 'id_project' => $request->id_project,
-                'no_ba' => $request->no_ba,
+                'no_ba' => $noBA,
                 'tanggal' => $request->tanggal,
                 'no_dokumen' => $request->no_dokumen,
                 'periode_mulai' => $request->periode_mulai,
@@ -259,7 +291,7 @@ class PendapatanProyekController extends Controller
             Log::info('Pendapatan created', [
                 'id_project' => $request->id_project,
                 'norut' => $request->norut,
-                'no_ba' => $request->no_ba,
+                'no_ba' => $noBA,
                 'no_pendapatan' => $pendapatan->no_pendapatan
             ]);
 
@@ -296,7 +328,7 @@ class PendapatanProyekController extends Controller
         $request->validate([
             'id_project' => 'required|string|max:10',
             'norut' => 'required|integer',
-            'no_ba' => 'required|string|max:9',
+            'no_ba' => 'nullable|string|max:9',
             'no_dokumen' => 'required|string|max:100',
             'periode_mulai' => 'nullable|date',
             'periode_akhir' => 'nullable|date|after_or_equal:periode_mulai',
@@ -307,11 +339,10 @@ class PendapatanProyekController extends Controller
         try {
             DB::beginTransaction();
 
-            // Find by composite key
+            // Find by composite key (no_ba can be from existing record)
             $pendapatan = PendapatanProyek::where('norut', $request->norut)
                 ->where('id_project', $request->id_project)
                 ->where('no_pendapatan', $noPendapatan)
-                ->where('no_ba', $request->no_ba)
                 ->firstOrFail();
 
             $updateData = [
@@ -371,13 +402,11 @@ class PendapatanProyekController extends Controller
         try {
             $idProject = $request->get('id_project');
             $norut = $request->get('norut');
-            $noBA = $request->get('no_ba');
 
-            // Find by composite key
+            // Find by composite key (no longer need no_ba in WHERE clause)
             $pendapatan = PendapatanProyek::where('norut', $norut)
                 ->where('id_project', $idProject)
                 ->where('no_pendapatan', $noPendapatan)
-                ->where('no_ba', $noBA)
                 ->firstOrFail();
 
             // Delete file if exists
@@ -408,12 +437,10 @@ class PendapatanProyekController extends Controller
     {
         $idProject = $request->get('id_project');
         $norut = $request->get('norut');
-        $noBA = $request->get('no_ba');
 
         $pendapatan = PendapatanProyek::where('norut', $norut)
             ->where('id_project', $idProject)
             ->where('no_pendapatan', $noPendapatan)
-            ->where('no_ba', $noBA)
             ->firstOrFail();
 
         if (!$pendapatan->file_ba || !Storage::disk('public')->exists($pendapatan->file_ba)) {

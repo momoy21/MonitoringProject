@@ -42,6 +42,11 @@ class PendapatanProyek extends Model
         parent::boot();
 
         static::creating(function ($pendapatan) {
+            // Auto-generate norut if not set
+            if (empty($pendapatan->norut)) {
+                $pendapatan->norut = self::getNextNorutForProject($pendapatan->id_project);
+            }
+
             // Auto-generate no_pendapatan if not set
             if (empty($pendapatan->no_pendapatan)) {
                 $pendapatan->no_pendapatan = self::generateNoPendapatan(
@@ -165,5 +170,18 @@ class PendapatanProyek extends Model
         return $query->where('id_project', $idProject)
                      ->where('norut', $norut)
                      ->where('no_ba', $noBA);
+    }
+
+    /**
+     * Get next norut for specific id_project
+     * Each id_project has its own norut sequence starting from 1
+     */
+    public static function getNextNorutForProject($idProject)
+    {
+        $maxNorut = self::where('id_project', $idProject)
+                        ->lockForUpdate()
+                        ->max('norut');
+
+        return $maxNorut ? $maxNorut + 1 : 1;
     }
 }

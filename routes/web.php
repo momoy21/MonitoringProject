@@ -254,8 +254,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Get approved BA for dropdown
             Route::get('/approved-ba', [PendapatanProyekController::class, 'getApprovedBeritaAcara'])->name('getApprovedBA');
 
-            // Get pendapatan by BA
+            // Get pendapatan by header progress (all BA)
             Route::get('/by-ba', [PendapatanProyekController::class, 'getPendapatanByBA'])->name('getByBA');
+
+            // Get approved BA list by header progress
+            Route::get('/approved-ba-by-header', [PendapatanProyekController::class, 'getApprovedBAByHeader'])->name('getApprovedBAByHeader');
 
             // CRUD operations
             Route::post('/store', [PendapatanProyekController::class, 'store'])->name('store');

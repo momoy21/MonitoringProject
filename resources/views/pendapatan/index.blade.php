@@ -81,14 +81,10 @@
                                 </div>
                             </div>
 
-                            <!-- Baris 4: Periode BA dan Nilai BA -->
+                            <!-- Baris 4: Nilai BA -->
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Periode Berita Acara</label>
-                                    <input type="text" class="form-control" id="info_periode_ba" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Nilai Berita Acara</label>
+                                    <label class="form-label">Total Nilai Berita Acara (Approved)</label>
                                     <input type="text" class="form-control currency-display-pd fw-bold" id="info_nilai_ba" readonly>
                                 </div>
                             </div>
@@ -157,6 +153,7 @@
     window.routes = {
         getApprovedBA: "{{ route('pendapatan.getApprovedBA') }}",
         getPendapatanByBA: "{{ route('pendapatan.getByBA') }}",
+        getApprovedBAByHeader: "{{ route('pendapatan.getApprovedBAByHeader') }}",
         storePendapatan: "{{ route('pendapatan.store') }}",
         updatePendapatan: "{{ route('pendapatan.update', ['noPendapatan' => ':noPendapatan']) }}",
         deletePendapatan: "{{ route('pendapatan.destroy', ['noPendapatan' => ':noPendapatan']) }}",

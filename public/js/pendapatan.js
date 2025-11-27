@@ -5,6 +5,7 @@
 $(document).ready(function() {
     let currentBAData = null;
     let pendapatanData = [];
+    let approvedBAList = [];
     let isReadOnly = false;
     let deleteNoPendapatan = null;
 
@@ -93,17 +94,13 @@ $(document).ready(function() {
         $('#info_lama').val(data.lama || '-');
         $('#info_akhir').val(data.akhir || '-');
 
-        // Baris 4: Periode BA dan Nilai BA
-        const periodBA = (data.periode_mulai && data.periode_akhir) ?
-            `${data.periode_mulai} - ${data.periode_akhir}` : '-';
-        $('#info_periode_ba').val(periodBA);
-
+        // Baris 4: Nilai BA (Total dari semua BA Approved)
         const nilaiBA = data.nilai_ba ? formatCurrencyNoDecimalText(data.nilai_ba) : '-';
         $('#info_nilai_ba').val(nilaiBA);
     }
 
     function clearBAInfo() {
-        $('#info_namaproject, #info_konsumen, #info_no_kontrak, #info_nilai_proyek, #info_tanggal_kontrak, #info_akhir_kontrak, #info_mulai, #info_lama, #info_akhir, #info_periode_ba, #info_nilai_ba').val('-');
+        $('#info_namaproject, #info_konsumen, #info_no_kontrak, #info_nilai_proyek, #info_tanggal_kontrak, #info_akhir_kontrak, #info_mulai, #info_lama, #info_akhir, #info_nilai_ba').val('-');
     }
 
     function loadPendapatanData() {
@@ -121,13 +118,14 @@ $(document).ready(function() {
             method: 'GET',
             data: {
                 id_project: currentBAData.id_project,
-                norut: currentBAData.norut,
-                no_ba: currentBAData.no_ba
+                norut: currentBAData.norut
             },
             success: function(response) {
                 if (response.success) {
                     pendapatanData = response.data;
                     renderPendapatanTable();
+                    // Load approved BA list for info
+                    loadApprovedBAList();
                 } else {
                     showAlert(response.message || 'Gagal memuat data', 'error');
                 }
@@ -135,6 +133,35 @@ $(document).ready(function() {
             error: function(xhr) {
                 console.error('Error loading pendapatan:', xhr);
                 showAlert('Terjadi kesalahan saat memuat data', 'error');
+            }
+        });
+    }
+
+    function loadApprovedBAList() {
+        if (!currentBAData) return;
+
+        $.ajax({
+            url: window.routes.getApprovedBAByHeader,
+            method: 'GET',
+            data: {
+                id_project: currentBAData.id_project,
+                norut: currentBAData.norut
+            },
+            success: function(response) {
+                if (response.success && response.data.length > 0) {
+                    // Store BA list for reference
+                    approvedBAList = response.data;
+
+                    // Show total nilai BA dari semua approved BA
+                    const totalNilaiBA = response.data.reduce((sum, ba) => sum + (parseFloat(ba.nilai_ba) || 0), 0);
+                    currentBAData.nilai_ba = totalNilaiBA;
+
+                    // Update display if needed
+                    fillBAInfo(currentBAData);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading approved BA list:', xhr);
             }
         });
     }
@@ -581,7 +608,7 @@ $(document).ready(function() {
         formData.append('_token', window.csrfToken);
         formData.append('id_project', currentBAData.id_project);
         formData.append('norut', currentBAData.norut);
-        formData.append('no_ba', currentBAData.no_ba);
+        // no_ba tidak perlu dikirim, akan diambil dari BA approved pertama di backend
         formData.append('no_dokumen', noDokumen);
 
         if (!isEdit && tanggal) {
