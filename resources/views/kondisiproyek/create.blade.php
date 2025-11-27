@@ -90,9 +90,15 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/kondisiproyek.js') }}"></script>
+    <script src="{{ asset('js/kondisiproyek.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
+        // Clear state when creating new kondisi proyek
+        if (window.StateManagers?.kondisiProyek) {
+            window.StateManagers.kondisiProyek.clearState();
+            console.log('State cleared on create page load');
+        }
+
         // Initialize kondisi proyek manager untuk halaman create
         window.kondisiProyekManager = new KondisiProyekManager();
 

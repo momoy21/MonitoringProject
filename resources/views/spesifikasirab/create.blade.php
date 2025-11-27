@@ -129,9 +129,15 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/spesifikasirab.js') }}"></script>
+    <script src="{{ asset('js/spesifikasirab.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
+        // Clear state when creating new spesifikasi RAB
+        if (window.StateManagers?.spesifikasiRAB) {
+            window.StateManagers.spesifikasiRAB.clearState();
+            console.log('State cleared on create page load');
+        }
+
         // Initialize spesifikasi RAB manager untuk halaman create
         window.spesifikasiRABManager = new SpesifikasiRABManager();
 

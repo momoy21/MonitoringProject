@@ -12,6 +12,9 @@ class DataPeluangManager {
 
         // Form validation variables (for create/edit)
         this.currentDataPeluangId = '';
+
+        // State manager for preserving last activity
+        this.stateManager = window.StateManagers?.dataPeluang;
     }
 
     // ========================================
@@ -19,7 +22,42 @@ class DataPeluangManager {
     // ========================================
 
     init(config = {}) {
+        console.log('[DataPeluang] Init called with config:', config);
+        console.log('[DataPeluang] StateManager available:', !!this.stateManager);
+
         this.setConfig(config);
+
+        let shouldLoadData = false;
+
+        // Try to restore state if coming from edit/create
+        if (config.pageType === 'index' && this.stateManager) {
+            const savedState = this.stateManager.getState();
+            console.log('[DataPeluang] Saved state:', savedState);
+            console.log('[DataPeluang] Should restore?', this.stateManager.shouldRestoreState());
+
+            if (savedState && this.stateManager.shouldRestoreState()) {
+                this.currentPage = savedState.currentPage || 1;
+                this.currentSearch = savedState.currentSearch || '';
+                this.perPage = savedState.perPage || 10;
+
+                // Set search input value
+                if (this.currentSearch) {
+                    $('#searchInput').val(this.currentSearch);
+                }
+
+                // Set per page selector
+                if (this.perPage) {
+                    $('#perPageSelect').val(this.perPage);
+                }
+
+                this.stateManager.clearRestoreFlag();
+                console.log('[DataPeluang] State restored:', savedState);
+
+                // Mark that we need to reload data with restored state
+                shouldLoadData = true;
+            }
+        }
+
         this.initializeEventHandlers();
 
         // Initialize dropdowns and fields
@@ -28,6 +66,12 @@ class DataPeluangManager {
         // Initialize page-specific functions
         if (config.pageType === 'index') {
             this.updatePaginationButtons();
+
+            // If state was restored, load data with restored parameters
+            if (shouldLoadData) {
+                console.log('[DataPeluang] Loading data with restored state');
+                this.loadDataPeluangData();
+            }
         }
     }
 
@@ -551,6 +595,16 @@ class DataPeluangManager {
             success: (response) => {
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // ONLY mark for restore if this is an EDIT operation (not CREATE)
+                    const isEdit = $('#dataPeluangForm').find('input[name="_method"]').val() === 'PUT';
+                    if (isEdit && this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('[DataPeluang] Edit operation - marked for restore');
+                    } else {
+                        console.log('[DataPeluang] Create operation - no restore needed');
+                    }
+
                     setTimeout(() => {
                         const dataPeluangIndexRoute = window.Laravel?.routes?.dataPeluangIndex || '/datapeluang';
                         window.location.href = dataPeluangIndexRoute;
@@ -614,6 +668,15 @@ class DataPeluangManager {
             per_page: this.perPage,
             page: this.currentPage
         };
+
+        // Save current state for restoration later
+        if (this.stateManager) {
+            this.stateManager.saveState({
+                currentPage: this.currentPage,
+                currentSearch: this.currentSearch,
+                perPage: this.perPage
+            });
+        }
 
         const dataPeluangIndexRoute = window.Laravel?.routes?.dataPeluangIndex || '/datapeluang';
 
@@ -906,6 +969,12 @@ class DataPeluangManager {
                 $('#deleteConfirmModal').modal('hide');
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // Mark that we should restore state on next load
+                    if (this.stateManager) {
+                        this.stateManager.markForRestore();
+                    }
+
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);

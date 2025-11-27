@@ -145,6 +145,12 @@
 
     @push('scripts')
     <script>
+        // Clear any saved state when entering create page
+        if (window.StateManagers?.kelolaPM) {
+            window.StateManagers.kelolaPM.clearState();
+            console.log('[KelolaPM] State cleared on create page');
+        }
+
         // Select/Deselect All Checkboxes
         document.getElementById('selectAll').addEventListener('click', function() {
             document.querySelectorAll('.bidang-jasa-check').forEach(checkbox => {
@@ -160,6 +166,8 @@
 
         // Form Submit Handler
         document.getElementById('registerForm').addEventListener('submit', function() {
+            // Don't mark for restore on create - just go to normal index
+
             const submitBtn = document.getElementById('submitBtn');
             const submitSpinner = document.getElementById('submitSpinner');
             const submitIcon = document.getElementById('submitIcon');

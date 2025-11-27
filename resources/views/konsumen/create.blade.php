@@ -161,9 +161,15 @@
     <!-- Searchable Select Handler -->
     <script src="{{ asset('js/searchable-select.js') }}"></script>
 
-    <script src="{{ asset('js/konsumen.js') }}"></script>
+    <script src="{{ asset('js/konsumen.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
+        // Clear state when creating new konsumen
+        if (window.StateManagers?.konsumen) {
+            window.StateManagers.konsumen.clearState();
+            console.log('State cleared on create page load');
+        }
+
         // Initialize konsumen manager untuk halaman create
         window.konsumenManager = new KonsumenManager();
 

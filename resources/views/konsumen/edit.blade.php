@@ -24,7 +24,7 @@
                 <p class="mb-0">Perbarui informasi konsumen {{ $konsumen->konsumen }}</p>
             </div>
             <div class="col-md-6 text-end">
-                <a href="{{ route('konsumen.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('konsumen.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.konsumen) window.StateManagers.konsumen.markForRestore();">
                     <i class="bx bx-arrow-back me-1"></i> Kembali
                 </a>
             </div>
@@ -162,7 +162,7 @@
 
                         <!-- Buttons -->
                         <div class="d-flex justify-content-end gap-3 mt-4">
-                            <a href="{{ route('konsumen.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('konsumen.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.konsumen) window.StateManagers.konsumen.markForRestore();">
                                 <i class="bx bx-x me-1"></i> Batal
                             </a>
                             <button type="button" class="btn btn-outline-warning" onclick="window.resetForm()">
@@ -187,7 +187,7 @@
     <!-- Searchable Select Handler -->
     <script src="{{ asset('js/searchable-select.js') }}"></script>
 
-    <script src="{{ asset('js/konsumen.js') }}"></script>
+    <script src="{{ asset('js/konsumen.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Set data original untuk reset function

@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('bidangjasa.create') }}" class="btn btn-primary">
+                    <a href="{{ route('bidangjasa.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.bidangJasa) window.StateManagers.bidangJasa.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah
                     </a>
                 </div>
@@ -132,7 +132,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/bidangjasa.js') }}"></script>
+    <script src="{{ asset('js/bidangjasa.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Initialize bidang jasa manager dengan konfigurasi untuk halaman index

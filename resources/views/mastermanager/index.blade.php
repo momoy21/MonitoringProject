@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('mastermanager.create') }}" class="btn btn-primary">
+                    <a href="{{ route('mastermanager.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.masterManager) window.StateManagers.masterManager.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah
                     </a>
                 </div>
@@ -181,7 +181,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/manager.js') }}"></script>
+    <script src="{{ asset('js/manager.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         window.managerManager = new ManagerManager();

@@ -2,6 +2,7 @@ class BidangJasaManager {
     constructor() {
         this.isSubmitting = false;
         this.searchTimeout = null;
+        this.stateManager = window.StateManagers?.bidangJasa;
 
         // Pagination variables (for index page)
         this.currentPage = 1;
@@ -36,11 +37,36 @@ class BidangJasaManager {
     init(config = {}) {
         this.setConfig(config);
         this.bindElements();
+
+        let shouldLoadData = false;
+
+        // Restore state if coming from edit
+        if (config.pageType === 'index' && this.stateManager) {
+            const savedState = this.stateManager.getState();
+            if (savedState && this.stateManager.shouldRestoreState()) {
+                this.currentPage = savedState.currentPage || 1;
+                this.currentSearch = savedState.currentSearch || '';
+                this.perPage = savedState.perPage || 10;
+
+                $('#searchInput').val(this.currentSearch);
+                $('#perPageSelect').val(this.perPage);
+
+                this.stateManager.clearRestoreFlag();
+                console.log('[BidangJasa] State restored:', savedState);
+                shouldLoadData = true;
+            }
+        }
+
         this.initializeEventHandlers();
 
         // Initialize page-specific functions
         if (config.pageType === 'index') {
             this.updatePaginationButtons();
+
+            if (shouldLoadData) {
+                console.log('[BidangJasa] Loading data with restored state');
+                this.loadBidangJasaData();
+            }
         }
 
         console.log('BidangJasa Manager initialized:', this.config);
@@ -209,6 +235,15 @@ class BidangJasaManager {
     // ========================================
 
     loadBidangJasaData() {
+        // Save current state
+        if (this.stateManager) {
+            this.stateManager.saveState({
+                currentPage: this.currentPage,
+                currentSearch: this.currentSearch,
+                perPage: this.perPage
+            });
+        }
+
         this.showLoadingSpinner(true);
 
         const params = {
@@ -216,6 +251,7 @@ class BidangJasaManager {
             per_page: this.perPage,
             page: this.currentPage
         };
+
 
         $.ajax({
             url: this.urls.index,
@@ -456,6 +492,14 @@ class BidangJasaManager {
             success: (response) => {
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // Only mark for restore if this is EDIT (not CREATE)
+                    const isEdit = $('#bidangJasaForm').find('input[name="_method"]').val() === 'PUT';
+                    if (isEdit && this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('[BidangJasa] Edit - marked for restore');
+                    }
+
                     setTimeout(() => {
                         window.location.href = this.urls.index;
                     }, 1500);

@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('datapeluang.create') }}" class="btn btn-primary">
+                    <a href="{{ route('datapeluang.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.dataPeluang) window.StateManagers.dataPeluang.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah
                     </a>
                 </div>
@@ -206,7 +206,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/datapeluang.js') }}"></script>
+    <script src="{{ asset('js/datapeluang.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Initialize data peluang manager dengan konfigurasi untuk halaman index

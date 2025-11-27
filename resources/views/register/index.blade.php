@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('register.create') }}" class="btn btn-primary">
+                    <a href="{{ route('register.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.kelolaPM) window.StateManagers.kelolaPM.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah PM
                     </a>
                 </div>
@@ -214,6 +214,247 @@
 
     @push('scripts')
     <script>
+        class KelolaPMManager {
+            constructor() {
+                this.stateManager = window.StateManagers?.kelolaPM;
+                this.currentPage = 1;
+                this.perPage = 10;
+                this.currentSearch = '';
+                this.currentBidangJasa = '';
+                this.searchTimeout = null;
+            }
+
+            init(config = {}) {
+                console.log('[KelolaPM] Init called with config:', config);
+                console.log('[KelolaPM] StateManager available:', !!this.stateManager);
+
+                this.currentPage = config.currentPage || 1;
+                this.perPage = config.perPage || 10;
+                this.currentSearch = config.currentSearch || '';
+                this.currentBidangJasa = config.currentBidangJasa || '';
+
+                let shouldLoadData = false;
+
+                // Restore state if available
+                if (this.stateManager) {
+                    const savedState = this.stateManager.getState();
+                    console.log('[KelolaPM] Saved state:', savedState);
+                    console.log('[KelolaPM] Should restore?', this.stateManager.shouldRestoreState());
+
+                    if (savedState && this.stateManager.shouldRestoreState()) {
+                        this.currentPage = savedState.currentPage || 1;
+                        this.currentSearch = savedState.currentSearch || '';
+                        this.perPage = savedState.perPage || 10;
+                        this.currentBidangJasa = savedState.currentBidangJasa || '';
+
+                        // Set UI inputs to restored values
+                        $('#searchInput').val(this.currentSearch);
+                        $('#perPageSelect').val(this.perPage);
+                        $('#bidangJasaFilter').val(this.currentBidangJasa);
+
+                        this.stateManager.clearRestoreFlag();
+                        console.log('[KelolaPM] State restored:', savedState);
+
+                        // Mark that we need to reload data with restored state
+                        shouldLoadData = true;
+                    }
+                }
+
+                this.initializeEventHandlers();
+                this.initPagination();
+
+                // If state was restored, load data with restored parameters
+                if (shouldLoadData) {
+                    console.log('[KelolaPM] Loading data with restored state');
+                    this.loadPMData();
+                }
+            }
+
+            initializeEventHandlers() {
+                // Search handler
+                $('#searchInput').on('input', (e) => {
+                    const searchValue = $(e.target).val().trim();
+                    this.currentSearch = searchValue;
+                    this.currentPage = 1;
+
+                    clearTimeout(this.searchTimeout);
+                    $('.loading-spinner').show();
+
+                    this.searchTimeout = setTimeout(() => {
+                        this.loadPMData();
+                    }, 300);
+                });
+
+                // Per page selector
+                $('#perPageSelect').on('change', (e) => {
+                    this.perPage = $(e.target).val();
+                    this.currentPage = 1;
+                    this.loadPMData();
+                });
+
+                // Bidang jasa filter
+                $('#bidangJasaFilter').on('change', (e) => {
+                    this.currentBidangJasa = $(e.target).val();
+                    this.currentPage = 1;
+                    this.loadPMData();
+                });
+            }
+
+            loadPMData() {
+                // Save current state
+                if (this.stateManager) {
+                    this.stateManager.saveState({
+                        currentPage: this.currentPage,
+                        currentSearch: this.currentSearch,
+                        perPage: this.perPage,
+                        currentBidangJasa: this.currentBidangJasa
+                    });
+                }
+
+                const params = {
+                    search: this.currentSearch,
+                    per_page: this.perPage,
+                    page: this.currentPage
+                };
+
+                if (this.currentBidangJasa) {
+                    params.bidang_jasa = this.currentBidangJasa;
+                }
+
+                $.ajax({
+                    url: '{{ route("register.index") }}',
+                    type: 'GET',
+                    data: params,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: (response) => {
+                        if (response.success) {
+                            $('.register-table tbody').html(response.html);
+                            this.updatePaginationInfo(response.pagination);
+                            this.initPagination();
+                        }
+                    },
+                    error: (xhr) => {
+                        console.error('Error loading data:', xhr);
+                    },
+                    complete: () => {
+                        $('.loading-spinner').hide();
+                    }
+                });
+            }
+
+            initPagination() {
+                const { current_page, last_page } = paginationData;
+                this.generatePageNumbers(current_page, last_page);
+                this.setupPaginationButtons(current_page, last_page);
+            }
+
+            generatePageNumbers(currentPage, lastPage) {
+                const container = $('#pageNumbersContainer');
+                if (!container.length) return;
+
+                container.empty();
+
+                let startPage, endPage;
+                const maxVisible = 5;
+
+                if (lastPage <= maxVisible) {
+                    startPage = 1;
+                    endPage = lastPage;
+                } else {
+                    if (currentPage <= 3) {
+                        startPage = 1;
+                        endPage = maxVisible;
+                    } else if (currentPage >= lastPage - 2) {
+                        startPage = lastPage - maxVisible + 1;
+                        endPage = lastPage;
+                    } else {
+                        startPage = currentPage - 2;
+                        endPage = currentPage + 2;
+                    }
+                }
+
+                if (startPage > 1) {
+                    this.addPageButton(container, 1, currentPage);
+                    if (startPage > 2) {
+                        this.addEllipsis(container);
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    this.addPageButton(container, i, currentPage);
+                }
+
+                if (endPage < lastPage) {
+                    if (endPage < lastPage - 1) {
+                        this.addEllipsis(container);
+                    }
+                    this.addPageButton(container, lastPage, currentPage);
+                }
+            }
+
+            addPageButton(container, pageNum, currentPage) {
+                const btn = $('<button>')
+                    .attr('type', 'button')
+                    .addClass(`btn btn-sm ${pageNum === currentPage ? 'btn-primary' : 'btn-outline-secondary'}`)
+                    .text(pageNum)
+                    .on('click', () => this.navigateToPage(pageNum));
+
+                if (pageNum === currentPage) {
+                    btn.prop('disabled', true);
+                }
+
+                container.append(btn);
+            }
+
+            addEllipsis(container) {
+                container.append($('<span>').addClass('px-2').text('...'));
+            }
+
+            setupPaginationButtons(currentPage, lastPage) {
+                const firstBtn = $('#firstPageBtn');
+                const prevBtn = $('#prevPageBtn');
+                const nextBtn = $('#nextPageBtn');
+                const lastBtn = $('#lastPageBtn');
+
+                if (currentPage <= 1) {
+                    firstBtn.prop('disabled', true);
+                    prevBtn.prop('disabled', true);
+                } else {
+                    firstBtn.prop('disabled', false).off('click').on('click', () => this.navigateToPage(1));
+                    prevBtn.prop('disabled', false).off('click').on('click', () => this.navigateToPage(currentPage - 1));
+                }
+
+                if (currentPage >= lastPage) {
+                    nextBtn.prop('disabled', true);
+                    lastBtn.prop('disabled', true);
+                } else {
+                    nextBtn.prop('disabled', false).off('click').on('click', () => this.navigateToPage(currentPage + 1));
+                    lastBtn.prop('disabled', false).off('click').on('click', () => this.navigateToPage(lastPage));
+                }
+            }
+
+            navigateToPage(page) {
+                this.currentPage = page;
+                this.loadPMData();
+            }
+
+            updatePaginationInfo(pagination) {
+                $('#entriesFrom').text(pagination.from);
+                $('#entriesTo').text(pagination.to);
+                $('#entriesTotal').text(pagination.total);
+
+                // Update global pagination data
+                paginationData.current_page = pagination.current_page;
+                paginationData.last_page = pagination.last_page;
+                paginationData.per_page = pagination.per_page;
+                paginationData.total = pagination.total;
+                paginationData.from = pagination.from;
+                paginationData.to = pagination.to;
+            }
+        }
+
         // Pagination Data from Laravel
         const paginationData = {
             current_page: {{ $users->currentPage() }},
@@ -224,197 +465,17 @@
             to: {{ $users->lastItem() ?? 0 }}
         };
 
-        // Initialize pagination on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            initPagination();
-        });
-
-        function initPagination() {
-            const { current_page, last_page } = paginationData;
-
-            // Generate page numbers
-            generatePageNumbers(current_page, last_page);
-
-            // Setup button states
-            setupPaginationButtons(current_page, last_page);
-        }
-
-        function generatePageNumbers(currentPage, lastPage) {
-            const container = document.getElementById('pageNumbersContainer');
-            if (!container) return;
-
-            container.innerHTML = '';
-
-            // Calculate range
-            let startPage, endPage;
-            const maxVisible = 5;
-
-            if (lastPage <= maxVisible) {
-                startPage = 1;
-                endPage = lastPage;
-            } else {
-                if (currentPage <= 3) {
-                    startPage = 1;
-                    endPage = maxVisible;
-                } else if (currentPage >= lastPage - 2) {
-                    startPage = lastPage - maxVisible + 1;
-                    endPage = lastPage;
-                } else {
-                    startPage = currentPage - 2;
-                    endPage = currentPage + 2;
-                }
-            }
-
-            // Add first page and ellipsis if needed
-            if (startPage > 1) {
-                addPageButton(container, 1, currentPage);
-                if (startPage > 2) {
-                    addEllipsis(container);
-                }
-            }
-
-            // Add page numbers
-            for (let i = startPage; i <= endPage; i++) {
-                addPageButton(container, i, currentPage);
-            }
-
-            // Add ellipsis and last page if needed
-            if (endPage < lastPage) {
-                if (endPage < lastPage - 1) {
-                    addEllipsis(container);
-                }
-                addPageButton(container, lastPage, currentPage);
-            }
-        }
-
-        function addPageButton(container, pageNum, currentPage) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = `btn btn-sm ${pageNum === currentPage ? 'btn-primary' : 'btn-outline-secondary'}`;
-            btn.textContent = pageNum;
-            btn.onclick = () => navigateToPage(pageNum);
-            if (pageNum === currentPage) {
-                btn.disabled = true;
-            }
-            container.appendChild(btn);
-        }
-
-        function addEllipsis(container) {
-            const ellipsis = document.createElement('span');
-            ellipsis.className = 'px-2';
-            ellipsis.textContent = '...';
-            container.appendChild(ellipsis);
-        }
-
-        function setupPaginationButtons(currentPage, lastPage) {
-            const firstBtn = document.getElementById('firstPageBtn');
-            const prevBtn = document.getElementById('prevPageBtn');
-            const nextBtn = document.getElementById('nextPageBtn');
-            const lastBtn = document.getElementById('lastPageBtn');
-
-            // First and Previous buttons
-            if (currentPage <= 1) {
-                firstBtn.disabled = true;
-                prevBtn.disabled = true;
-            } else {
-                firstBtn.disabled = false;
-                prevBtn.disabled = false;
-                firstBtn.onclick = () => navigateToPage(1);
-                prevBtn.onclick = () => navigateToPage(currentPage - 1);
-            }
-
-            // Next and Last buttons
-            if (currentPage >= lastPage) {
-                nextBtn.disabled = true;
-                lastBtn.disabled = true;
-            } else {
-                nextBtn.disabled = false;
-                lastBtn.disabled = false;
-                nextBtn.onclick = () => navigateToPage(currentPage + 1);
-                lastBtn.onclick = () => navigateToPage(lastPage);
-            }
-        }
-
-        function navigateToPage(page) {
-            const searchValue = document.getElementById('searchInput')?.value.trim() || '';
-            loadPMData(searchValue, page);
-        }
-
-        // Per page selector handler
-        document.getElementById('perPageSelect')?.addEventListener('change', function() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('per_page', this.value);
-            url.searchParams.delete('page'); // Reset to page 1
-            window.location.href = url.toString();
-        });
-
-        // Search functionality - AJAX search (searches all data without reload)
-        let searchTimeout;
-        const searchInput = document.getElementById('searchInput');
-        const loadingSpinner = document.querySelector('.loading-spinner');
-        const tableBody = document.querySelector('.register-table tbody');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                const searchValue = this.value.trim();
-
-                // Show loading indicator
-                if (loadingSpinner) {
-                    loadingSpinner.style.display = 'flex';
-                }
-
-                // Debounce search - wait 300ms after user stops typing
-                searchTimeout = setTimeout(() => {
-                    loadPMData(searchValue, 1);
-                }, 300);
+        // Initialize manager
+        let kelolaPMManager;
+        $(document).ready(function() {
+            kelolaPMManager = new KelolaPMManager();
+            kelolaPMManager.init({
+                currentPage: {{ $users->currentPage() }},
+                perPage: {{ $users->perPage() }},
+                currentSearch: '{{ request('search') }}',
+                currentBidangJasa: '{{ request('bidang_jasa') }}'
             });
-        }
-
-        function loadPMData(search = '', page = 1) {
-            const url = new URL(window.location.href);
-            const params = new URLSearchParams(url.search);
-
-            if (search) {
-                params.set('search', search);
-            } else {
-                params.delete('search');
-            }
-            params.set('page', page);
-
-            $.ajax({
-                url: '{{ route("register.index") }}',
-                type: 'GET',
-                data: params.toString(),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Update table body
-                        tableBody.innerHTML = response.html;
-
-                        // Update pagination
-                        updatePaginationInfo(response.pagination);
-                        initPagination(response.pagination.current_page, response.pagination.last_page);
-                    }
-                },
-                error: function(xhr) {
-                    console.error('Error loading data:', xhr);
-                },
-                complete: function() {
-                    if (loadingSpinner) {
-                        loadingSpinner.style.display = 'none';
-                    }
-                }
-            });
-        }
-
-        function updatePaginationInfo(pagination) {
-            document.getElementById('entriesFrom').textContent = pagination.from;
-            document.getElementById('entriesTo').textContent = pagination.to;
-            document.getElementById('entriesTotal').textContent = pagination.total;
-        }
+        });
 
         function editPM(id) {
             window.location.href = `/register/${id}/edit`;
@@ -488,6 +549,11 @@
             // Set form action
             const form = document.getElementById('deleteForm');
             form.action = `/register/${id}`;
+
+            // Mark for state restoration before form submit
+            if (kelolaPMManager?.stateManager) {
+                kelolaPMManager.stateManager.markForRestore();
+            }
 
             // Show modal
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));

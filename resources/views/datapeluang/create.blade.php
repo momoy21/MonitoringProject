@@ -179,7 +179,7 @@
             dataPeluangIndex: '{{ route("datapeluang.index") }}'
         };
     </script>
-    <script src="{{ asset('js/datapeluang.js') }}"></script>
+    <script src="{{ asset('js/datapeluang.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Set tanggal hari ini dalam format dd/mm/yyyy
@@ -191,6 +191,12 @@
 
         // Initialize data peluang manager untuk halaman create
         window.dataPeluangManager = new DataPeluangManager();
+
+        // Clear any saved state when entering create page
+        if (window.StateManagers?.dataPeluang) {
+            window.StateManagers.dataPeluang.clearState();
+            console.log('[DataPeluang] State cleared on create page');
+        }
 
         window.dataPeluangManager.init({
             pageType: 'create'

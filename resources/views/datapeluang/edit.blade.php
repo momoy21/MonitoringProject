@@ -24,7 +24,7 @@
                 <p class="mb-0">Perbarui informasi peluang {{ $datapeluang->peluang }}</p>
             </div>
             <div class="col-md-6 text-end">
-                <a href="{{ route('datapeluang.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('datapeluang.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.dataPeluang) window.StateManagers.dataPeluang.markForRestore();">
                     <i class="bx bx-arrow-back me-1"></i> Kembali
                 </a>
             </div>
@@ -168,7 +168,7 @@
 
                         <!-- Buttons -->
                         <div class="d-flex justify-content-end gap-3 mt-4">
-                            <a href="{{ route('datapeluang.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('datapeluang.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.dataPeluang) window.StateManagers.dataPeluang.markForRestore();">
                                 <i class="bx bx-x me-1"></i> Batal
                             </a>
                             <button type="button" class="btn btn-outline-warning" onclick="window.resetDataPeluangForm()">
@@ -193,7 +193,7 @@
     <!-- Searchable Select Handler -->
     <script src="{{ asset('js/searchable-select.js') }}"></script>
 
-    <script src="{{ asset('js/datapeluang.js') }}"></script>
+    <script src="{{ asset('js/datapeluang.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Set data original untuk reset function

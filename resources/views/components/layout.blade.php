@@ -94,6 +94,9 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.20/dist/sweetalert2.all.min.js"></script>
 
+    <!-- State Manager -->
+    <script src="{{ asset('js/state-manager.js') }}?v={{ time() }}"></script>
+
     <!-- CSRF Token setup -->
     <script>
         $.ajaxSetup({

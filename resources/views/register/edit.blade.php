@@ -18,7 +18,7 @@
                 <p class="mb-0">Update informasi Project Manager: {{ $user->name }}</p>
             </div>
             <div class="col-md-6 text-end">
-                <a href="{{ route('register.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('register.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.kelolaPM) window.StateManagers.kelolaPM.markForRestore();">
                     <i class="bx bx-arrow-back me-1"></i> Kembali
                 </a>
             </div>
@@ -151,7 +151,7 @@
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-end gap-3 mt-4">
-                    <a href="{{ route('register.index') }}" class="btn btn-outline-secondary">
+                    <a href="{{ route('register.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.kelolaPM) window.StateManagers.kelolaPM.markForRestore();">
                         <i class="bx bx-x me-1"></i> Batal
                     </a>
                     <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -181,6 +181,11 @@
 
         // Form Submit Handler
         document.getElementById('registerForm').addEventListener('submit', function() {
+            // Mark for state restoration (this is edit page, so always restore)
+            if (window.StateManagers?.kelolaPM) {
+                window.StateManagers.kelolaPM.markForRestore();
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             const submitSpinner = document.getElementById('submitSpinner');
             const submitIcon = document.getElementById('submitIcon');

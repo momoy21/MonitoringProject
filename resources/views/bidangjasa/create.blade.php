@@ -90,8 +90,13 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/bidangjasa.js') }}"></script>
+    <script src="{{ asset('js/bidangjasa.js') }}?v={{ time() }}"></script>
     <script>
+    // Clear any saved state when entering create page
+    if (window.StateManagers?.bidangJasa) {
+        window.StateManagers.bidangJasa.clearState();
+    }
+
     $(document).ready(function() {
         // Initialize bidang jasa manager untuk halaman create
         window.bidangJasaManager = new BidangJasaManager();

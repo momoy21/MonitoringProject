@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('summaryrab.create') }}" class="btn btn-primary">
+                    <a href="{{ route('summaryrab.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.summaryRAB) window.StateManagers.summaryRAB.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah
                     </a>
                 </div>
@@ -180,7 +180,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/summaryrab.js') }}"></script>
+    <script src="{{ asset('js/summaryrab.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Initialize summary RAB manager dengan konfigurasi untuk halaman index

@@ -1,5 +1,6 @@
 class SpesifikasiRABManager {
     constructor() {
+        this.stateManager = window.StateManagers?.spesifikasiRAB;
         this.isSubmitting = false;
         this.searchTimeout = null;
         this.deleteTargetId = null;
@@ -41,9 +42,33 @@ class SpesifikasiRABManager {
         this.bindElements();
         this.initializeEventHandlers();
 
+        let shouldLoadData = false;
+
         // Initialize page-specific functions
         if (config.pageType === 'index') {
+            // Try to restore state
+            if (this.stateManager) {
+                const savedState = this.stateManager.getState();
+                if (savedState && this.stateManager.shouldRestoreState()) {
+                    this.currentPage = savedState.currentPage || this.currentPage;
+                    this.currentSearch = savedState.currentSearch || this.currentSearch;
+                    this.perPage = savedState.perPage || this.perPage;
+
+                    // Update UI with restored state
+                    if ($('#searchInput').length) $('#searchInput').val(this.currentSearch);
+                    if ($('#perPageSelect').length) $('#perPageSelect').val(this.perPage);
+
+                    shouldLoadData = true;
+                    this.stateManager.clearRestoreFlag();
+                    console.log('State restored:', savedState);
+                }
+            }
+
             this.updatePaginationButtons();
+        }
+
+        if (shouldLoadData) {
+            this.loadSpesifikasiRABData();
         }
 
         console.log('SpesifikasiRAB Manager initialized:', this.config);
@@ -229,6 +254,16 @@ class SpesifikasiRABManager {
             per_page: this.perPage,
             page: this.currentPage
         };
+
+        // Save state
+        if (this.stateManager) {
+            this.stateManager.saveState({
+                currentPage: this.currentPage,
+                currentSearch: this.currentSearch,
+                perPage: this.perPage
+            });
+            console.log('State saved:', this.stateManager.getState());
+        }
 
         $.ajax({
             url: this.urls.index,
@@ -508,6 +543,14 @@ class SpesifikasiRABManager {
             success: (response) => {
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // Mark for restore only if editing
+                    const isEdit = $('#spesifikasiRABForm').find('input[name="_method"]').val() === 'PUT';
+                    if (isEdit && this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('Marked for restore (edit mode)');
+                    }
+
                     setTimeout(() => {
                         window.location.href = this.urls.index;
                     }, 1500);
@@ -634,6 +677,13 @@ class SpesifikasiRABManager {
                 $('#deleteConfirmModal').modal('hide');
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // Mark for restore after delete
+                    if (this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('Marked for restore (after delete)');
+                    }
+
                     this.loadSpesifikasiRABData();
                 }
             },

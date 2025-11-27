@@ -18,7 +18,7 @@
                 <p class="mb-0">Perbarui informasi spesifikasi RAB {{ $spesifikasirab->id_spec }}</p>
             </div>
             <div class="col-md-6 text-end">
-                <a href="{{ route('spesifikasirab.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('spesifikasirab.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.spesifikasiRAB) window.StateManagers.spesifikasiRAB.markForRestore();">
                     <i class="bx bx-arrow-back me-1"></i> Kembali
                 </a>
             </div>
@@ -113,7 +113,7 @@
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-end gap-3 mt-4">
-                    <a href="{{ route('spesifikasirab.index') }}" class="btn btn-outline-secondary">
+                    <a href="{{ route('spesifikasirab.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.spesifikasiRAB) window.StateManagers.spesifikasiRAB.markForRestore();">
                         <i class="bx bx-x me-1"></i> Batal
                     </a>
                     <button type="reset" class="btn btn-outline-warning" onclick="resetForm()">
@@ -130,7 +130,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/spesifikasirab.js') }}"></script>
+    <script src="{{ asset('js/spesifikasirab.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Set data original untuk reset function

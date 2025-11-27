@@ -24,7 +24,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('dataproyek.create') }}" class="btn btn-primary">
+                    <a href="{{ route('dataproyek.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.dataProyek) window.StateManagers.dataProyek.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah
                     </a>
                 </div>

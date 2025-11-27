@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('kondisiproyek.create') }}" class="btn btn-primary">
+                    <a href="{{ route('kondisiproyek.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.kondisiProyek) window.StateManagers.kondisiProyek.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah
                     </a>
                 </div>
@@ -180,7 +180,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/kondisiproyek.js') }}"></script>
+    <script src="{{ asset('js/kondisiproyek.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Initialize kondisi proyek manager dengan konfigurasi untuk halaman index

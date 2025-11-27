@@ -112,9 +112,15 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/manager.js') }}"></script>
+    <script src="{{ asset('js/manager.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
+        // Clear state when creating new manager
+        if (window.StateManagers?.masterManager) {
+            window.StateManagers.masterManager.clearState();
+            console.log('State cleared on create page load');
+        }
+
         // Initialize manager manager untuk halaman create
         window.managerManager = new ManagerManager();
 

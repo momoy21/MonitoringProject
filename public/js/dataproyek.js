@@ -3,6 +3,7 @@ class DataProyekManager {
         this.isSubmitting = false;
         this.searchTimeout = null;
         this.deleteTargetId = null;
+        this.stateManager = window.StateManagers?.dataProyek;
 
         // Pagination variables (for index page)
         this.currentPage = 1;
@@ -25,12 +26,74 @@ class DataProyekManager {
     // ========================================
 
     init(config = {}) {
+        console.log('[DataProyek] Init called with config:', config);
+        console.log('[DataProyek] StateManager available:', !!this.stateManager);
+
         this.setConfig(config);
+
+        let shouldLoadData = false;
+
+        // Restore state if available (for index page)
+        if (config.pageType === 'index' && this.stateManager) {
+            const savedState = this.stateManager.getState();
+            console.log('[DataProyek] Saved state:', savedState);
+            console.log('[DataProyek] Should restore?', this.stateManager.shouldRestoreState());
+
+            if (savedState && this.stateManager.shouldRestoreState()) {
+                this.currentPage = savedState.currentPage || 1;
+                this.currentSearch = savedState.currentSearch || '';
+                this.perPage = savedState.perPage || 15;
+
+                // Set UI inputs to restored values
+                $('#searchInput').val(this.currentSearch);
+                $('#perPageSelect').val(this.perPage);
+
+                this.stateManager.clearRestoreFlag();
+                console.log('[DataProyek] State restored:', savedState);
+
+                // Mark that we need to reload data with restored state
+                shouldLoadData = true;
+            }
+        }
+
+        // Restore state for show page (history table)
+        if (config.pageType === 'show' && this.stateManager) {
+            const savedState = this.stateManager.getState();
+            console.log('[DataProyek/History] Saved state:', savedState);
+            console.log('[DataProyek/History] Should restore?', this.stateManager.shouldRestoreState());
+
+            if (savedState && this.stateManager.shouldRestoreState()) {
+                this.currentPage = savedState.currentPage || 1;
+                this.currentSearch = savedState.currentSearch || '';
+                this.perPage = savedState.perPage || 15;
+
+                // Set UI inputs to restored values
+                $('#historySearchInput').val(this.currentSearch);
+                $('#perPageSelect').val(this.perPage);
+
+                this.stateManager.clearRestoreFlag();
+                console.log('[DataProyek/History] State restored:', savedState);
+
+                // Mark that we need to reload data with restored state
+                shouldLoadData = true;
+            }
+        }
+
         this.initializeEventHandlers();
 
         // Initialize page-specific functions
         if (config.pageType === 'index' || config.pageType === 'show') {
             this.updatePaginationButtons();
+
+            // If state was restored, load data with restored parameters
+            if (shouldLoadData) {
+                console.log('[DataProyek] Loading data with restored state');
+                if (config.pageType === 'index') {
+                    this.loadProyekData();
+                } else if (config.pageType === 'show') {
+                    this.loadHistoryProyekData(this.idProject);
+                }
+            }
         } else if (config.pageType === 'create' || config.pageType === 'edit') {
             this.initializeFormFields();
         }
@@ -932,17 +995,27 @@ class DataProyekManager {
                     console.log('=== AJAX SUCCESS ===');
                     console.log('Response:', response);
                     this.showAlert('Data proyek berhasil disimpan.', 'success');
+
+                    // Detect form types
+                    const isCreateHistory = $('#proyekForm').data('add-to-history') === true ||
+                                          $('#proyekForm').data('add-to-history') === 'true';
+                    const isEditHistory = $('#proyekForm').data('is-edit') === true &&
+                                         $('input[name="cost_center"][type="hidden"]').length > 0;
+                    const isEdit = $('#proyekForm').data('is-edit') === true && !isEditHistory;
+
+                    // ONLY mark for restore if this is an EDIT operation (not CREATE)
+                    if ((isEdit || isEditHistory) && this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('[DataProyek] Edit operation - marked for restore');
+                    } else {
+                        console.log('[DataProyek] Create operation - no restore needed');
+                    }
+
                     setTimeout(() => {
                         // Check if server provided redirect URL
                         if (response.redirect_url) {
                             window.location.href = response.redirect_url;
                         } else {
-                            // Detect form types
-                            const isCreateHistory = $('#proyekForm').data('add-to-history') === true ||
-                                                  $('#proyekForm').data('add-to-history') === 'true';
-                            const isEditHistory = $('#proyekForm').data('is-edit') === true &&
-                                                 $('input[name="cost_center"][type="hidden"]').length > 0;
-                            const isEdit = $('#proyekForm').data('is-edit') === true && !isEditHistory;
 
                             if (isCreateHistory || isEditHistory) {
                                 // For create-history and edit-history, redirect back to the history page
@@ -1385,6 +1458,15 @@ class DataProyekManager {
     // ========================================
 
     loadProyekData() {
+        // Save current state
+        if (this.stateManager) {
+            this.stateManager.saveState({
+                currentPage: this.currentPage,
+                currentSearch: this.currentSearch,
+                perPage: this.perPage
+            });
+        }
+
         this.showLoadingSpinner(true);
 
         const params = {
@@ -1638,6 +1720,15 @@ class DataProyekManager {
     // ========================================
 
     loadHistoryProyekData(idProject) {
+        // Save current state for history table
+        if (this.stateManager) {
+            this.stateManager.saveState({
+                currentPage: this.currentPage,
+                currentSearch: this.currentSearch,
+                perPage: this.perPage
+            });
+        }
+
         this.showLoadingSpinner(true);
 
         const params = {
@@ -1886,6 +1977,11 @@ function editDataProyek(idProject) {
  * Delete history proyek using composite key
  */
 function deleteHistoryProyek(idProject, norut) {
+    // Mark for state restoration
+    if (window.dataProyekManager?.stateManager) {
+        window.dataProyekManager.stateManager.markForRestore();
+    }
+
     // Create form and submit (modal confirmation handled by initializeModalHandlers)
     const form = document.createElement('form');
     form.method = 'POST';

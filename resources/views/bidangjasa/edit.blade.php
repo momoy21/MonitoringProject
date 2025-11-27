@@ -18,7 +18,7 @@
                 <p class="mb-0">Perbarui informasi bidang jasa {{ $bidangjasa->desc_bidjasa }}</p>
             </div>
             <div class="col-md-6 text-end">
-                <a href="{{ route('bidangjasa.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('bidangjasa.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.bidangJasa) window.StateManagers.bidangJasa.markForRestore();">
                     <i class="bx bx-arrow-back me-1"></i> Kembali
                 </a>
             </div>
@@ -77,7 +77,7 @@
 
                         <!-- Buttons -->
                         <div class="d-flex justify-content-end gap-3 mt-4">
-                            <a href="{{ route('bidangjasa.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('bidangjasa.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.bidangJasa) window.StateManagers.bidangJasa.markForRestore();">
                                 <i class="bx bx-x me-1"></i> Batal
                             </a>
                             <button type="button" class="btn btn-outline-warning" onclick="window.resetForm()">
@@ -96,7 +96,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/bidangjasa.js') }}"></script>
+    <script src="{{ asset('js/bidangjasa.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Set data original untuk reset function

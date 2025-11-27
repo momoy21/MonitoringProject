@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <!-- Add Button -->
-                    <a href="{{ route('spesifikasirab.create') }}" class="btn btn-primary">
+                    <a href="{{ route('spesifikasirab.create') }}" class="btn btn-primary" onclick="if(window.StateManagers?.spesifikasiRAB) window.StateManagers.spesifikasiRAB.clearState();">
                         <i class="bx bx-plus me-1"></i> Tambah
                     </a>
                 </div>
@@ -192,7 +192,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/spesifikasirab.js') }}"></script>
+    <script src="{{ asset('js/spesifikasirab.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
         // Initialize spesifikasi RAB manager dengan konfigurasi untuk halaman index

@@ -115,9 +115,15 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/summaryrab.js') }}"></script>
+    <script src="{{ asset('js/summaryrab.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
+        // Clear state when creating new summary RAB
+        if (window.StateManagers?.summaryRAB) {
+            window.StateManagers.summaryRAB.clearState();
+            console.log('State cleared on create page load');
+        }
+
         // Initialize summary RAB manager untuk halaman create
         window.summaryRABManager = new SummaryRABManager();
 

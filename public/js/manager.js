@@ -1,5 +1,6 @@
 class ManagerManager {
     constructor() {
+        this.stateManager = window.StateManagers?.masterManager;
         this.currentPage = 1;
         this.totalPages = 1;
         this.perPage = 10;
@@ -17,6 +18,26 @@ class ManagerManager {
         this.currentSearch = config.currentSearch || '';
         this.pageType = config.pageType || 'index';
 
+        let shouldLoadData = false;
+
+        // Try to restore state for index page
+        if (this.pageType === 'index' && this.stateManager) {
+            const savedState = this.stateManager.getState();
+            if (savedState && this.stateManager.shouldRestoreState()) {
+                this.currentPage = savedState.currentPage || this.currentPage;
+                this.currentSearch = savedState.currentSearch || this.currentSearch;
+                this.perPage = savedState.perPage || this.perPage;
+
+                // Update UI with restored state
+                if ($('#searchInput').length) $('#searchInput').val(this.currentSearch);
+                if ($('#perPageSelect').length) $('#perPageSelect').val(this.perPage);
+
+                shouldLoadData = true;
+                this.stateManager.clearRestoreFlag();
+                console.log('State restored:', savedState);
+            }
+        }
+
         this.bindEvents();
 
         if (this.pageType === 'index') {
@@ -32,6 +53,10 @@ class ManagerManager {
         // Initialize form submission for create/edit pages
         if (this.pageType === 'create' || this.pageType === 'edit') {
             this.initFormSubmission();
+        }
+
+        if (shouldLoadData) {
+            this.loadData();
         }
     }
 
@@ -141,6 +166,13 @@ class ManagerManager {
 
                 if (response.success) {
                     this.showAlert(response.message || 'Data berhasil disimpan!', 'success');
+
+                    // Mark for restore only if editing
+                    const isEdit = this.pageType === 'edit';
+                    if (isEdit && this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('Marked for restore (edit mode)');
+                    }
 
                     // Redirect to index after short delay
                     setTimeout(() => {
@@ -270,6 +302,16 @@ class ManagerManager {
 
         this.isLoading = true;
         this.showTableLoading();
+
+        // Save state
+        if (this.stateManager) {
+            this.stateManager.saveState({
+                currentPage: this.currentPage,
+                currentSearch: this.currentSearch,
+                perPage: this.perPage
+            });
+            console.log('State saved:', this.stateManager.getState());
+        }
 
         const params = {
             page: this.currentPage,
@@ -506,6 +548,13 @@ class ManagerManager {
                 $('#deleteConfirmModal').modal('hide');
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // Mark for restore after delete
+                    if (this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('Marked for restore (after delete)');
+                    }
+
                     setTimeout(() => {
                         this.loadData();
                     }, 1000);

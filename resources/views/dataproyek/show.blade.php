@@ -45,7 +45,7 @@
                         </a>
                     @endif
                     <!-- Back Button -->
-                    <a href="{{ route('dataproyek.index') }}" class="btn btn-outline-secondary">
+                    <a href="{{ route('dataproyek.index') }}" class="btn btn-outline-secondary" onclick="if(window.StateManagers?.dataProyek) window.StateManagers.dataProyek.markForRestore();">
                         <i class="bx bx-arrow-back me-1"></i> Kembali
                     </a>
                 </div>
@@ -386,7 +386,7 @@
 
     @push('scripts')
         <script src="{{ asset('js/file-preview.js') }}"></script>
-        <script src="{{ asset('js/dataproyek.js') }}"></script>
+        <script src="{{ asset('js/dataproyek.js') }}?v={{ time() }}"></script>
         <script>
         // Function untuk edit data proyek utama (double click pada ID)
         function editDataProyek(idProject) {

@@ -4,6 +4,7 @@ class KonsumenManager {
         this.isSubmitting = false;
         this.searchTimeout = null;
         this.deleteTargetId = null;
+        this.stateManager = window.StateManagers?.konsumen;
 
         // Pagination variables (for index page)
         this.currentPage = 1;
@@ -23,11 +24,29 @@ class KonsumenManager {
     init(config = {}) {
         this.setConfig(config);
         this.loadAllCities();
+
+        let shouldLoadData = false;
+        if (config.pageType === 'index' && this.stateManager) {
+            const savedState = this.stateManager.getState();
+            if (savedState && this.stateManager.shouldRestoreState()) {
+                this.currentPage = savedState.currentPage || 1;
+                this.currentSearch = savedState.currentSearch || '';
+                this.perPage = savedState.perPage || 10;
+                $('#searchInput').val(this.currentSearch);
+                $('#perPageSelect').val(this.perPage);
+                this.stateManager.clearRestoreFlag();
+                shouldLoadData = true;
+            }
+        }
+
         this.initializeEventHandlers();
 
         // Initialize page-specific functions
         if (config.pageType === 'index') {
             this.updatePaginationButtons();
+            if (shouldLoadData) {
+                this.loadKonsumenData();
+            }
         }
     }
 
@@ -367,6 +386,14 @@ class KonsumenManager {
             success: (response) => {
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // Mark for restore only if editing
+                    const isEdit = $('#konsumenForm').find('input[name="_method"]').val() === 'PUT';
+                    if (isEdit && this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('Marked for restore (edit mode)');
+                    }
+
                     setTimeout(() => {
                         const konsumenIndexRoute = window.Laravel?.routes?.konsumenIndex || '/konsumen';
                         window.location.href = konsumenIndexRoute;
@@ -424,6 +451,16 @@ class KonsumenManager {
             per_page: this.perPage,
             page: this.currentPage
         };
+
+        // Save state
+        if (this.stateManager) {
+            this.stateManager.saveState({
+                currentPage: this.currentPage,
+                currentSearch: this.currentSearch,
+                perPage: this.perPage
+            });
+            console.log('State saved:', this.stateManager.getState());
+        }
 
         const konsumenIndexRoute = window.Laravel?.routes?.konsumenIndex || '/konsumen';
 
@@ -699,6 +736,13 @@ class KonsumenManager {
                 $('#deleteConfirmModal').modal('hide');
                 if (response.success) {
                     this.showAlert(response.message, 'success');
+
+                    // Mark for restore after delete
+                    if (this.stateManager) {
+                        this.stateManager.markForRestore();
+                        console.log('Marked for restore (after delete)');
+                    }
+
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
