@@ -75,7 +75,9 @@ $(document).ready(function() {
     };
 
     function checkUserRole() {
-        isReadOnly = window.userRole !== 'Super Admin';
+        // Project Manager dan Super Admin dapat melakukan tambah, edit, hapus
+        const allowedRoles = ['Super Admin', 'Project Manager'];
+        isReadOnly = !allowedRoles.includes(window.userRole);
     }
 
     function loadBeritaAcaraData() {

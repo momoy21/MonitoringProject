@@ -68,13 +68,13 @@ class BeritaAcaraProjectController extends Controller
      */
     public function store(Request $request)
     {
-        // Check if user is Super Admin
+        // Check if user is Super Admin or Project Manager
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user || !$user->hasRole('Super Admin')) {
+        if (!$user || !$user->hasAnyRole(['Super Admin', 'Project Manager'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya Super Admin yang dapat membuat Berita Acara'
+                'message' => 'Hanya Super Admin dan Project Manager yang dapat membuat Berita Acara'
             ], 403);
         }
 
@@ -147,13 +147,13 @@ class BeritaAcaraProjectController extends Controller
      */
     public function update(Request $request, $noBA)
     {
-        // Check if user is Super Admin
+        // Check if user is Super Admin or Project Manager
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user || !$user->hasRole('Super Admin')) {
+        if (!$user || !$user->hasAnyRole(['Super Admin', 'Project Manager'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya Super Admin yang dapat mengubah Berita Acara'
+                'message' => 'Hanya Super Admin dan Project Manager yang dapat mengubah Berita Acara'
             ], 403);
         }
 
@@ -207,13 +207,13 @@ class BeritaAcaraProjectController extends Controller
      */
     public function updateStatus(Request $request)
     {
-        // Check if user is Super Admin
+        // Check if user is Super Admin or Project Manager
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user || !$user->hasRole('Super Admin')) {
+        if (!$user || !$user->hasAnyRole(['Super Admin', 'Project Manager'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya Super Admin yang dapat mengubah status'
+                'message' => 'Hanya Super Admin dan Project Manager yang dapat mengubah status'
             ], 403);
         }
 
@@ -253,13 +253,13 @@ class BeritaAcaraProjectController extends Controller
      */
     public function destroy(Request $request, $noBA)
     {
-        // Check if user is Super Admin
+        // Check if user is Super Admin or Project Manager
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user || !$user->hasRole('Super Admin')) {
+        if (!$user || !$user->hasAnyRole(['Super Admin', 'Project Manager'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya Super Admin yang dapat menghapus Berita Acara'
+                'message' => 'Hanya Super Admin dan Project Manager yang dapat menghapus Berita Acara'
             ], 403);
         }
 

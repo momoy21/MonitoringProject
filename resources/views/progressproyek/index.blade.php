@@ -124,7 +124,7 @@
                             <div class="tab-pane fade" id="content-ba" role="tabpanel" aria-labelledby="tab-ba">
                                 <div class="d-flex justify-content-between align-items-center mb-3" id="baHeaderControls" style="display: none !important;">
                                     <h5 class="mb-0">Daftar Berita Acara</h5>
-                                    @if(Auth::user()->hasRole('Super Admin'))
+                                    @if(Auth::user()->hasAnyRole(['Super Admin', 'Project Manager']))
                                     <button type="button" class="btn btn-primary btn-sm" id="btnAddBA">
                                         <i class="bx bx-plus me-1"></i>Tambah Berita Acara
                                     </button>
