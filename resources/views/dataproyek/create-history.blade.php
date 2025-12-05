@@ -72,11 +72,14 @@
                             <div class="mb-3">
                                 <label for="dokumen_io" class="form-label">Dokumen IO</label>
                                 <input type="text" class="form-control number-only @error('dokumen_io') is-invalid @enderror"
-                                       id="dokumen_io" name="dokumen_io" value="{{ old('dokumen_io') }}"
+                                       id="dokumen_io" name="dokumen_io" value="{{ old('dokumen_io', $parentProject->dokumen_io) }}"
                                        placeholder="9 digit angka" maxlength="9">
                                 @error('dokumen_io')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                @if($parentProject->dokumen_io)
+                                    <small class="text-muted">Auto filled dari proyek induk (dapat diedit)</small>
+                                @endif
                             </div>
                         </div>
 
