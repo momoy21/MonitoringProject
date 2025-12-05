@@ -306,7 +306,7 @@ class RABController extends Controller
     {
         $request->validate([
             'project_id' => 'required',
-            'document_rab' => 'required|file|mimes:xls,xlsx,csv|max:10240'
+            'document_rab' => 'required|file|mimes:xls,xlsx,csv|max:25600'
         ]);
 
         try {

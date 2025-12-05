@@ -210,7 +210,7 @@ class DataProyekController extends Controller
             'penanggung_jawab' => 'nullable|exists:master_manager,nik',
             'nilai_proyek' => 'nullable|numeric|min:0',
             'status' => 'required|in:O,I,C,P,F',
-            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:10240',
+            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:25600',
             'id_konsumen' => 'required|exists:konsumen,id_konsumen',
             'id_bidjasa' => 'required|exists:bidangjasa,id_bidjasa',
             'id_kondisi_proyek' => 'required|exists:kondisiproyek,id_kondisi_proyek',
@@ -343,7 +343,7 @@ class DataProyekController extends Controller
             'penanggung_jawab' => 'nullable|exists:master_manager,nik',
             'nilai_proyek' => 'nullable|numeric|min:0',
             'status' => 'required|in:O,I,C,P,F',
-            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:10240',
+            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:25600',
             'id_konsumen' => 'required|exists:konsumen,id_konsumen',
             'id_bidjasa' => 'required|exists:bidangjasa,id_bidjasa',
             'id_kondisi_proyek' => 'required|exists:kondisiproyek,id_kondisi_proyek',
@@ -719,7 +719,7 @@ class DataProyekController extends Controller
             'nilai_proyek' => 'nullable|numeric|min:0',
             'status' => 'required|in:O,I,C,P,F',
             'keterangan' => 'nullable|string|max:255',
-            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:10240'
+            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:25600'
         ]);
 
         if ($validator->fails()) {
@@ -869,7 +869,7 @@ class DataProyekController extends Controller
             'nilai_proyek' => 'nullable|numeric|min:0',
             'status' => 'required|in:O,I,C,P,F',
             'keterangan' => 'nullable|in:1,2',
-            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:10240'
+            'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:25600'
         ], [
             'cost_center.required' => 'Cost center harus diisi',
             'namaproject.required' => 'Nama proyek harus diisi',

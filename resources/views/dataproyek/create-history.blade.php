@@ -350,7 +350,7 @@
                                        id="dokumen_kontrak" name="dokumen_kontrak"
                                        accept=".docx,.doc,.pdf,.xlsx,.xls,.pptx,.ppt,.jpg,.jpeg,.png">
                                 <div class="form-text">
-                                    Format: docx, doc, pdf, xlsx, xls, pptx, ppt, jpg, jpeg, png (Max: 10MB)
+                                    Format: docx, doc, pdf, xlsx, xls, pptx, ppt, jpg, jpeg, png (Max: 25MB)
                                 </div>
                                 @error('dokumen_kontrak')
                                     <div class="invalid-feedback">{{ $message }}</div>

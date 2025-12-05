@@ -241,7 +241,7 @@ class PendapatanProyekController extends Controller
             'periode_mulai' => 'nullable|date',
             'periode_akhir' => 'nullable|date|after_or_equal:periode_mulai',
             'nilai_pendapatan' => 'nullable|numeric|min:0',
-            'file_ba' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240'
+            'file_ba' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:25600'
         ]);
 
         try {
@@ -333,7 +333,7 @@ class PendapatanProyekController extends Controller
             'periode_mulai' => 'nullable|date',
             'periode_akhir' => 'nullable|date|after_or_equal:periode_mulai',
             'nilai_pendapatan' => 'nullable|numeric|min:0',
-            'file_ba' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240'
+            'file_ba' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:25600'
         ]);
 
         try {

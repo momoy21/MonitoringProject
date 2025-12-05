@@ -427,7 +427,7 @@ $(document).ready(function() {
                                                 </div>` :
                                                 !viewMode ?
                                                 `<input type="file" class="form-control" style="font-size: 0.875rem;" id="pend_file_ba" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
-                                                <small class="text-muted" style="font-size: 0.75rem;">Max 10MB (PDF, DOC, DOCX, XLS, XLSX, JPG, PNG)</small>` :
+                                                <small class="text-muted" style="font-size: 0.75rem;">Max 25MB (PDF, DOC, DOCX, XLS, XLSX, JPG, PNG)</small>` :
                                                 '<p class="text-muted" style="font-size: 0.875rem;">Tidak ada dokumen</p>'
                                             }
                                         </div>

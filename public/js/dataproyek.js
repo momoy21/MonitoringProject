@@ -488,7 +488,7 @@ class DataProyekManager {
                 'image/jpeg', // jpg, jpeg
                 'image/png' // png
             ];
-            const maxSize = 10 * 1024 * 1024; // 10MB
+            const maxSize = 25 * 1024 * 1024; // 25MB
 
             if (file) {
                 // Check file type
@@ -500,7 +500,7 @@ class DataProyekManager {
 
                 // Check file size
                 if (file.size > maxSize) {
-                    window.dataProyekManager.showAlert('Ukuran file maksimal 10MB', 'error');
+                    window.dataProyekManager.showAlert('Ukuran file maksimal 25MB', 'error');
                     $(this).val('');
                     return;
                 }

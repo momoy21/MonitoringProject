@@ -84,7 +84,7 @@
                             <div class="col-md-4 mb-3">
                                 <label for="document_rab" class="form-label">Upload Dokumen RAB</label>
                                 <input type="file" class="form-control" id="document_rab" name="document_rab" accept=".pdf,.doc,.docx,.xls,.xlsx">
-                                <div class="file-upload-info">Format file yang didukung: XLS, XLSX (Max: 10MB)</div>
+                                <div class="file-upload-info">Format file yang didukung: XLS, XLSX (Max: 25MB)</div>
                             </div>
                         </div>
 
