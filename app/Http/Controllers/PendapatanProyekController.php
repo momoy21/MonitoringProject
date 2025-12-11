@@ -30,7 +30,7 @@ class PendapatanProyekController extends Controller
         $search = $request->get('search', '');
 
         // Get Header Progress Proyek that has at least one approved BA (status = '03')
-        $headerProgressList = DB::table('header_progress_proyek as hpp')
+        $query = DB::table('header_progress_proyek as hpp')
             ->select(
                 'hpp.norut',
                 'hpp.id_project',
@@ -40,6 +40,7 @@ class PendapatanProyekController extends Controller
                 'hp.nilai_proyek',
                 'hp.start_kontrak',
                 'hp.finish_kontrak',
+                'hp.id_bidjasa',
                 'k.konsumen',
                 'hr.periode_rab',
                 'hr.lama'
@@ -59,17 +60,32 @@ class PendapatanProyekController extends Controller
                       ->whereColumn('ba.id_project', 'hpp.id_project')
                       ->whereColumn('ba.norut', 'hpp.norut')
                       ->where('ba.status', '03'); // At least one approved BA
-            })
-            ->where(function($query) use ($search) {
+            });
+
+        // Filter by bidang jasa for PM role
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if ($user) {
+            $isSuperAdmin = method_exists($user, 'hasRole') && $user->hasRole('Super Admin');
+            if (!$isSuperAdmin) {
+                $allowedIds = $user->getAllowedBidangJasaIds();
+                if (!empty($allowedIds)) {
+                    $query->whereIn('hp.id_bidjasa', $allowedIds);
+                }
+            }
+        }
+
+        $query->where(function($q) use ($search) {
                 if ($search) {
-                    $query->where('hpp.id_project', 'LIKE', "%{$search}%")
+                    $q->where('hpp.id_project', 'LIKE', "%{$search}%")
                           ->orWhere('hp.namaproject', 'LIKE', "%{$search}%")
                           ->orWhere('hp.cost_center', 'LIKE', "%{$search}%");
                 }
             })
             ->orderBy('hpp.created_at', 'desc')
-            ->limit(50)
-            ->get();
+            ->limit(50);
+
+        $headerProgressList = $query->get();
 
         $results = $headerProgressList->map(function($hpp) {
             $costCenter = $hpp->cost_center ?? '-';
