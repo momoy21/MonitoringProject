@@ -63,7 +63,7 @@ class RABStreamImport
             // Untuk Detail RAB: kolom G sampai G+lamaBulan
             // Untuk Summary: kolom F
             $startCol = 'B'; // Kolom B untuk keterangan
-            $endCol = chr(ord('G') + $this->lamaBulan); // G + lamaBulan
+            $endCol = $this->getColumnLetter(7 + $this->lamaBulan); // G=7, jadi 7+lamaBulan
 
             // Baca range data sekaligus (lebih cepat dari cell by cell)
             $dataRange = $sheet->rangeToArray(
@@ -110,7 +110,7 @@ class RABStreamImport
                     $colIndex = 5 + $j; // G=5, H=6, I=7, dst
                     $cellValue = $rowData[$colIndex] ?? null;
 
-                    $columnLetter = chr(ord('G') + $j);
+                    $columnLetter = $this->getColumnLetter(7 + $j); // G=7
                     $rawValues[] = "[$columnLetter: $cellValue]";
 
                     // Parse nilai dengan pembulatan
@@ -170,5 +170,19 @@ class RABStreamImport
         }
 
         return 0;
+    }
+
+    /**
+     * Convert column number to Excel column letter (1=A, 27=AA, etc.)
+     */
+    private function getColumnLetter($columnNumber)
+    {
+        $letter = '';
+        while ($columnNumber > 0) {
+            $temp = ($columnNumber - 1) % 26;
+            $letter = chr(65 + $temp) . $letter;
+            $columnNumber = (int)(($columnNumber - $temp - 1) / 26);
+        }
+        return $letter;
     }
 }
