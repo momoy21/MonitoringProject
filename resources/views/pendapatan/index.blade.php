@@ -102,7 +102,7 @@
                         <!-- Header Controls -->
                         <div id="pendapatanHeaderControls" class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0"><i class="bx bx-money me-2"></i>Data Pendapatan</h5>
-                            @if(Auth::user()->hasRole('Super Admin'))
+                            @if(Auth::user()->hasAnyRole(['Super Admin', 'Project Manager']))
                             <button type="button" class="btn btn-primary btn-sm" id="btnAddPendapatan">
                                 <i class="bx bx-plus me-1"></i>Tambah Pendapatan
                             </button>

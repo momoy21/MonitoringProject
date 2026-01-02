@@ -74,7 +74,7 @@ $(document).ready(function() {
     });
 
     function checkUserRole() {
-        isReadOnly = window.userRole !== 'Super Admin';
+        isReadOnly = !['Super Admin', 'Project Manager'].includes(window.userRole);
     }
 
     function fillBAInfo(data) {

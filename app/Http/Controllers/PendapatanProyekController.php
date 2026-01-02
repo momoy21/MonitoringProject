@@ -278,6 +278,29 @@ class PendapatanProyekController extends Controller
                 ], 404);
             }
 
+            // Check bidang jasa access for Project Manager
+            if ($user->hasRole('Project Manager')) {
+                $historyProyek = DB::table('history_proyek')
+                    ->where('id_project', $request->id_project)
+                    ->where('norut', $request->norut)
+                    ->first();
+
+                if (!$historyProyek) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Data proyek tidak ditemukan'
+                    ], 404);
+                }
+
+                $allowedIds = $user->getAllowedBidangJasaIds();
+                if (!empty($allowedIds) && !in_array($historyProyek->id_bidjasa, $allowedIds)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak memiliki akses ke proyek ini'
+                    ], 403);
+                }
+            }
+
             // Use provided no_ba or use first approved BA
             $noBA = $request->no_ba ?? $approvedBA->no_ba;
 
@@ -361,6 +384,29 @@ class PendapatanProyekController extends Controller
                 ->where('no_pendapatan', $noPendapatan)
                 ->firstOrFail();
 
+            // Check bidang jasa access for Project Manager
+            if ($user->hasRole('Project Manager')) {
+                $historyProyek = DB::table('history_proyek')
+                    ->where('id_project', $request->id_project)
+                    ->where('norut', $request->norut)
+                    ->first();
+
+                if (!$historyProyek) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Data proyek tidak ditemukan'
+                    ], 404);
+                }
+
+                $allowedIds = $user->getAllowedBidangJasaIds();
+                if (!empty($allowedIds) && !in_array($historyProyek->id_bidjasa, $allowedIds)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak memiliki akses ke proyek ini'
+                    ], 403);
+                }
+            }
+
             $updateData = [
                 'no_dokumen' => $request->no_dokumen,
                 'periode_mulai' => $request->periode_mulai,
@@ -408,10 +454,10 @@ class PendapatanProyekController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user || !$user->hasRole('Super Admin')) {
+        if (!$user || !$user->hasAnyRole(['Super Admin', 'Project Manager'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya Super Admin yang dapat menghapus Pendapatan'
+                'message' => 'Tidak memiliki akses untuk menghapus Pendapatan'
             ], 403);
         }
 
@@ -424,6 +470,29 @@ class PendapatanProyekController extends Controller
                 ->where('id_project', $idProject)
                 ->where('no_pendapatan', $noPendapatan)
                 ->firstOrFail();
+
+            // Check bidang jasa access for Project Manager
+            if ($user->hasRole('Project Manager')) {
+                $historyProyek = DB::table('history_proyek')
+                    ->where('id_project', $idProject)
+                    ->where('norut', $norut)
+                    ->first();
+
+                if (!$historyProyek) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Data proyek tidak ditemukan'
+                    ], 404);
+                }
+
+                $allowedIds = $user->getAllowedBidangJasaIds();
+                if (!empty($allowedIds) && !in_array($historyProyek->id_bidjasa, $allowedIds)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak memiliki akses ke proyek ini'
+                    ], 403);
+                }
+            }
 
             // Delete file if exists
             if ($pendapatan->file_ba) {
