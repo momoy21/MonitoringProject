@@ -65,11 +65,11 @@
         </li>
         @endrole
 
+        @role('Project Manager')
         <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">Transaksi/Operasional</span>
+            <span class="menu-header-text">Master Data</span>
         </li>
 
-        @role('Project Manager')
         <!-- Konsumen - Read Only for PM -->
         <li class="menu-item {{ request()->routeIs('konsumen.*') ? 'active' : '' }}">
             <a href="{{ route('konsumen.index') }}" class="menu-link">
@@ -78,6 +78,10 @@
             </a>
         </li>
         @endrole
+
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">Transaksi/Operasional</span>
+        </li>
 
         <!-- Data Peluang -->
         <li class="menu-item {{ request()->routeIs('datapeluang.*') ? 'active' : '' }}">
