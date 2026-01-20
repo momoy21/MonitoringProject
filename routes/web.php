@@ -15,6 +15,7 @@ use App\Http\Controllers\ProgressProyekController;
 use App\Http\Controllers\BeritaAcaraProjectController;
 use App\Http\Controllers\IssueProyekController;
 use App\Http\Controllers\PendapatanProyekController;
+use App\Http\Controllers\SAPImportController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -270,4 +271,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 });
+
+// SAP Import Routes
+Route::middleware(['auth'])->prefix('sap')->name('sap.')->group(function () {
+    Route::get('/', [SAPImportController::class, 'index'])->name('index');
+    Route::post('/upload', [SAPImportController::class, 'upload'])->name('upload');
+    Route::post('/import-local', [SAPImportController::class, 'importLocal'])->name('importLocal');
+    Route::post('/force-import', [SAPImportController::class, 'forceImport'])->name('forceImport');
+    Route::delete('/truncate', [SAPImportController::class, 'truncate'])->name('truncate');
+    Route::delete('/delete-by-source', [SAPImportController::class, 'deleteBySource'])->name('deleteBySource');
+    Route::get('/source-files', [SAPImportController::class, 'getSourceFiles'])->name('sourceFiles');
+    Route::get('/import-history', [SAPImportController::class, 'getImportHistory'])->name('importHistory');
+    Route::get('/error-logs', [SAPImportController::class, 'getErrorLogs'])->name('errorLogs');
+    Route::get('/import-logs', [SAPImportController::class, 'getImportLogs'])->name('importLogs');
+});
+
 require __DIR__.'/auth.php';

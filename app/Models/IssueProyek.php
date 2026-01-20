@@ -28,6 +28,11 @@ class IssueProyek extends Model
         'tanggal' => 'datetime'
     ];
 
+    protected $attributes = [
+        'issue' => 'Tidak ada issue',
+        'mitigasi' => 'Tidak ada mitigasi',
+    ];
+
     /**
      * Relationship with HistoryProyek
      */
