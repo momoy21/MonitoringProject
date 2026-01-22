@@ -112,10 +112,13 @@ class SAPImportService
 
     /**
      * Cek apakah file sudah pernah diimport (duplikat)
+     * @param string $filePath Path ke file
+     * @param bool $checkByContent Cek berdasarkan hash konten
+     * @param string|null $originalFilename Nama file asli (opsional)
      */
-    protected function isDuplicateFile(string $filePath, bool $checkByContent = true): array
+    protected function isDuplicateFile(string $filePath, bool $checkByContent = true, ?string $originalFilename = null): array
     {
-        $filename = basename($filePath);
+        $filename = $originalFilename ?? basename($filePath);
 
         // 1. Cek berdasarkan nama file di tabel plsap
         $existingByName = Plsap::where('source_file', $filename)->first();
@@ -156,12 +159,16 @@ class SAPImportService
 
     /**
      * Simpan history import untuk tracking
+     * @param string $filePath Path ke file
+     * @param string $status Status import
+     * @param int $recordCount Jumlah record
+     * @param string|null $originalFilename Nama file asli (opsional)
      */
-    protected function recordImportHistory(string $filePath, string $status, int $recordCount = 0): void
+    protected function recordImportHistory(string $filePath, string $status, int $recordCount = 0, ?string $originalFilename = null): void
     {
         try {
             DB::table('sap_import_history')->insert([
-                'filename' => basename($filePath),
+                'filename' => $originalFilename ?? basename($filePath),
                 'file_hash' => $this->getFileHash($filePath),
                 'file_size' => File::size($filePath),
                 'record_count' => $recordCount,
@@ -293,10 +300,14 @@ class SAPImportService
     /**
      * Import data dari file CSV SAP
      * Mode: ALL OR NOTHING - Jika ada satu baris error, seluruh file ditolak
+     * @param string $filePath Path ke file CSV
+     * @param bool $force Force import meskipun sudah ada
+     * @param string|null $originalFilename Nama file asli (opsional, untuk FTP import)
      */
-    public function importFromCSV(string $filePath, bool $force = false): array
+    public function importFromCSV(string $filePath, bool $force = false, ?string $originalFilename = null): array
     {
-        $sourceFile = basename($filePath);
+        // Gunakan originalFilename jika ada, jika tidak gunakan basename dari path
+        $sourceFile = $originalFilename ?? basename($filePath);
 
         $this->logImport($sourceFile, 'STARTED', "Memulai proses import" . ($force ? " (FORCE MODE)" : ""));
 
@@ -324,7 +335,7 @@ class SAPImportService
             // STEP 2: Cek duplikat (skip jika force = true)
             // ================================================================
             if (!$force) {
-                $duplicateCheck = $this->isDuplicateFile($filePath);
+                $duplicateCheck = $this->isDuplicateFile($filePath, true, $sourceFile);
                 if ($duplicateCheck['is_duplicate']) {
                     $this->logImport($sourceFile, 'DUPLICATE', $duplicateCheck['message']);
 
@@ -550,8 +561,8 @@ class SAPImportService
 
                 DB::commit();
 
-                // Record import history
-                $this->recordImportHistory($filePath, 'SUCCESS', $importedCount);
+                // Record import history (use original filename)
+                $this->recordImportHistory($filePath, 'SUCCESS', $importedCount, $sourceFile);
 
                 // Build success message
                 $message = "Import berhasil! {$importedCount} record diimport dari total {$rowCount} baris.";

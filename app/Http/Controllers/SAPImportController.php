@@ -4,18 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Plsap;
 use App\Services\SAPImportService;
+use App\Services\FtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class SAPImportController extends Controller
 {
     protected SAPImportService $importService;
+    protected FtpService $ftpService;
 
-    public function __construct(SAPImportService $importService)
+    public function __construct(SAPImportService $importService, FtpService $ftpService)
     {
         $this->importService = $importService;
+        $this->ftpService = $ftpService;
     }
 
     /**
@@ -64,110 +67,6 @@ class SAPImportController extends Controller
         }
 
         return view('sap.index', compact('data', 'stats'));
-    }
-
-    /**
-     * Upload dan import file CSV via form upload
-     */
-    public function upload(Request $request)
-    {
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:51200'
-        ]);
-
-        try {
-            $file = $request->file('csv_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-
-            $path = $file->storeAs('temp/sap', $filename, 'local');
-            $fullPath = storage_path('app/' . $path);
-
-            Log::info('SAP Upload - File saved to: ' . $fullPath);
-
-            $force = $request->boolean('force', false);
-            $result = $this->importService->importFromCSV($fullPath, $force);
-
-            // Hapus file temporary
-            if (Storage::disk('local')->exists($path)) {
-                Storage::disk('local')->delete($path);
-            }
-
-            $httpStatus = $result['success'] ? 200 : (($result['error_type'] ?? '') === 'DUPLICATE_FILE' ? 409 : 422);
-
-            return response()->json($result, $httpStatus);
-
-        } catch (\Exception $e) {
-            Log::error('SAP Upload Error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'error_type' => 'UPLOAD_ERROR',
-                'message' => 'Gagal upload file: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Import dari path lokal
-     */
-    public function importLocal(Request $request)
-    {
-        $request->validate([
-            'file_path' => 'required|string',
-            'force' => 'nullable'
-        ]);
-
-        $filePath = $request->input('file_path');
-        $filePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $filePath);
-
-        Log::info('SAP Import Local - Path: ' . $filePath);
-
-        if (!file_exists($filePath)) {
-            return response()->json([
-                'success' => false,
-                'error_type' => 'FILE_NOT_FOUND',
-                'message' => "File tidak ditemukan: {$filePath}"
-            ], 404);
-        }
-
-        if (!is_readable($filePath)) {
-            return response()->json([
-                'success' => false,
-                'error_type' => 'FILE_NOT_READABLE',
-                'message' => "File tidak dapat dibaca: {$filePath}"
-            ], 403);
-        }
-
-        // Check force parameter (bisa dari checkbox atau boolean)
-        $force = $request->boolean('force', false) || $request->input('force') === 'on';
-
-        $result = $this->importService->importFromCSV($filePath, $force);
-
-        $httpStatus = $result['success'] ? 200 : (($result['error_type'] ?? '') === 'DUPLICATE_FILE' ? 409 : 422);
-
-        return response()->json($result, $httpStatus);
-    }
-
-    /**
-     * Force import
-     */
-    public function forceImport(Request $request)
-    {
-        $request->validate([
-            'file_path' => 'required|string'
-        ]);
-
-        $filePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $request->input('file_path'));
-
-        if (!file_exists($filePath)) {
-            return response()->json([
-                'success' => false,
-                'message' => "File tidak ditemukan: {$filePath}"
-            ], 404);
-        }
-
-        $result = $this->importService->forceImportFromCSV($filePath);
-
-        return response()->json($result);
     }
 
     /**
@@ -276,6 +175,123 @@ class SAPImportController extends Controller
         return response()->json([
             'success' => true,
             'data' => $files
+        ]);
+    }
+
+    // ========================================================================
+    // FTP METHODS
+    // ========================================================================
+
+    /**
+     * Test FTP connection
+     */
+    public function testFtpConnection()
+    {
+        $result = $this->ftpService->testConnection();
+        $connectionInfo = $this->ftpService->getConnectionInfo();
+
+        return response()->json([
+            ...$result,
+            'connection_info' => $connectionInfo
+        ], $result['success'] ? 200 : 500);
+    }
+
+    /**
+     * List files from FTP server
+     */
+    public function listFtpFiles(Request $request)
+    {
+        $directory = $request->get('directory', '/');
+        
+        $result = $this->ftpService->listCsvFiles($directory);
+        
+        // Add import status for each file
+        if ($result['success'] && !empty($result['files'])) {
+            foreach ($result['files'] as &$file) {
+                $file['already_imported'] = Plsap::where('source_file', $file['name'])->exists();
+            }
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Import file from FTP
+     */
+    public function importFromFtp(Request $request)
+    {
+        $request->validate([
+            'ftp_path' => 'required|string',
+            'force' => 'nullable'
+        ]);
+
+        $ftpPath = $request->input('ftp_path');
+        $force = $request->boolean('force', false) || $request->input('force') === 'on';
+
+        Log::info('SAP Import FTP - Path: ' . $ftpPath, ['force' => $force]);
+
+        try {
+            // Step 1: Download file dari FTP ke temp folder
+            $downloadResult = $this->ftpService->downloadToTemp($ftpPath);
+
+            if (!$downloadResult['success']) {
+                return response()->json([
+                    'success' => false,
+                    'error_type' => 'FTP_DOWNLOAD_ERROR',
+                    'message' => $downloadResult['message']
+                ], 422);
+            }
+
+            $tempPath = $downloadResult['temp_path'];
+            $filename = $downloadResult['filename'];
+
+            // Step 2: Import file menggunakan SAPImportService
+            // Pass original filename agar source_file tercatat dengan nama asli
+            $result = $this->importService->importFromCSV($tempPath, $force, $filename);
+
+            // Step 3: Cleanup temp file
+            if (File::exists($tempPath)) {
+                File::delete($tempPath);
+            }
+
+            $httpStatus = $result['success'] ? 200 : (($result['error_type'] ?? '') === 'DUPLICATE_FILE' ? 409 : 422);
+
+            return response()->json($result, $httpStatus);
+
+        } catch (\Exception $e) {
+            Log::error('SAP FTP Import Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error_type' => 'FTP_IMPORT_ERROR',
+                'message' => 'Gagal import dari FTP: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get FTP directories
+     */
+    public function getFtpDirectories(Request $request)
+    {
+        $directory = $request->get('directory', '/');
+        $result = $this->ftpService->listDirectories($directory);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get FTP connection info
+     */
+    public function getFtpInfo()
+    {
+        $info = $this->ftpService->getConnectionInfo();
+        $testResult = $this->ftpService->testConnection();
+
+        return response()->json([
+            'success' => true,
+            'info' => $info,
+            'status' => $testResult['success'] ? 'connected' : 'disconnected',
+            'status_message' => $testResult['message']
         ]);
     }
 }

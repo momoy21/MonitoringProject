@@ -93,55 +93,51 @@
             </div>
         </div>
 
-        <!-- Import Section -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bx bx-upload me-2"></i>Upload File CSV</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="uploadForm" enctype="multipart/form-data">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="csv_file" class="form-label">Pilih File CSV SAP</label>
-                                <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv,.txt">
-                                <div class="form-text">Format: CSV dengan header InternalOrder, CCProjek, dll.</div>
-                            </div>
-                            <button type="submit" class="btn btn-primary" id="btnUpload">
-                                <i class="bx bx-upload me-1"></i> Upload & Import
-                            </button>
-                        </form>
-                    </div>
+        <!-- FTP Import Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0"><i class="bx bx-server me-2"></i>Import dari FTP Server</h5>
+                    <small class="text-muted" id="ftpConnectionInfo">Checking connection...</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnRefreshFtp">
+                        <i class="bx bx-refresh me-1"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm" id="btnTestFtp">
+                        <i class="bx bx-plug me-1"></i> Test Koneksi
+                    </button>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bx bx-folder-open me-2"></i>Import dari Path Lokal</h5>
+            <div class="card-body">
+                <div class="mb-3 d-flex gap-2 align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="ftpForceImport">
+                        <label class="form-check-label" for="ftpForceImport">
+                            <strong>Force Import</strong> (import ulang jika sudah ada)
+                        </label>
                     </div>
-                    <div class="card-body">
-                        <form id="localImportForm">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="file_path" class="form-label">Path File CSV</label>
-                                <input type="text" class="form-control" id="file_path" name="file_path"
-                                       placeholder="D:\CSV\SAPIO03122025.csv" value="D:\CSV\SAPIO03122025.csv">
-                                <div class="form-text">Masukkan path lengkap ke file CSV</div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="forceImport" name="force">
-                                    <label class="form-check-label" for="forceImport">
-                                        <strong>Force Import</strong> (hapus data lama jika duplikat)
-                                    </label>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-success" id="btnImportLocal">
-                                <i class="bx bx-import me-1"></i> Import dari Path
-                            </button>
-                        </form>
-                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="ftpFilesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 40%;">Nama File</th>
+                                <th>Ukuran</th>
+                                <th>Terakhir Diubah</th>
+                                <th>Status</th>
+                                <th style="width: 120px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ftpFilesBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="bx bx-loader bx-spin" style="font-size: 24px;"></i>
+                                    <p class="text-muted mt-2 mb-0">Memuat daftar file dari FTP...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -266,81 +262,181 @@
     <script>
     $(document).ready(function() {
         loadSourceFiles();
+        loadFtpFiles();
+        checkFtpConnection();
 
-        // Upload form
-        $('#uploadForm').on('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const btn = $('#btnUpload');
-            const originalText = btn.html();
-
-            btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin me-1"></i> Mengupload...');
-
-            $.ajax({
-                url: '{{ route("sap.upload") }}',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    showAlert(response.message, 'success');
-                    loadSourceFiles();
-                    setTimeout(() => location.reload(), 1500);
-                },
-                error: function(xhr) {
-                    const response = xhr.responseJSON || {};
-                    let alertType = 'danger';
-
-                    if (response.error_type === 'DUPLICATE_FILE') {
-                        alertType = 'warning';
-                    }
-
-                    showAlert(response.message || 'Gagal upload', alertType);
-                },
-                complete: function() {
-                    btn.prop('disabled', false).html(originalText);
+        // ================================================================
+        // FTP FUNCTIONS
+        // ================================================================
+        
+        // Check FTP connection on load
+        function checkFtpConnection() {
+            $.get('{{ route("sap.ftp.info") }}', function(response) {
+                if (response.success) {
+                    const info = response.info;
+                    const statusClass = response.status === 'connected' ? 'text-success' : 'text-danger';
+                    const statusIcon = response.status === 'connected' ? 'bx-check-circle' : 'bx-x-circle';
+                    $('#ftpConnectionInfo').html(`
+                        <i class="bx ${statusIcon} ${statusClass}"></i> 
+                        ${info.host}:${info.port} - ${response.status_message}
+                    `);
                 }
+            }).fail(function() {
+                $('#ftpConnectionInfo').html('<i class="bx bx-x-circle text-danger"></i> Tidak dapat memeriksa koneksi FTP');
+            });
+        }
+
+        // Load FTP files
+        function loadFtpFiles() {
+            $('#ftpFilesBody').html(`
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <i class="bx bx-loader bx-spin" style="font-size: 24px;"></i>
+                        <p class="text-muted mt-2 mb-0">Memuat daftar file dari FTP...</p>
+                    </td>
+                </tr>
+            `);
+
+            $.get('{{ route("sap.ftp.files") }}', function(response) {
+                if (response.success && response.files && response.files.length > 0) {
+                    let html = '';
+                    response.files.forEach(function(file) {
+                        const statusBadge = file.already_imported 
+                            ? '<span class="badge bg-label-success">Sudah Diimport</span>'
+                            : '<span class="badge bg-label-warning">Belum Diimport</span>';
+                        
+                        const importBtnClass = file.already_imported ? 'btn-outline-secondary' : 'btn-primary';
+                        const importBtnText = file.already_imported ? 'Re-import' : 'Import';
+                        
+                        html += `
+                            <tr>
+                                <td>
+                                    <i class="bx bx-file text-primary me-1"></i>
+                                    <strong>${file.name}</strong>
+                                </td>
+                                <td>${file.size_formatted}</td>
+                                <td>${file.last_modified || '-'}</td>
+                                <td>${statusBadge}</td>
+                                <td>
+                                    <button type="button" class="btn ${importBtnClass} btn-sm btn-ftp-import"
+                                            data-path="${file.path}" data-name="${file.name}" data-imported="${file.already_imported}">
+                                        <i class="bx bx-import me-1"></i> ${importBtnText}
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    $('#ftpFilesBody').html(html);
+                    bindFtpImportButtons();
+                } else {
+                    let message = response.message || 'Tidak ada file CSV/TXT di folder FTP';
+                    $('#ftpFilesBody').html(`
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <i class="bx bx-folder-open" style="font-size: 48px; color: #d9dee3;"></i>
+                                <p class="text-muted mt-2 mb-0">${message}</p>
+                            </td>
+                        </tr>
+                    `);
+                }
+            }).fail(function(xhr) {
+                const response = xhr.responseJSON || {};
+                $('#ftpFilesBody').html(`
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="bx bx-error-circle text-danger" style="font-size: 48px;"></i>
+                            <p class="text-danger mt-2 mb-0">Gagal koneksi ke FTP Server</p>
+                            <small class="text-muted">${response.message || 'Periksa konfigurasi FTP'}</small>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // Bind import buttons
+        function bindFtpImportButtons() {
+            $('.btn-ftp-import').off('click').on('click', function() {
+                const btn = $(this);
+                const ftpPath = btn.data('path');
+                const fileName = btn.data('name');
+                const alreadyImported = btn.data('imported');
+                const forceImport = $('#ftpForceImport').is(':checked');
+
+                // Confirm jika sudah diimport dan tidak force
+                if (alreadyImported && !forceImport) {
+                    if (!confirm(`File "${fileName}" sudah pernah diimport. Lanjutkan import ulang?`)) {
+                        return;
+                    }
+                }
+
+                const originalText = btn.html();
+                btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i>');
+
+                $.ajax({
+                    url: '{{ route("sap.ftp.import") }}',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        ftp_path: ftpPath,
+                        force: forceImport || alreadyImported
+                    },
+                    success: function(response) {
+                        let message = response.message;
+                        if (response.ftp_moved) {
+                            message += '<br><small class="text-success">File dipindahkan ke: ' + response.ftp_new_path + '</small>';
+                        }
+                        showAlert(message, 'success');
+                        loadFtpFiles();
+                        loadSourceFiles();
+                        setTimeout(() => location.reload(), 2000);
+                    },
+                    error: function(xhr) {
+                        const response = xhr.responseJSON || {};
+                        let alertType = 'danger';
+                        let message = response.message || 'Gagal import dari FTP';
+
+                        if (response.error_type === 'DUPLICATE_FILE') {
+                            alertType = 'warning';
+                            message += '<br><small>Centang "Force Import" untuk import ulang.</small>';
+                        }
+
+                        showAlert(message, alertType);
+                        btn.prop('disabled', false).html(originalText);
+                    }
+                });
+            });
+        }
+
+        // Refresh FTP files
+        $('#btnRefreshFtp').on('click', function() {
+            loadFtpFiles();
+            checkFtpConnection();
+        });
+
+        // Test FTP connection
+        $('#btnTestFtp').on('click', function() {
+            const btn = $(this);
+            const originalText = btn.html();
+            btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin me-1"></i> Testing...');
+
+            $.get('{{ route("sap.ftp.test") }}', function(response) {
+                if (response.success) {
+                    showAlert('Koneksi FTP berhasil! ' + (response.file_count || 0) + ' file ditemukan.', 'success');
+                } else {
+                    showAlert('Koneksi FTP gagal: ' + response.message, 'danger');
+                }
+                checkFtpConnection();
+            }).fail(function(xhr) {
+                const response = xhr.responseJSON || {};
+                showAlert('Koneksi FTP gagal: ' + (response.message || 'Unknown error'), 'danger');
+            }).always(function() {
+                btn.prop('disabled', false).html(originalText);
             });
         });
 
-        // Local import form
-        $('#localImportForm').on('submit', function(e) {
-            e.preventDefault();
-            const btn = $('#btnImportLocal');
-            const originalText = btn.html();
-
-            btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin me-1"></i> Mengimport...');
-
-            $.ajax({
-                url: '{{ route("sap.importLocal") }}',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    file_path: $('#file_path').val(),
-                    force: $('#forceImport').is(':checked')
-                },
-                success: function(response) {
-                    showAlert(response.message, 'success');
-                    loadSourceFiles();
-                    setTimeout(() => location.reload(), 1500);
-                },
-                error: function(xhr) {
-                    const response = xhr.responseJSON || {};
-                    let alertType = 'danger';
-                    let message = response.message || 'Gagal import';
-
-                    if (response.error_type === 'DUPLICATE_FILE') {
-                        alertType = 'warning';
-                        message += '<br><small>Centang "Force Import" untuk import ulang.</small>';
-                    }
-
-                    showAlert(message, alertType);
-                },
-                complete: function() {
-                    btn.prop('disabled', false).html(originalText);
-                }
-            });
-        });
+        // ================================================================
+        // OTHER FUNCTIONS
+        // ================================================================
 
         // Truncate all
         $('#btnTruncateAll').on('click', function() {
