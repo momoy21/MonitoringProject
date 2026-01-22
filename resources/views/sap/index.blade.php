@@ -146,9 +146,14 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bx bx-file me-2"></i>File yang Sudah Diimport</h5>
-                <button type="button" class="btn btn-outline-danger btn-sm" id="btnTruncateAll">
-                    <i class="bx bx-trash me-1"></i> Hapus Semua Data
-                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnRefreshSourceFiles">
+                        <i class="bx bx-refresh me-1"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="btnTruncateAll">
+                        <i class="bx bx-trash me-1"></i> Hapus Semua Data
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -176,9 +181,12 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bx bx-table me-2"></i>Data SAP</h5>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 align-items-center">
                     <input type="text" class="form-control form-control-sm" id="searchInput"
                            placeholder="Cari..." style="width: 200px;">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnRefreshData">
+                        <i class="bx bx-refresh me-1"></i> Refresh
+                    </button>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -230,33 +238,121 @@
 
     <!-- Logs Modal -->
     <div class="modal fade" id="logsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Import & Error Logs</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="bx bx-terminal me-2"></i>Import & Error Logs</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <ul class="nav nav-tabs" role="tablist">
-                        <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#importLogsTab">Import Logs</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#errorLogsTab">Error Logs</button>
-                        </li>
-                    </ul>
-                    <div class="tab-content mt-3">
-                        <div class="tab-pane fade show active" id="importLogsTab">
-                            <pre id="importLogsContent" class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 12px;">Loading...</pre>
-                        </div>
-                        <div class="tab-pane fade" id="errorLogsTab">
-                            <pre id="errorLogsContent" class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 12px;">Loading...</pre>
+                <div class="modal-body p-0">
+                    <!-- Log Toolbar -->
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
+                        <ul class="nav nav-pills" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#importLogsTab">
+                                    <i class="bx bx-import me-1"></i> Import Logs
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#errorLogsTab">
+                                    <i class="bx bx-error me-1"></i> Error Logs
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#autoImportLogsTab">
+                                    <i class="bx bx-time me-1"></i> Auto Import Logs
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="d-flex gap-2">
+                            <input type="date" class="form-control form-control-sm" id="logDate" 
+                                   value="{{ date('Y-m-d') }}" style="width: 150px;">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnRefreshLogs">
+                                <i class="bx bx-refresh"></i>
+                            </button>
                         </div>
                     </div>
+                    
+                    <!-- Log Content -->
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="importLogsTab">
+                            <div class="log-container">
+                                <div class="log-header d-flex justify-content-between align-items-center px-3 py-2 bg-success bg-opacity-10 border-bottom">
+                                    <span><i class="bx bx-check-circle text-success me-1"></i> <strong>Import Activity Log</strong></span>
+                                    <small class="text-muted" id="importLogDate">{{ date('d/m/Y') }}</small>
+                                </div>
+                                <pre id="importLogsContent" class="log-content m-0">Loading...</pre>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="errorLogsTab">
+                            <div class="log-container">
+                                <div class="log-header d-flex justify-content-between align-items-center px-3 py-2 bg-danger bg-opacity-10 border-bottom">
+                                    <span><i class="bx bx-error-circle text-danger me-1"></i> <strong>Error Log</strong></span>
+                                    <small class="text-muted" id="errorLogDate">{{ date('d/m/Y') }}</small>
+                                </div>
+                                <pre id="errorLogsContent" class="log-content m-0">Loading...</pre>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="autoImportLogsTab">
+                            <div class="log-container">
+                                <div class="log-header d-flex justify-content-between align-items-center px-3 py-2 bg-info bg-opacity-10 border-bottom">
+                                    <span><i class="bx bx-time text-info me-1"></i> <strong>Auto Import Log (Scheduler)</strong></span>
+                                    <small class="text-muted">storage/logs/sap-auto-import.log</small>
+                                </div>
+                                <pre id="autoImportLogsContent" class="log-content m-0">Loading...</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <small class="text-muted me-auto">
+                        <i class="bx bx-info-circle"></i> Log disimpan di: storage/app/sap/LOG/
+                    </small>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+    .log-content {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #a8dadc;
+        padding: 1rem;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        max-height: 450px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .log-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    .log-content::-webkit-scrollbar-track {
+        background: #1a1a2e;
+    }
+    .log-content::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 4px;
+    }
+    .log-content::-webkit-scrollbar-thumb:hover {
+        background: #718096;
+    }
+    .log-container {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        margin: 1rem;
+        overflow: hidden;
+    }
+    .nav-pills .nav-link {
+        color: #6c757d;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #696cff;
+    }
+    </style>
 
     @push('scripts')
     <script>
@@ -438,6 +534,19 @@
         // OTHER FUNCTIONS
         // ================================================================
 
+        // Refresh Source Files
+        $('#btnRefreshSourceFiles').on('click', function() {
+            const btn = $(this);
+            btn.find('i').addClass('bx-spin');
+            loadSourceFiles();
+            setTimeout(() => btn.find('i').removeClass('bx-spin'), 500);
+        });
+
+        // Refresh Data Table
+        $('#btnRefreshData').on('click', function() {
+            location.reload();
+        });
+
         // Truncate all
         $('#btnTruncateAll').on('click', function() {
             if (!confirm('Apakah Anda yakin ingin menghapus SEMUA data SAP?')) return;
@@ -508,13 +617,89 @@
 
         // Load logs when modal opens
         $('#logsModal').on('show.bs.modal', function() {
-            $.get('{{ route("sap.importLogs") }}', function(response) {
-                $('#importLogsContent').text(response.logs || 'Tidak ada log');
-            });
-            $.get('{{ route("sap.errorLogs") }}', function(response) {
-                $('#errorLogsContent').text(response.logs || 'Tidak ada error');
-            });
+            loadLogs();
         });
+
+        // Refresh logs button
+        $('#btnRefreshLogs').on('click', function() {
+            loadLogs();
+        });
+
+        // Date change for logs
+        $('#logDate').on('change', function() {
+            loadLogs();
+        });
+
+        function loadLogs() {
+            const selectedDate = $('#logDate').val();
+            const formattedDate = selectedDate.replace(/-/g, '');
+            const displayDate = new Date(selectedDate).toLocaleDateString('id-ID');
+
+            $('#importLogDate').text(displayDate);
+            $('#errorLogDate').text(displayDate);
+
+            // Loading state
+            $('#importLogsContent').html('<span class="text-info">⏳ Loading import logs...</span>');
+            $('#errorLogsContent').html('<span class="text-info">⏳ Loading error logs...</span>');
+            $('#autoImportLogsContent').html('<span class="text-info">⏳ Loading auto import logs...</span>');
+
+            // Load import logs
+            $.get('{{ route("sap.importLogs") }}', { date: formattedDate }, function(response) {
+                const logs = response.logs || 'Tidak ada log untuk tanggal ini';
+                $('#importLogsContent').html(formatLogContent(logs, 'import'));
+            }).fail(function() {
+                $('#importLogsContent').html('<span class="text-danger">❌ Gagal memuat log</span>');
+            });
+
+            // Load error logs
+            $.get('{{ route("sap.errorLogs") }}', { date: formattedDate }, function(response) {
+                const logs = response.logs || 'Tidak ada error untuk tanggal ini';
+                $('#errorLogsContent').html(formatLogContent(logs, 'error'));
+            }).fail(function() {
+                $('#errorLogsContent').html('<span class="text-danger">❌ Gagal memuat log</span>');
+            });
+
+            // Load auto import logs
+            $.get('{{ route("sap.autoImportLogs") }}', function(response) {
+                const logs = response.logs || 'Tidak ada auto import log';
+                $('#autoImportLogsContent').html(formatLogContent(logs, 'auto'));
+            }).fail(function() {
+                $('#autoImportLogsContent').html('<span class="text-warning">⚠️ Auto import log tidak tersedia</span>');
+            });
+        }
+
+        function formatLogContent(text, type) {
+            if (!text || text.includes('Tidak ada')) {
+                return `<span class="text-muted">${text}</span>`;
+            }
+
+            // Highlight timestamps
+            text = text.replace(/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/g, 
+                '<span style="color: #ffd93d;">[$1]</span>');
+
+            // Highlight status
+            text = text.replace(/\[SUCCESS\]/g, '<span style="color: #6bcb77;">[SUCCESS]</span>');
+            text = text.replace(/\[STARTED\]/g, '<span style="color: #4d96ff;">[STARTED]</span>');
+            text = text.replace(/\[FAILED\]/g, '<span style="color: #ff6b6b;">[FAILED]</span>');
+            text = text.replace(/\[REJECTED\]/g, '<span style="color: #ff6b6b;">[REJECTED]</span>');
+            text = text.replace(/\[DUPLICATE\]/g, '<span style="color: #ffa94d;">[DUPLICATE]</span>');
+            text = text.replace(/\[FORCE_DELETE\]/g, '<span style="color: #cc5de8;">[FORCE_DELETE]</span>');
+
+            // Highlight file names
+            text = text.replace(/\[([^\]]+\.csv)\]/gi, 
+                '<span style="color: #74c0fc;">[$1]</span>');
+
+            // Highlight errors
+            if (type === 'error') {
+                text = text.replace(/ERROR/gi, '<span style="color: #ff6b6b; font-weight: bold;">ERROR</span>');
+                text = text.replace(/DATA_INCOMPLETE/g, '<span style="color: #ffa94d;">DATA_INCOMPLETE</span>');
+            }
+
+            // Highlight numbers
+            text = text.replace(/(\d+) record/g, '<span style="color: #69db7c;">$1</span> record');
+
+            return text;
+        }
 
         function showAlert(message, type) {
             $('#alertContainer').html(`

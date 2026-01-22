@@ -100,6 +100,29 @@ class SAPImportController extends Controller
     }
 
     /**
+     * Get auto import logs (from scheduler)
+     */
+    public function getAutoImportLogs()
+    {
+        $logFile = storage_path('logs/sap-auto-import.log');
+
+        if (File::exists($logFile)) {
+            // Read last 500 lines
+            $content = File::get($logFile);
+            $lines = explode("\n", $content);
+            $lastLines = array_slice($lines, -500);
+            $logs = implode("\n", $lastLines);
+        } else {
+            $logs = "Auto import log belum tersedia.\nScheduler belum pernah dijalankan atau log kosong.";
+        }
+
+        return response()->json([
+            'success' => true,
+            'logs' => $logs
+        ]);
+    }
+
+    /**
      * Hapus semua data SAP
      */
     public function truncate()

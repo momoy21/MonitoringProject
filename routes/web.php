@@ -281,6 +281,7 @@ Route::middleware(['auth'])->prefix('sap')->name('sap.')->group(function () {
     Route::get('/import-history', [SAPImportController::class, 'getImportHistory'])->name('importHistory');
     Route::get('/error-logs', [SAPImportController::class, 'getErrorLogs'])->name('errorLogs');
     Route::get('/import-logs', [SAPImportController::class, 'getImportLogs'])->name('importLogs');
+    Route::get('/auto-import-logs', [SAPImportController::class, 'getAutoImportLogs'])->name('autoImportLogs');
 
     // FTP Routes
     Route::get('/ftp/test', [SAPImportController::class, 'testFtpConnection'])->name('ftp.test');
