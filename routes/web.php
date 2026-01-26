@@ -18,6 +18,8 @@ use App\Http\Controllers\PendapatanProyekController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ReportProgramController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +37,18 @@ Route::get('/', function () {
 // ===================================================================
 Route::middleware(['auth', 'verified'])->group(function () {
 
+// ===================================================================
+// laporan-progress-proyek
+// ===================================================================    
+
+Route::get('/laporan-progress-proyek', [ReportProgramController::class, 'index'])->name('report.index');
+
+Route::get('/laporan-progress-proyek/pdf', [ReportProgramController::class, 'exportPdf'])->name('report.pdf');
+Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'exportExcel'])->name('report.excel');
+
+
+    
+    
     // ===================================================================
     // DASHBOARD - Redirect based on role
     // ===================================================================
