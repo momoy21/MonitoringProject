@@ -224,7 +224,8 @@ class SAPImportController extends Controller
      */
     public function listFtpFiles(Request $request)
     {
-        $directory = $request->get('directory', '/');
+        // Default ke source directory dari env (FTP_SOURCE_DIR)
+        $directory = $request->get('directory', $this->ftpService->getSourceDirectory());
         
         $result = $this->ftpService->listCsvFiles($directory);
         
@@ -277,6 +278,9 @@ class SAPImportController extends Controller
                 File::delete($tempPath);
             }
 
+            // Step 4: Move file di FTP berdasarkan hasil import
+            $this->moveFileAfterImport($ftpPath, $filename, $result);
+
             $httpStatus = $result['success'] ? 200 : (($result['error_type'] ?? '') === 'DUPLICATE_FILE' ? 409 : 422);
 
             return response()->json($result, $httpStatus);
@@ -288,6 +292,42 @@ class SAPImportController extends Controller
                 'error_type' => 'FTP_IMPORT_ERROR',
                 'message' => 'Gagal import dari FTP: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Move file di FTP setelah import berdasarkan hasil
+     * - Success → /Processed/
+     * - Error/Rejected → /Error/
+     */
+    protected function moveFileAfterImport(string $ftpPath, string $filename, array $result): void
+    {
+        try {
+            $destinationFolder = $result['success'] 
+                ? $this->ftpService->getProcessedDirectory() 
+                : $this->ftpService->getErrorDirectory();
+            $destinationPath = $destinationFolder . '/' . $filename;
+
+            $moveResult = $this->ftpService->moveFile($ftpPath, $destinationPath);
+
+            if ($moveResult['success']) {
+                Log::info('File moved after import', [
+                    'file' => $filename,
+                    'destination' => $destinationFolder,
+                    'import_success' => $result['success']
+                ]);
+            } else {
+                Log::warning('Failed to move file after import', [
+                    'file' => $filename,
+                    'destination' => $destinationFolder,
+                    'error' => $moveResult['message']
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error moving file after import', [
+                'file' => $filename,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

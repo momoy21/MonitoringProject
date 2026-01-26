@@ -157,7 +157,31 @@ class FtpService
     }
 
     /**
-     * Move file di FTP ke folder lain (misalnya Processed)
+     * Ensure directory exists on FTP server
+     */
+    public function ensureDirectoryExists(string $directory): bool
+    {
+        try {
+            $disk = Storage::disk('ftp');
+            
+            // Cek apakah direktori sudah ada
+            if ($disk->directoryExists($directory)) {
+                return true;
+            }
+
+            // Buat direktori jika belum ada
+            $disk->makeDirectory($directory);
+            Log::info('FTP Directory Created', ['directory' => $directory]);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('FTP Create Directory Error: ' . $e->getMessage(), ['directory' => $directory]);
+            return false;
+        }
+    }
+
+    /**
+     * Move file di FTP ke folder lain (misalnya Processed atau Error)
      */
     public function moveFile(string $sourcePath, string $destinationPath): array
     {
@@ -170,6 +194,12 @@ class FtpService
                     'success' => false,
                     'message' => "File sumber tidak ditemukan: {$sourcePath}"
                 ];
+            }
+
+            // Pastikan folder tujuan ada
+            $destinationDir = dirname($destinationPath);
+            if ($destinationDir !== '.' && $destinationDir !== '/') {
+                $this->ensureDirectoryExists($destinationDir);
             }
 
             // Move file
@@ -292,6 +322,31 @@ class FtpService
             'username' => config('filesystems.disks.ftp.username'),
             'root' => config('filesystems.disks.ftp.root'),
             'ssl' => config('filesystems.disks.ftp.ssl'),
+            'source_dir' => $this->getSourceDirectory(),
         ];
+    }
+
+    /**
+     * Get source directory for CSV files
+     */
+    public function getSourceDirectory(): string
+    {
+        return env('FTP_SOURCE_DIR', '/CSV');
+    }
+
+    /**
+     * Get processed directory path
+     */
+    public function getProcessedDirectory(): string
+    {
+        return '/Processed';
+    }
+
+    /**
+     * Get error directory path
+     */
+    public function getErrorDirectory(): string
+    {
+        return '/Error';
     }
 }

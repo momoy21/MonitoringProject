@@ -43,7 +43,11 @@ class SapAutoImport extends Command
     public function handle(): int
     {
         $force = $this->option('force');
+        // Gunakan source directory dari FtpService sebagai default
         $directory = $this->option('directory');
+        if ($directory === '/') {
+            $directory = $this->ftpService->getSourceDirectory();
+        }
 
         $this->info('========================================');
         $this->info('SAP Auto Import - ' . now()->format('Y-m-d H:i:s'));
@@ -138,6 +142,8 @@ class SapAutoImport extends Command
 
             if ($alreadyImported && !$force) {
                 $skipped++;
+                // Tulis log untuk file yang di-skip (duplikat)
+                $this->importService->writeImportLog($filename, 'SKIPPED', 'File sudah pernah diimport sebelumnya');
                 $tableData[] = [$filename, $size, '⏭ Skipped', 'Sudah diimport sebelumnya'];
                 continue;
             }
@@ -162,10 +168,13 @@ class SapAutoImport extends Command
                 File::delete($tempPath);
             }
 
+            // Move file di FTP berdasarkan hasil import
+            $this->moveFileAfterImport($ftpPath, $filename, $importResult);
+
             if ($importResult['success']) {
                 $imported++;
                 $recordCount = $importResult['data']['imported'] ?? 0;
-                $tableData[] = [$filename, $size, '✓ Success', "{$recordCount} records imported"];
+                $tableData[] = [$filename, $size, '✓ Success', "{$recordCount} records → Processed/"];
                 Log::info('SAP Auto Import - File imported', ['file' => $filename, 'records' => $recordCount]);
             } else {
                 $failed++;
@@ -174,11 +183,40 @@ class SapAutoImport extends Command
                 if (strlen($errorMsg) > 50) {
                     $errorMsg = substr($errorMsg, 0, 47) . '...';
                 }
-                $tableData[] = [$filename, $size, '✗ Failed', $errorMsg];
+                $tableData[] = [$filename, $size, '✗ Failed', $errorMsg . ' → Error/'];
                 Log::error('SAP Auto Import - Import failed', ['file' => $filename, 'error' => $importResult['message'] ?? 'Unknown']);
             }
         }
 
         return $tableData;
+    }
+
+    /**
+     * Move file di FTP setelah import berdasarkan hasil
+     * - Success → /Processed/
+     * - Error/Rejected → /Error/
+     */
+    protected function moveFileAfterImport(string $ftpPath, string $filename, array $result): void
+    {
+        try {
+            $destinationFolder = $result['success'] 
+                ? $this->ftpService->getProcessedDirectory() 
+                : $this->ftpService->getErrorDirectory();
+            $destinationPath = $destinationFolder . '/' . $filename;
+
+            $moveResult = $this->ftpService->moveFile($ftpPath, $destinationPath);
+
+            if ($moveResult['success']) {
+                $this->line("   ↳ File dipindahkan ke {$destinationFolder}/");
+            } else {
+                $this->warn("   ↳ Gagal memindahkan file: " . $moveResult['message']);
+            }
+        } catch (\Exception $e) {
+            $this->warn("   ↳ Error memindahkan file: " . $e->getMessage());
+            Log::error('Error moving file after import', [
+                'file' => $filename,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

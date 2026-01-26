@@ -82,6 +82,14 @@ class SAPImportService
     }
 
     /**
+     * Public method untuk log import activity (untuk diakses dari luar, misal SapAutoImport command)
+     */
+    public function writeImportLog(string $sourceFile, string $status, string $message): void
+    {
+        $this->logImport($sourceFile, $status, $message);
+    }
+
+    /**
      * Pindahkan file corrupt ke folder Error
      */
     protected function moveToErrorFolder(string $filePath): bool
@@ -413,6 +421,7 @@ class SAPImportService
                 fclose($handle);
                 $errorMsg = 'Kolom yang hilang: ' . implode(', ', $missingColumns);
                 $this->logError($sourceFile, 'HEADER_VALIDATION_FAILED', $errorMsg);
+                $this->logImport($sourceFile, 'REJECTED', "File ditolak! " . $errorMsg);
                 $this->moveToErrorFolder($filePath);
 
                 return [
