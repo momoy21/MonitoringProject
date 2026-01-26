@@ -60,6 +60,20 @@ return [
             'report' => false,
         ],
 
+        'ftp'=> [
+            'driver'   => 'ftp',
+            'host'     => env('FTP_HOST', '10.0.1.99'),
+            'username' => env('FTP_USERNAME'),
+            'password' => env('FTP_PASSWORD'),
+            'port'     => (int) env('FTP_PORT', 21),
+            'root'     => env('FTP_ROOT', '/'),
+            'passive'  => true,
+            'ssl'      => env('FTP_SSL', false),
+            'timeout'  => 30,
+            'throw'    => false,
+            'report'   => false,
+        ],
+
     ],
 
     /*

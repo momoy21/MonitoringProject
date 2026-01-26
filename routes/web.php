@@ -15,6 +15,7 @@ use App\Http\Controllers\ProgressProyekController;
 use App\Http\Controllers\BeritaAcaraProjectController;
 use App\Http\Controllers\IssueProyekController;
 use App\Http\Controllers\PendapatanProyekController;
+use App\Http\Controllers\SAPImportController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -284,4 +285,24 @@ Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'e
         });
     });
 });
+
+// SAP Import Routes
+Route::middleware(['auth'])->prefix('sap')->name('sap.')->group(function () {
+    Route::get('/', [SAPImportController::class, 'index'])->name('index');
+    Route::delete('/truncate', [SAPImportController::class, 'truncate'])->name('truncate');
+    Route::delete('/delete-by-source', [SAPImportController::class, 'deleteBySource'])->name('deleteBySource');
+    Route::get('/source-files', [SAPImportController::class, 'getSourceFiles'])->name('sourceFiles');
+    Route::get('/import-history', [SAPImportController::class, 'getImportHistory'])->name('importHistory');
+    Route::get('/error-logs', [SAPImportController::class, 'getErrorLogs'])->name('errorLogs');
+    Route::get('/import-logs', [SAPImportController::class, 'getImportLogs'])->name('importLogs');
+    Route::get('/auto-import-logs', [SAPImportController::class, 'getAutoImportLogs'])->name('autoImportLogs');
+
+    // FTP Routes
+    Route::get('/ftp/test', [SAPImportController::class, 'testFtpConnection'])->name('ftp.test');
+    Route::get('/ftp/files', [SAPImportController::class, 'listFtpFiles'])->name('ftp.files');
+    Route::get('/ftp/directories', [SAPImportController::class, 'getFtpDirectories'])->name('ftp.directories');
+    Route::get('/ftp/info', [SAPImportController::class, 'getFtpInfo'])->name('ftp.info');
+    Route::post('/ftp/import', [SAPImportController::class, 'importFromFtp'])->name('ftp.import');
+});
+
 require __DIR__.'/auth.php';
