@@ -93,11 +93,11 @@
             </div>
         </div>
 
-        <!-- FTP Import Section -->
+        <!-- FTP Monitoring Section -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="mb-0"><i class="bx bx-server me-2"></i>Import dari FTP Server</h5>
+                    <h5 class="mb-0"><i class="bx bx-server me-2"></i>File di FTP Server</h5>
                     <small class="text-muted" id="ftpConnectionInfo">Checking connection...</small>
                 </div>
                 <div class="d-flex gap-2">
@@ -110,28 +110,24 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="mb-3 d-flex gap-2 align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="ftpForceImport">
-                        <label class="form-check-label" for="ftpForceImport">
-                            <strong>Force Import</strong> (import ulang jika sudah ada)
-                        </label>
-                    </div>
+                <div class="alert alert-info mb-3">
+                    <i class="bx bx-info-circle me-1"></i>
+                    <strong>Mode Otomatis:</strong> File akan diimport secara otomatis setiap hari oleh scheduler.
+                    File berhasil dipindah ke <code>/Processed</code>, file gagal ke <code>/Error</code>.
                 </div>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover" id="ftpFilesTable">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 40%;">Nama File</th>
+                                <th style="width: 50%;">Nama File</th>
                                 <th>Ukuran</th>
                                 <th>Terakhir Diubah</th>
                                 <th>Status</th>
-                                <th style="width: 120px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="ftpFilesBody">
                             <tr>
-                                <td colspan="5" class="text-center py-4">
+                                <td colspan="4" class="text-center py-4">
                                     <i class="bx bx-loader bx-spin" style="font-size: 24px;"></i>
                                     <p class="text-muted mt-2 mb-0">Memuat daftar file dari FTP...</p>
                                 </td>
@@ -385,7 +381,7 @@
                         <div class="tab-pane fade p-3" id="tabScheduler">
                             <div class="alert alert-info mb-3">
                                 <i class="bx bx-info-circle me-1"></i>
-                                Log dari scheduler auto-import (dijalankan setiap jam)
+                                Log dari scheduler auto-import (dijalankan setiap hari)
                             </div>
                             <div id="schedulerContainer">
                                 <div class="text-center py-4">
@@ -678,10 +674,7 @@
                     response.files.forEach(function(file) {
                         const statusBadge = file.already_imported 
                             ? '<span class="badge bg-label-success">Sudah Diimport</span>'
-                            : '<span class="badge bg-label-warning">Belum Diimport</span>';
-                        
-                        const importBtnClass = file.already_imported ? 'btn-outline-secondary' : 'btn-primary';
-                        const importBtnText = file.already_imported ? 'Re-import' : 'Import';
+                            : '<span class="badge bg-label-warning">Menunggu Import</span>';
                         
                         html += `
                             <tr>
@@ -692,24 +685,18 @@
                                 <td>${file.size_formatted}</td>
                                 <td>${file.last_modified || '-'}</td>
                                 <td>${statusBadge}</td>
-                                <td>
-                                    <button type="button" class="btn ${importBtnClass} btn-sm btn-ftp-import"
-                                            data-path="${file.path}" data-name="${file.name}" data-imported="${file.already_imported}">
-                                        <i class="bx bx-import me-1"></i> ${importBtnText}
-                                    </button>
-                                </td>
                             </tr>
                         `;
                     });
                     $('#ftpFilesBody').html(html);
-                    bindFtpImportButtons();
                 } else {
                     let message = response.message || 'Tidak ada file CSV/TXT di folder FTP';
                     $('#ftpFilesBody').html(`
                         <tr>
-                            <td colspan="5" class="text-center py-4">
-                                <i class="bx bx-folder-open" style="font-size: 48px; color: #d9dee3;"></i>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="bx bx-check-circle text-success" style="font-size: 48px;"></i>
                                 <p class="text-muted mt-2 mb-0">${message}</p>
+                                <small class="text-success">Semua file sudah diproses oleh scheduler</small>
                             </td>
                         </tr>
                     `);
@@ -718,67 +705,13 @@
                 const response = xhr.responseJSON || {};
                 $('#ftpFilesBody').html(`
                     <tr>
-                        <td colspan="5" class="text-center py-4">
+                        <td colspan="4" class="text-center py-4">
                             <i class="bx bx-error-circle text-danger" style="font-size: 48px;"></i>
                             <p class="text-danger mt-2 mb-0">Gagal koneksi ke FTP Server</p>
                             <small class="text-muted">${response.message || 'Periksa konfigurasi FTP'}</small>
                         </td>
                     </tr>
                 `);
-            });
-        }
-
-        // Bind import buttons
-        function bindFtpImportButtons() {
-            $('.btn-ftp-import').off('click').on('click', function() {
-                const btn = $(this);
-                const ftpPath = btn.data('path');
-                const fileName = btn.data('name');
-                const alreadyImported = btn.data('imported');
-                const forceImport = $('#ftpForceImport').is(':checked');
-
-                // Confirm jika sudah diimport dan tidak force
-                if (alreadyImported && !forceImport) {
-                    if (!confirm(`File "${fileName}" sudah pernah diimport. Lanjutkan import ulang?`)) {
-                        return;
-                    }
-                }
-
-                const originalText = btn.html();
-                btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i>');
-
-                $.ajax({
-                    url: '{{ route("sap.ftp.import") }}',
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        ftp_path: ftpPath,
-                        force: forceImport || alreadyImported
-                    },
-                    success: function(response) {
-                        let message = response.message;
-                        if (response.ftp_moved) {
-                            message += '<br><small class="text-success">File dipindahkan ke: ' + response.ftp_new_path + '</small>';
-                        }
-                        showAlert(message, 'success');
-                        loadFtpFiles();
-                        loadSourceFiles();
-                        setTimeout(() => location.reload(), 2000);
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON || {};
-                        let alertType = 'danger';
-                        let message = response.message || 'Gagal import dari FTP';
-
-                        if (response.error_type === 'DUPLICATE_FILE') {
-                            alertType = 'warning';
-                            message += '<br><small>Centang "Force Import" untuk import ulang.</small>';
-                        }
-
-                        showAlert(message, alertType);
-                        btn.prop('disabled', false).html(originalText);
-                    }
-                });
             });
         }
 
