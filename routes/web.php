@@ -9,6 +9,7 @@ use App\Http\Controllers\KondisiProyekController;
 use App\Http\Controllers\KonsumenController;
 use App\Http\Controllers\MasterManagerController;
 use App\Http\Controllers\RABController;
+use App\Http\Controllers\PengajuanRABController;
 use App\Http\Controllers\SpesifikasiRABController;
 use App\Http\Controllers\SummaryRABController;
 use App\Http\Controllers\ProgressProyekController;
@@ -229,6 +230,21 @@ Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
             Route::put('/header', [RABController::class, 'updateHeaderRAB'])->name('updateHeaderRAB');
             Route::get('/detail', [RABController::class, 'getDetailRAB'])->name('getDetailRAB');
             Route::get('/summary-detail', [RABController::class, 'getSummaryDetailRAB'])->name('getSummaryDetailRAB');
+        });
+
+        // ---------------------------------------------------------------
+        // PENGAJUAN RAB (Pengajuan Rencana Anggaran Biaya)
+        // ---------------------------------------------------------------
+        Route::prefix('pengajuanrab')->name('pengajuanrab.')->group(function () {
+            Route::get('/', [PengajuanRABController::class, 'index'])->name('index');
+            Route::get('/create', [PengajuanRABController::class, 'create'])->name('create');
+            Route::post('/', [PengajuanRABController::class, 'store'])->name('store');
+            Route::get('/generate-no', [PengajuanRABController::class, 'generateNoPengajuan'])->name('generateNo');
+            Route::get('/{pengajuanrab:nopengajuan}', [PengajuanRABController::class, 'show'])->name('show');
+            Route::get('/{pengajuanrab:nopengajuan}/edit', [PengajuanRABController::class, 'edit'])->name('edit');
+            Route::put('/{pengajuanrab:nopengajuan}', [PengajuanRABController::class, 'update'])->name('update');
+            Route::delete('/{pengajuanrab:nopengajuan}', [PengajuanRABController::class, 'destroy'])->name('destroy');
+            Route::get('/{pengajuanrab:nopengajuan}/download/{type}', [PengajuanRABController::class, 'download'])->name('download');
         });
 
         Route::prefix('progressproyek')->name('progressproyek.')->group(function () {
