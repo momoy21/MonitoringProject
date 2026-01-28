@@ -305,12 +305,10 @@ Route::middleware(['auth'])->prefix('sap')->name('sap.')->group(function () {
     Route::get('/import-logs', [SAPImportController::class, 'getImportLogs'])->name('importLogs');
     Route::get('/auto-import-logs', [SAPImportController::class, 'getAutoImportLogs'])->name('autoImportLogs');
 
-    // FTP Routes
+    // FTP Routes (read-only monitoring)
     Route::get('/ftp/test', [SAPImportController::class, 'testFtpConnection'])->name('ftp.test');
     Route::get('/ftp/files', [SAPImportController::class, 'listFtpFiles'])->name('ftp.files');
-    Route::get('/ftp/directories', [SAPImportController::class, 'getFtpDirectories'])->name('ftp.directories');
     Route::get('/ftp/info', [SAPImportController::class, 'getFtpInfo'])->name('ftp.info');
-    Route::post('/ftp/import', [SAPImportController::class, 'importFromFtp'])->name('ftp.import');
 });
 
 require __DIR__.'/auth.php';
