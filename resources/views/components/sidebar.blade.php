@@ -40,6 +40,14 @@
             </a>
         </li>
 
+        <!-- Master divisi -->
+        <li class="menu-item {{ request()->routeIs('masterdivisi.*') ? 'active' : '' }}">
+            <a href="{{ route('masterdivisi.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user-check"></i>
+                <div>Master divisi</div>
+            </a>
+        </li>
+
         <!-- Kondisi Proyek -->
         <li class="menu-item {{ request()->routeIs('kondisiproyek.*') ? 'active' : '' }}">
             <a href="{{ route('kondisiproyek.index') }}" class="menu-link">
@@ -63,6 +71,7 @@
                 <div>Summary RAB</div>
             </a>
         </li>
+ 
         @endrole
 
         @role('Project Manager')
@@ -112,6 +121,14 @@
             <a href="{{ route('pengajuanrab.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-file-find"></i>
                 <div>Pengajuan RAB</div>
+            </a>
+        </li>
+
+         <!-- laporan progres proyek -->
+         <li class="menu-item {{ request()->is('laporan-progress-proyek*') ? 'active' : '' }}">
+            <a href="{{ url('laporan-progress-proyek') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                <div>Laporan Progress Proyek</div>
             </a>
         </li>
 

@@ -19,8 +19,8 @@ return new class extends Migration
 
             // Fields
             $table->dateTime('tanggal')->nullable()->comment('Tanggal issue dibuat');
-            $table->text('issue')->nullable()->comment('Deskripsi issue/kendala');
-            $table->text('mitigasi')->nullable()->comment('Mitigasi issue');
+            $table->text('issue')->nullable()->default('Tidak ada issue')->comment('Deskripsi issue/kendala');
+            $table->text('mitigasi')->nullable()->default('Tidak ada mitigasi')->comment('Mitigasi issue');
             $table->char('status', 1)->nullable()->default('O')->comment('O=Open, C=Close');
 
             $table->timestamps();
