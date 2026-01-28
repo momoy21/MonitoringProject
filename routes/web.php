@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportProgramController;
+use App\Http\Controllers\MasterDivisiController;
 
 
 /*
@@ -46,6 +47,11 @@ Route::get('/laporan-progress-proyek', [ReportProgramController::class, 'index']
 
 Route::get('/laporan-progress-proyek/pdf', [ReportProgramController::class, 'exportPdf'])->name('report.pdf');
 Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'exportExcel'])->name('report.excel');
+
+
+Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
+    'masterdivisi' => 'masterdivisi:kode_divisi'
+]);
 
 
     
@@ -102,6 +108,8 @@ Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'e
         Route::resource('mastermanager', MasterManagerController::class)->parameters([
             'mastermanager' => 'mastermanager:nik'
         ]);
+
+
         // ---------------------------------------------------------------
         // KONDISI PROYEK
         // ---------------------------------------------------------------
