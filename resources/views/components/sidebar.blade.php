@@ -116,14 +116,6 @@
             </a>
         </li>
 
-         <!-- laporan progres proyek -->
-         <li class="menu-item {{ request()->is('laporan-progress-proyek*') ? 'active' : '' }}">
-            <a href="{{ url('laporan-progress-proyek') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
-                <div>Laporan Progress Proyek</div>
-            </a>
-        </li>
-
         <!-- Progress Project -->
         <li class="menu-item {{ request()->routeIs('progressproyek.*') ? 'active' : '' }}">
             <a href="{{ route('progressproyek.index') }}" class="menu-link">
@@ -141,4 +133,18 @@
         </li>
 
     </ul>
+
+    <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">laporan proyek</span>
+        </li>
+
+         <!-- laporan progres proyek -->
+         <li class="menu-item {{ request()->is('laporan-progress-proyek*') ? 'active' : '' }}">
+            <a href="{{ url('laporan-progress-proyek') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                <div>Laporan Progress Proyek</div>
+            </a>
+        </li>
+
+
 </aside>
