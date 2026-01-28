@@ -7,6 +7,7 @@ use App\Models\RABProyek;
 use App\Models\Konsumen;
 use App\Models\BidangJasa;
 use App\Models\MasterDivisi;
+use App\Models\JenisProyek;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -86,6 +87,7 @@ class PengajuanRABController extends Controller
             $konsumen = Konsumen::where('status', 'A')->orderBy('konsumen')->get();
             $bidangJasa = BidangJasa::active()->orderBy('desc_bidjasa')->get();
             $divisi = MasterDivisi::active()->orderBy('nama_divisi')->get();
+            $jenisProyek = JenisProyek::orderBy('kode_jenis')->get();
             $today = Carbon::today()->format('Y-m-d');
 
             return view('pengajuanrab.create', compact(
@@ -93,6 +95,7 @@ class PengajuanRABController extends Controller
                 'konsumen',
                 'bidangJasa',
                 'divisi',
+                'jenisProyek',
                 'today'
             ));
         } catch (\Exception $e) {
@@ -121,6 +124,7 @@ class PengajuanRABController extends Controller
             'id_bidjasa' => 'required|string|exists:bidangjasa,id_bidjasa',
             'pm' => 'nullable|string|max:100',
             'divisi' => 'nullable|string|exists:master_divisi,kode_divisi',
+            'jenis_proyek' => 'nullable|string|exists:jenis_proyek,kode_jenis',
             'nilai_proyek' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|in:P,T,R',
             'rab_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
@@ -170,6 +174,7 @@ class PengajuanRABController extends Controller
                 'id_bidjasa' => $request->id_bidjasa,
                 'pm' => $request->pm,
                 'divisi' => $request->divisi,
+                'jenis_proyek' => $request->jenis_proyek,
                 'nilai_proyek' => $request->nilai_proyek ?: null,
                 'tgl_input' => Carbon::today(),
                 'keterangan' => $request->keterangan,
@@ -259,12 +264,14 @@ class PengajuanRABController extends Controller
             $konsumen = Konsumen::where('status', 'A')->orderBy('konsumen')->get();
             $bidangJasa = BidangJasa::active()->orderBy('desc_bidjasa')->get();
             $divisi = MasterDivisi::active()->orderBy('nama_divisi')->get();
+            $jenisProyek = JenisProyek::orderBy('kode_jenis')->get();
 
             return view('pengajuanrab.edit', compact(
                 'pengajuanrab',
                 'konsumen',
                 'bidangJasa',
-                'divisi'
+                'divisi',
+                'jenisProyek'
             ));
         } catch (\Exception $e) {
             return redirect()->route('pengajuanrab.index')
@@ -295,6 +302,7 @@ class PengajuanRABController extends Controller
             'id_bidjasa' => 'required|string|exists:bidangjasa,id_bidjasa',
             'pm' => 'nullable|string|max:100',
             'divisi' => 'nullable|string|exists:master_divisi,kode_divisi',
+            'jenis_proyek' => 'nullable|string|exists:jenis_proyek,kode_jenis',
             'nilai_proyek' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|in:P,T,R',
             'progress' => 'nullable|in:01,02,03,04',
@@ -354,6 +362,7 @@ class PengajuanRABController extends Controller
                 'id_bidjasa' => $request->id_bidjasa,
                 'pm' => $request->pm,
                 'divisi' => $request->divisi,
+                'jenis_proyek' => $request->jenis_proyek,
                 'nilai_proyek' => $request->nilai_proyek ?: null,
                 'keterangan' => $request->keterangan,
                 'progress' => $request->progress,

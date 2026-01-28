@@ -24,6 +24,7 @@ class RABProyek extends Model
         'id_bidjasa',
         'pm',
         'divisi',
+        'jenis_proyek',
         'nilai_proyek',
         'tgl_input',
         'keterangan',
@@ -123,6 +124,14 @@ class RABProyek extends Model
     public function masterDivisi()
     {
         return $this->belongsTo(MasterDivisi::class, 'divisi', 'kode_divisi');
+    }
+
+    /**
+     * Relasi ke JenisProyek
+     */
+    public function jenisProyek()
+    {
+        return $this->belongsTo(JenisProyek::class, 'jenis_proyek', 'kode_jenis');
     }
 
     /**

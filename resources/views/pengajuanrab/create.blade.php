@@ -166,6 +166,25 @@
                             </div>
                         </div>
 
+                        <!-- Jenis Proyek -->
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="jenis_proyek" class="form-label">Jenis Proyek</label>
+                                <select class="form-select @error('jenis_proyek') is-invalid @enderror"
+                                        id="jenis_proyek" name="jenis_proyek">
+                                    <option value="">-- Pilih Jenis Proyek --</option>
+                                    @foreach($jenisProyek as $jp)
+                                        <option value="{{ $jp->kode_jenis }}" {{ old('jenis_proyek') == $jp->kode_jenis ? 'selected' : '' }}>
+                                            [{{ $jp->kode_jenis }}] {{ $jp->nama_jenis }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('jenis_proyek')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
                         <!-- Project Manager -->
                         <div class="col-md-4">
                             <div class="mb-3">
