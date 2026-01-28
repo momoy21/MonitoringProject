@@ -15,9 +15,13 @@ use App\Http\Controllers\ProgressProyekController;
 use App\Http\Controllers\BeritaAcaraProjectController;
 use App\Http\Controllers\IssueProyekController;
 use App\Http\Controllers\PendapatanProyekController;
+use App\Http\Controllers\SAPImportController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ReportProgramController;
+use App\Http\Controllers\MasterDivisiController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +39,23 @@ Route::get('/', function () {
 // ===================================================================
 Route::middleware(['auth', 'verified'])->group(function () {
 
+// ===================================================================
+// laporan-progress-proyek
+// ===================================================================    
+
+Route::get('/laporan-progress-proyek', [ReportProgramController::class, 'index'])->name('report.index');
+
+Route::get('/laporan-progress-proyek/pdf', [ReportProgramController::class, 'exportPdf'])->name('report.pdf');
+Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'exportExcel'])->name('report.excel');
+
+
+Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
+    'masterdivisi' => 'masterdivisi:kode_divisi'
+]);
+
+
+    
+    
     // ===================================================================
     // DASHBOARD - Redirect based on role
     // ===================================================================
@@ -87,6 +108,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('mastermanager', MasterManagerController::class)->parameters([
             'mastermanager' => 'mastermanager:nik'
         ]);
+
+
         // ---------------------------------------------------------------
         // KONDISI PROYEK
         // ---------------------------------------------------------------
@@ -270,4 +293,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 });
+
+// SAP Import Routes
+Route::middleware(['auth'])->prefix('sap')->name('sap.')->group(function () {
+    Route::get('/', [SAPImportController::class, 'index'])->name('index');
+    Route::delete('/truncate', [SAPImportController::class, 'truncate'])->name('truncate');
+    Route::delete('/delete-by-source', [SAPImportController::class, 'deleteBySource'])->name('deleteBySource');
+    Route::get('/source-files', [SAPImportController::class, 'getSourceFiles'])->name('sourceFiles');
+    Route::get('/import-history', [SAPImportController::class, 'getImportHistory'])->name('importHistory');
+    Route::get('/error-logs', [SAPImportController::class, 'getErrorLogs'])->name('errorLogs');
+    Route::get('/import-logs', [SAPImportController::class, 'getImportLogs'])->name('importLogs');
+    Route::get('/auto-import-logs', [SAPImportController::class, 'getAutoImportLogs'])->name('autoImportLogs');
+
+    // FTP Routes (read-only monitoring)
+    Route::get('/ftp/test', [SAPImportController::class, 'testFtpConnection'])->name('ftp.test');
+    Route::get('/ftp/files', [SAPImportController::class, 'listFtpFiles'])->name('ftp.files');
+    Route::get('/ftp/info', [SAPImportController::class, 'getFtpInfo'])->name('ftp.info');
+});
+
 require __DIR__.'/auth.php';
