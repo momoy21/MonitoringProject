@@ -12,6 +12,7 @@
         "league/flysystem-ftp": "^3.29",
         "maatwebsite/excel": "*",
         "phpoffice/phpspreadsheet": "^1.30",
+        "smalot/pdfparser": "*",
         "spatie/laravel-permission": "^6.22"
     },
     "require-dev": {

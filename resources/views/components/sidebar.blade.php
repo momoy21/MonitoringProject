@@ -107,6 +107,14 @@
             </a>
         </li>
 
+        <!-- Pengajuan RAB -->
+        <li class="menu-item {{ request()->routeIs('pengajuanrab.*') ? 'active' : '' }}">
+            <a href="{{ route('pengajuanrab.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-file-find"></i>
+                <div>Pengajuan RAB</div>
+            </a>
+        </li>
+
         <!-- Progress Project -->
         <li class="menu-item {{ request()->routeIs('progressproyek.*') ? 'active' : '' }}">
             <a href="{{ route('progressproyek.index') }}" class="menu-link">
