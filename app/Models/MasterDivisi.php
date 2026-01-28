@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class MasterDivisi extends Model
 {
@@ -17,7 +17,6 @@ class MasterDivisi extends Model
     protected $fillable = [
         'kode_divisi',
         'nama_divisi',
-<<<<<<< HEAD
         'status',
     ];
 
@@ -29,16 +28,10 @@ class MasterDivisi extends Model
     /**
      * Scope untuk hanya data aktif
      */
-=======
-        'status'
-    ];
-
->>>>>>> f83ca6e4e425778f36642efa5004e211ccd97da0
     public function scopeActive($query)
     {
         return $query->where('status', 'A');
     }
-<<<<<<< HEAD
 
     /**
      * Scope untuk pencarian
@@ -65,6 +58,3 @@ class MasterDivisi extends Model
         return $this->hasMany(RABProyek::class, 'divisi', 'kode_divisi');
     }
 }
-=======
-}
->>>>>>> f83ca6e4e425778f36642efa5004e211ccd97da0
