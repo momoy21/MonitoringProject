@@ -140,8 +140,7 @@
             </a>
         </li>
 
-    </ul>
-
+        
     <li class="menu-header small text-uppercase">
             <span class="menu-header-text">laporan proyek</span>
         </li>
@@ -153,6 +152,6 @@
                 <div>Laporan Progress Proyek</div>
             </a>
         </li>
-
-
+        
+    </ul>
 </aside>
