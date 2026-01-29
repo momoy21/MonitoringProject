@@ -29,7 +29,11 @@ class ReportProgramController extends Controller
         // 3. Logic Query Berita Acara
         if ($jenis == 'berita_acara') {
             $query = DB::table('berita_acara_project')
-                ->join('history_proyek', 'berita_acara_project.id_project', '=', 'history_proyek.id_project')
+                ->join('history_proyek', function($join) {
+                    // JOIN menggunakan composite key (norut + id_project)
+                    $join->on('berita_acara_project.id_project', '=', 'history_proyek.id_project')
+                         ->on('berita_acara_project.norut', '=', 'history_proyek.norut');
+                })
                 ->select('berita_acara_project.*', 'history_proyek.namaproject', 'history_proyek.cost_center');
 
             if ($status && $status != 'All') {
@@ -43,7 +47,11 @@ class ReportProgramController extends Controller
         // 4. Logic Query Issue Project
         elseif ($jenis == 'issue_project') {
             $query = DB::table('issue_proyek')
-                ->join('history_proyek', 'issue_proyek.id_project', '=', 'history_proyek.id_project')
+                ->join('history_proyek', function($join) {
+                    // JOIN menggunakan composite key (norut + id_project)
+                    $join->on('issue_proyek.id_project', '=', 'history_proyek.id_project')
+                         ->on('issue_proyek.norut', '=', 'history_proyek.norut');
+                })
                 ->select('issue_proyek.*', 'history_proyek.namaproject');
 
             if ($status && $status != 'All') {

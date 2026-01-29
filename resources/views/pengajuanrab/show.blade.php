@@ -63,9 +63,6 @@
                 <p class="mb-0">Informasi lengkap pengajuan Rencana Anggaran Biaya</p>
             </div>
             <div class="col-md-6 text-end">
-                <a href="{{ route('pengajuanrab.edit', $pengajuanrab->nopengajuan) }}" class="btn btn-primary me-2">
-                    <i class="bx bx-edit me-1"></i> Edit
-                </a>
                 <a href="{{ route('pengajuanrab.index') }}" class="btn btn-outline-secondary">
                     <i class="bx bx-arrow-back me-1"></i> Kembali
                 </a>
