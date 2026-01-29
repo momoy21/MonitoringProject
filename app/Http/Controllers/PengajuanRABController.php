@@ -129,7 +129,7 @@ class PengajuanRABController extends Controller
             'keterangan' => 'nullable|in:P,T,R',
             'rab_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
             'file_upload' => 'nullable|file|mimes:pdf|max:10240',
-            'peta_risk_upload' => 'nullable|file|mimes:pdf|max:10240',
+            'peta_risk_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
         ], [
             'cost_center.required' => 'Cost Center wajib diisi.',
             'cost_center.max' => 'Cost Center maksimal 9 karakter.',
@@ -146,7 +146,7 @@ class PengajuanRABController extends Controller
             'rab_upload.max' => 'File RAB maksimal 10MB.',
             'file_upload.mimes' => 'File Kontrak harus berformat PDF.',
             'file_upload.max' => 'File Kontrak maksimal 10MB.',
-            'peta_risk_upload.mimes' => 'File Peta Risiko harus berformat PDF.',
+            'peta_risk_upload.mimes' => 'File Peta Risiko harus berformat Excel (xlsx, xls).',
             'peta_risk_upload.max' => 'File Peta Risiko maksimal 10MB.',
         ]);
 
@@ -312,7 +312,7 @@ class PengajuanRABController extends Controller
             'margin_pleno' => 'nullable|numeric',
             'rab_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
             'file_upload' => 'nullable|file|mimes:pdf|max:10240',
-            'peta_risk_upload' => 'nullable|file|mimes:pdf|max:10240',
+            'peta_risk_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
             'hasil_upload' => 'nullable|file|mimes:pdf|max:10240',
         ], [
             'cost_center.required' => 'Cost Center wajib diisi.',
@@ -332,7 +332,7 @@ class PengajuanRABController extends Controller
             'rab_upload.max' => 'File RAB maksimal 10MB.',
             'file_upload.mimes' => 'File Kontrak harus berformat PDF.',
             'file_upload.max' => 'File Kontrak maksimal 10MB.',
-            'peta_risk_upload.mimes' => 'File Peta Risiko harus berformat PDF.',
+            'peta_risk_upload.mimes' => 'File Peta Risiko harus berformat Excel (xlsx, xls).',
             'peta_risk_upload.max' => 'File Peta Risiko maksimal 10MB.',
             'hasil_upload.mimes' => 'File Hasil Pleno harus berformat PDF.',
             'hasil_upload.max' => 'File Hasil Pleno maksimal 10MB.',

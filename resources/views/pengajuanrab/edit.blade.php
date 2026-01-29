@@ -441,10 +441,10 @@
                         <!-- Upload Peta Risiko -->
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="peta_risk_upload" class="form-label">Dokumen Peta Risiko (PDF)</label>
+                                <label for="peta_risk_upload" class="form-label">Dokumen Peta Risiko (Excel)</label>
                                 @if($pengajuanrab->peta_risk_upload)
                                     <div class="existing-file">
-                                        <i class="bx bxs-file-pdf text-danger"></i>
+                                        <i class="bx bxs-file text-success"></i>
                                         <div class="flex-grow-1">
                                             <small>File tersimpan:</small>
                                             <div>{{ basename($pengajuanrab->peta_risk_upload) }}</div>
@@ -455,10 +455,10 @@
                                     </div>
                                 @endif
                                 <div class="file-upload-box" id="petaRiskUploadBox">
-                                    <i class="bx bxs-file-pdf" style="font-size: 32px; color: #dc3545;"></i>
+                                    <i class="bx bxs-file" style="font-size: 32px; color: #28a745;"></i>
                                     <p class="mb-1">{{ $pengajuanrab->peta_risk_upload ? 'Ganti file' : 'Klik atau drag & drop file' }}</p>
-                                    <small class="text-muted">Format: .pdf (max 10MB)</small>
-                                    <input type="file" class="d-none" id="peta_risk_upload" name="peta_risk_upload" accept=".pdf">
+                                    <small class="text-muted">Format: .xlsx, .xls (max 10MB)</small>
+                                    <input type="file" class="d-none" id="peta_risk_upload" name="peta_risk_upload" accept=".xlsx,.xls">
                                 </div>
                                 <div class="file-info d-none" id="petaRiskFileInfo">
                                     <span id="petaRiskFileName"></span>
