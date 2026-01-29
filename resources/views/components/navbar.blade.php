@@ -50,6 +50,12 @@
                             <span class="align-middle">Kelola Project Manager</span>
                         </a>
                     </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('sap.index') }}">
+                            <i class="bx bx-data me-2"></i>
+                            <span class="align-middle">Kelola SAP Import</span>
+                        </a>
+                    </li>
                     @endif
                     @if(auth()->user()->hasRole('Project Manager'))
                     <li>
