@@ -23,30 +23,30 @@ class PengajuanRABController extends Controller
     {
         try {
             $perPage = $request->get('per_page', 10);
+            $search = $request->get('search');
 
             $query = RABProyek::with(['konsumen', 'bidangJasa', 'masterDivisi']);
 
-            // Filter by Cost Center
-            if ($request->filled('cost_center')) {
-                $query->where('cost_center', 'like', '%' . $request->cost_center . '%');
-            }
-
-            // Filter by Nama Proyek
-            if ($request->filled('nama_proyek')) {
-                $query->where('nama_project', 'like', '%' . $request->nama_proyek . '%');
-            }
-
-            // Filter by Konsumen
-            if ($request->filled('id_konsumen')) {
-                $query->where('id_konsumen', $request->id_konsumen);
+            // Universal Search - cari di semua field relevan
+            if ($request->filled('search')) {
+                $query->where(function($q) use ($search) {
+                    $q->where('nopengajuan', 'like', "%{$search}%")
+                      ->orWhere('cost_center', 'like', "%{$search}%")
+                      ->orWhere('nama_project', 'like', "%{$search}%")
+                      ->orWhere('dokumen_io', 'like', "%{$search}%")
+                      ->orWhere('pm', 'like', "%{$search}%")
+                      ->orWhereHas('konsumen', function($konsumenQuery) use ($search) {
+                          $konsumenQuery->where('konsumen', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('masterDivisi', function($divisiQuery) use ($search) {
+                          $divisiQuery->where('nama_divisi', 'like', "%{$search}%");
+                      });
+                });
             }
 
             $pengajuanRab = $query->orderBy('tgl_input', 'desc')
                                   ->orderBy('nopengajuan', 'desc')
                                   ->paginate($perPage);
-
-            // Get konsumen list for filter dropdown
-            $konsumenList = Konsumen::where('status', 'A')->orderBy('konsumen')->get();
 
             // For AJAX requests
             if ($request->ajax()) {
@@ -64,7 +64,7 @@ class PengajuanRABController extends Controller
                 ]);
             }
 
-            return view('pengajuanrab.index', compact('pengajuanRab', 'konsumenList'));
+            return view('pengajuanrab.index', compact('pengajuanRab'));
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
