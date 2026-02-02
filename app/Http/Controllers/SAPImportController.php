@@ -45,11 +45,27 @@ class SAPImportController extends Controller
 
         $data = $query->paginate($perPage);
 
+        // Enhanced statistics
+        $totalAmount = Plsap::sum('amount_local');
+        $totalPengeluaran = Plsap::where('amount_local', '>', 0)->sum('amount_local'); // Positif = Biaya
+        $totalPendapatan = abs(Plsap::where('amount_local', '<', 0)->sum('amount_local')); // Negatif = Pendapatan
+        
+        // Mapping statistics - Aktual Biaya
+        $totalMapped = \App\Models\AktualBiaya::count();
+        $totalUnmapped = Plsap::whereNotIn('id', \App\Models\AktualBiaya::pluck('plsap_id'))->count();
+        
         $stats = [
             'total_records' => Plsap::count(),
-            'total_amount' => Plsap::sum('amount_local'),
+            'total_amount' => $totalAmount,
+            'total_pengeluaran' => $totalPengeluaran,
+            'total_pendapatan' => $totalPendapatan,
+            'net_amount' => $totalPengeluaran - $totalPendapatan, // Positif = Rugi, Negatif = Untung
             'unique_projects' => Plsap::distinct('cc_projek')->count('cc_projek'),
+            'unique_files' => Plsap::distinct('source_file')->count('source_file'),
             'last_import' => Plsap::max('imported_at'),
+            // Mapping stats
+            'total_mapped' => $totalMapped,
+            'total_unmapped' => $totalUnmapped,
         ];
 
         if ($request->ajax()) {
@@ -183,13 +199,15 @@ class SAPImportController extends Controller
     }
 
     /**
-     * Get list of source files
+     * Get list of source files with biaya/pendapatan breakdown
      */
     public function getSourceFiles()
     {
         $files = Plsap::select('source_file')
             ->selectRaw('COUNT(*) as record_count')
             ->selectRaw('SUM(amount_local) as total_amount')
+            ->selectRaw('SUM(CASE WHEN amount_local > 0 THEN amount_local ELSE 0 END) as total_biaya')
+            ->selectRaw('ABS(SUM(CASE WHEN amount_local < 0 THEN amount_local ELSE 0 END)) as total_pendapatan')
             ->selectRaw('MAX(imported_at) as imported_at')
             ->groupBy('source_file')
             ->orderBy('imported_at', 'desc')

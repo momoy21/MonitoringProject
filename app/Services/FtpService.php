@@ -349,4 +349,158 @@ class FtpService
     {
         return '/Error';
     }
+
+    /**
+     * Write CSV file to FTP with given rows
+     * @param string $directory Target directory (e.g., '/Processed')
+     * @param string $filename Filename (e.g., 'SAPIO29012026.csv')
+     * @param array $header CSV header row
+     * @param array $rows Array of raw row data
+     * @return array Result with success status
+     */
+    public function writeCsvFile(string $directory, string $filename, array $header, array $rows): array
+    {
+        try {
+            $disk = Storage::disk('ftp');
+            
+            // Ensure directory exists
+            $this->ensureDirectoryExists($directory);
+
+            // Build CSV content
+            $csvContent = $this->buildCsvContent($header, $rows);
+
+            // Write to FTP
+            $filePath = rtrim($directory, '/') . '/' . $filename;
+            $disk->put($filePath, $csvContent);
+
+            Log::info('FTP Write CSV Success', ['path' => $filePath, 'rows' => count($rows)]);
+
+            return [
+                'success' => true,
+                'path' => $filePath,
+                'message' => "File berhasil ditulis: {$filePath}",
+                'row_count' => count($rows)
+            ];
+        } catch (\Exception $e) {
+            Log::error('FTP Write CSV Error: ' . $e->getMessage(), ['filename' => $filename]);
+            return [
+                'success' => false,
+                'message' => 'Gagal menulis file CSV: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Write error CSV file with Error_Reason column
+     * @param string $filename Original filename (will be renamed to filename-Error.csv)
+     * @param array $header Original CSV header
+     * @param array $errorRows Array with 'raw_data' and 'error_reason' keys
+     * @return array Result with success status
+     */
+    public function writeErrorCsvFile(string $filename, array $header, array $errorRows): array
+    {
+        try {
+            $disk = Storage::disk('ftp');
+            $directory = $this->getErrorDirectory();
+            
+            // Ensure directory exists
+            $this->ensureDirectoryExists($directory);
+
+            // Build error filename: SAPIO29012026.csv -> SAPIO29012026-Error.csv
+            $pathInfo = pathinfo($filename);
+            $errorFilename = $pathInfo['filename'] . '-Error.' . ($pathInfo['extension'] ?? 'csv');
+
+            // Add Error_Reason to header
+            $errorHeader = array_merge($header, ['Error_Reason']);
+
+            // Build CSV content with error reasons
+            $csvLines = [];
+            $csvLines[] = $this->arrayToCsvLine($errorHeader);
+            
+            foreach ($errorRows as $errorRow) {
+                $rowData = $errorRow['raw_data'];
+                $rowData[] = $errorRow['error_reason']; // Append error reason
+                $csvLines[] = $this->arrayToCsvLine($rowData);
+            }
+
+            $csvContent = implode("\n", $csvLines);
+
+            // Write to FTP
+            $filePath = rtrim($directory, '/') . '/' . $errorFilename;
+            $disk->put($filePath, $csvContent);
+
+            Log::info('FTP Write Error CSV Success', ['path' => $filePath, 'rows' => count($errorRows)]);
+
+            return [
+                'success' => true,
+                'path' => $filePath,
+                'filename' => $errorFilename,
+                'message' => "File error ditulis: {$filePath}",
+                'row_count' => count($errorRows)
+            ];
+        } catch (\Exception $e) {
+            Log::error('FTP Write Error CSV Error: ' . $e->getMessage(), ['filename' => $filename]);
+            return [
+                'success' => false,
+                'message' => 'Gagal menulis file error CSV: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Write processed CSV file (valid rows only)
+     * @param string $filename Original filename
+     * @param array $header CSV header
+     * @param array $validRows Array with 'raw_data' keys
+     * @return array Result with success status
+     */
+    public function writeProcessedCsvFile(string $filename, array $header, array $validRows): array
+    {
+        try {
+            $directory = $this->getProcessedDirectory();
+            
+            // Extract raw data from validRows
+            $rows = array_map(fn($row) => $row['raw_data'], $validRows);
+            
+            return $this->writeCsvFile($directory, $filename, $header, $rows);
+        } catch (\Exception $e) {
+            Log::error('FTP Write Processed CSV Error: ' . $e->getMessage(), ['filename' => $filename]);
+            return [
+                'success' => false,
+                'message' => 'Gagal menulis file processed CSV: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Build CSV content from header and rows
+     */
+    protected function buildCsvContent(array $header, array $rows): string
+    {
+        $lines = [];
+        $lines[] = $this->arrayToCsvLine($header);
+        
+        foreach ($rows as $row) {
+            $lines[] = $this->arrayToCsvLine($row);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Convert array to CSV line (properly escaped)
+     */
+    protected function arrayToCsvLine(array $fields): string
+    {
+        $escaped = [];
+        foreach ($fields as $field) {
+            $field = (string) $field;
+            // Escape if contains comma, quote, or newline
+            if (strpos($field, ',') !== false || strpos($field, '"') !== false || strpos($field, "\n") !== false) {
+                $field = '"' . str_replace('"', '""', $field) . '"';
+            }
+            $escaped[] = $field;
+        }
+        return implode(',', $escaped);
+    }
 }
