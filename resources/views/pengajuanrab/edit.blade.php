@@ -115,6 +115,19 @@
                             </div>
                         </div>
 
+                        <!-- Status (Read Only) -->
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <div class="id-display">
+                                    {!! $pengajuanrab->status_badge !!}
+                                </div>
+                                <small class="text-muted">Tidak dapat diubah</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <!-- Dokumen IO -->
                         <div class="col-md-4">
                             <div class="mb-3">

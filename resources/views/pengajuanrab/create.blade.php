@@ -81,7 +81,7 @@
                     <h6 class="mb-3"><i class="bx bx-id-card me-2"></i>Informasi Pengajuan</h6>
                     <div class="row">
                         <!-- Tanggal Input (Auto) -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label">Tanggal Pengajuan</label>
                                 <div class="id-display">
@@ -92,7 +92,7 @@
                         </div>
 
                         <!-- No Pengajuan (Auto) -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label">Nomor Pengajuan</label>
                                 <div class="id-display" id="nopengajuan-display">
@@ -102,8 +102,19 @@
                             </div>
                         </div>
 
+                        <!-- Status (Read-only, Default D) -->
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <div>
+                                    <span class="badge bg-label-warning" style="font-size: 1rem; padding: 10px 15px;">Draft RAB</span>
+                                </div>
+                                <small class="text-muted">Status default untuk pengajuan baru</small>
+                            </div>
+                        </div>
+
                         <!-- Dokumen IO -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 <label for="dokumen_io" class="form-label">Dokumen IO</label>
                                 <input type="text" class="form-control @error('dokumen_io') is-invalid @enderror"

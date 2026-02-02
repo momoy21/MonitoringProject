@@ -8,6 +8,14 @@
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-3">
+                    <!-- Status Filter -->
+                    <div class="position-relative">
+                        <select id="statusFilter" class="form-select" style="width: 150px;">
+                            <option value="">Semua Status</option>
+                            <option value="D" {{ request('status') == 'D' ? 'selected' : '' }}>Draft RAB</option>
+                            <option value="F" {{ request('status') == 'F' ? 'selected' : '' }}>Final RAB</option>
+                        </select>
+                    </div>
                     <!-- Search -->
                     <div class="position-relative">
                         <div class="input-group">
@@ -65,6 +73,7 @@
                         <th class="fw-bold">Divisi</th>
                         <th class="fw-bold">Konsumen</th>
                         <th class="fw-bold text-center">Hasil Pleno</th>
+                        <th class="fw-bold text-center">Status</th>
                         <th class="fw-bold text-center" style="width: 120px;">Aksi</th>
                     </tr>
                 </thead>
@@ -90,6 +99,9 @@
                             {!! $item->hasil_pleno_badge !!}
                         </td>
                         <td class="text-center" onclick="event.stopPropagation();">
+                            {!! $item->status_badge !!}
+                        </td>
+                        <td class="text-center" onclick="event.stopPropagation();">
                             <a href="{{ route('pengajuanrab.show', $item->nopengajuan) }}" 
                                class="btn btn-sm btn-outline-info" title="Lihat Detail">
                                 <i class="bx bx-show"></i> Detail
@@ -98,7 +110,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-4">
+                        <td colspan="10" class="text-center py-4">
                             <div class="d-flex flex-column align-items-center">
                                 <i class="bx bx-folder-open mb-2" style="font-size: 48px; color: #a1a5b7;"></i>
                                 <h5 class="mt-3 text-muted">Tidak ada data pengajuan RAB</h5>
@@ -158,6 +170,7 @@
         let totalPages = {{ $pengajuanRab->lastPage() }};
         let perPage = {{ request('per_page', 10) }};
         let currentSearch = '{{ request('search') }}';
+        let currentStatus = '{{ request('status') }}';
 
         // Search input with debounce
         $('#searchInput').on('input', function() {
@@ -170,6 +183,13 @@
                 currentPage = 1;
                 loadData();
             }, 300);
+        });
+
+        // Status filter change
+        $('#statusFilter').on('change', function() {
+            currentStatus = $(this).val();
+            currentPage = 1;
+            loadData();
         });
 
         // Per page change
@@ -217,6 +237,7 @@
                 type: 'GET',
                 data: {
                     search: currentSearch,
+                    status: currentStatus,
                     per_page: perPage,
                     page: currentPage
                 },
@@ -241,14 +262,14 @@
             if (data.length === 0) {
                 tbody.html(`
                     <tr>
-                        <td colspan="9" class="text-center py-4">
+                        <td colspan="10" class="text-center py-4">
                             <div class="d-flex flex-column align-items-center">
                                 <i class="bx bx-folder-open mb-2" style="font-size: 48px; color: #a1a5b7;"></i>
                                 <h5 class="mt-3 text-muted">Tidak ada data pengajuan RAB</h5>
                                 <p class="text-muted">
                                     ${currentSearch ? 'Tidak ditemukan data dengan pencarian "' + currentSearch + '"' : 'Belum ada data pengajuan RAB yang ditambahkan'}
                                 </p>
-                                ${currentSearch ? '<button type="button" class="btn btn-outline-primary" onclick="$(\'#searchInput\').val(\'\').trigger(\'input\')"><i class="bx bx-refresh me-1"></i> Reset Pencarian</button>' : ''}
+                                ${currentSearch || currentStatus ? '<button type="button" class="btn btn-outline-primary" onclick="$(\'#searchInput\').val(\'\'); $(\'#statusFilter\').val(\'\'); currentSearch=\'\'; currentStatus=\'\'; loadData();"><i class="bx bx-refresh me-1"></i> Reset Filter</button>' : ''}
                             </div>
                         </td>
                     </tr>
@@ -259,6 +280,7 @@
             let startIndex = (currentPage - 1) * perPage + 1;
             data.forEach((item, index) => {
                 const hasilPlenoBadge = getHasilPlenoBadge(item.hasil_pleno);
+                const statusBadge = getStatusBadge(item.status);
                 const divisiNama = item.master_divisi ? item.master_divisi.nama_divisi : '-';
                 const konsumenNama = item.konsumen ? item.konsumen.konsumen : '-';
                 const namaProject = item.nama_project || '-';
@@ -275,6 +297,7 @@
                         <td>${divisiNama}</td>
                         <td>${konsumenNama}</td>
                         <td class="text-center" onclick="event.stopPropagation();">${hasilPlenoBadge}</td>
+                        <td class="text-center" onclick="event.stopPropagation();">${statusBadge}</td>
                         <td class="text-center" onclick="event.stopPropagation();">
                             <a href="/pengajuanrab/${item.nopengajuan}" class="btn btn-sm btn-outline-info" title="Lihat Detail">
                                 <i class="bx bx-show"></i> Detail
@@ -283,6 +306,11 @@
                     </tr>
                 `);
             });
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'F') return '<span class="badge bg-label-success">Final RAB</span>';
+            return '<span class="badge bg-label-warning">Draft RAB</span>';
         }
 
         function getHasilPlenoBadge(hasilPleno) {

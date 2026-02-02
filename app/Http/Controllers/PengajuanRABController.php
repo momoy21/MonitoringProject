@@ -27,6 +27,11 @@ class PengajuanRABController extends Controller
 
             $query = RABProyek::with(['konsumen', 'bidangJasa', 'masterDivisi']);
 
+            // Filter by status
+            if ($request->filled('status')) {
+                $query->where('status', $request->get('status'));
+            }
+
             // Universal Search - cari di semua field relevan
             if ($request->filled('search')) {
                 $query->where(function($q) use ($search) {
@@ -175,6 +180,7 @@ class PengajuanRABController extends Controller
                 'pm' => $request->pm,
                 'divisi' => $request->divisi,
                 'jenis_proyek' => $request->jenis_proyek,
+                'status' => 'D', // Default: Draft RAB
                 'nilai_proyek' => $request->nilai_proyek ?: null,
                 'tgl_input' => Carbon::today(),
                 'keterangan' => $request->keterangan,

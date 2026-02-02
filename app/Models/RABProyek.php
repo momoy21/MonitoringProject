@@ -25,6 +25,7 @@ class RABProyek extends Model
         'pm',
         'divisi',
         'jenis_proyek',
+        'status',
         'nilai_proyek',
         'tgl_input',
         'keterangan',
@@ -218,6 +219,32 @@ class RABProyek extends Model
         ];
 
         return $badges[$this->hasil_pleno] ?? '<span class="badge bg-secondary">-</span>';
+    }
+
+    /**
+     * Get status text
+     */
+    public function getStatusTextAttribute()
+    {
+        $statusList = [
+            'D' => 'Draft RAB',
+            'F' => 'Final RAB',
+        ];
+
+        return $statusList[$this->status] ?? '-';
+    }
+
+    /**
+     * Get status badge
+     */
+    public function getStatusBadgeAttribute()
+    {
+        $badges = [
+            'D' => '<span class="badge bg-label-warning">Draft RAB</span>',
+            'F' => '<span class="badge bg-label-success">Final RAB</span>',
+        ];
+
+        return $badges[$this->status] ?? '<span class="badge bg-label-secondary">-</span>';
     }
 
     /**
