@@ -270,8 +270,18 @@ class SAPImportService
         if (isset($columnMap['AmountLocal'])) {
             $amount = trim($row[$columnMap['AmountLocal']] ?? '');
             if (!empty($amount)) {
+                // Normalize: handle trailing minus (SAP format: 1234- means -1234)
                 $cleanedAmount = preg_replace('/[^\d\-\.,]/', '', $amount);
-                if (empty($cleanedAmount) || !is_numeric(str_replace(['.', ','], ['', '.'], $cleanedAmount))) {
+                
+                // Handle trailing minus (e.g., "66894380-" -> "-66894380")
+                if (substr($cleanedAmount, -1) === '-') {
+                    $cleanedAmount = '-' . substr($cleanedAmount, 0, -1);
+                }
+                
+                // Remove thousand separators and normalize decimal
+                $normalizedAmount = str_replace(['.', ','], ['', '.'], $cleanedAmount);
+                
+                if (empty($cleanedAmount) || !is_numeric($normalizedAmount)) {
                     $errors[] = "AmountLocal bukan format angka valid: '{$amount}'";
                 }
             }
@@ -714,12 +724,18 @@ class SAPImportService
 
     /**
      * Parse amount dari string ke decimal
+     * Supports SAP trailing minus format (e.g., "1234-" = -1234)
      */
     private function parseAmount(string $value): float
     {
         if (empty($value)) return 0;
 
         $cleaned = preg_replace('/[^\d\-\.,]/', '', $value);
+        
+        // Handle trailing minus (SAP format: 66894380- means -66894380)
+        if (substr($cleaned, -1) === '-') {
+            $cleaned = '-' . substr($cleaned, 0, -1);
+        }
 
         if (strpos($cleaned, ',') !== false && strpos($cleaned, '.') !== false) {
             $cleaned = str_replace('.', '', $cleaned);

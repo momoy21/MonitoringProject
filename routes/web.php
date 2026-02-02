@@ -9,6 +9,7 @@ use App\Http\Controllers\KondisiProyekController;
 use App\Http\Controllers\KonsumenController;
 use App\Http\Controllers\MasterManagerController;
 use App\Http\Controllers\RABController;
+use App\Http\Controllers\PengajuanRABController;
 use App\Http\Controllers\SpesifikasiRABController;
 use App\Http\Controllers\SummaryRABController;
 use App\Http\Controllers\ProgressProyekController;
@@ -115,6 +116,24 @@ Route::resource('rabpleno', RABPlenoController::class);
         // ---------------------------------------------------------------
         Route::resource('register', RegisterController::class);
 
+        // ---------------------------------------------------------------
+        // IMPORT SAP
+        // ---------------------------------------------------------------
+        Route::prefix('sap')->name('sap.')->group(function () {
+            Route::get('/', [SAPImportController::class, 'index'])->name('index');
+            Route::delete('/truncate', [SAPImportController::class, 'truncate'])->name('truncate');
+            Route::delete('/delete-by-source', [SAPImportController::class, 'deleteBySource'])->name('deleteBySource');
+            Route::get('/source-files', [SAPImportController::class, 'getSourceFiles'])->name('sourceFiles');
+            Route::get('/import-history', [SAPImportController::class, 'getImportHistory'])->name('importHistory');
+            Route::get('/error-logs', [SAPImportController::class, 'getErrorLogs'])->name('errorLogs');
+            Route::get('/import-logs', [SAPImportController::class, 'getImportLogs'])->name('importLogs');
+            Route::get('/auto-import-logs', [SAPImportController::class, 'getAutoImportLogs'])->name('autoImportLogs');
+
+            // FTP Routes (read-only monitoring)
+            Route::get('/ftp/test', [SAPImportController::class, 'testFtpConnection'])->name('ftp.test');
+            Route::get('/ftp/files', [SAPImportController::class, 'listFtpFiles'])->name('ftp.files');
+            Route::get('/ftp/info', [SAPImportController::class, 'getFtpInfo'])->name('ftp.info');
+        });
         // ---------------------------------------------------------------
         // BIDANG JASA
         // ---------------------------------------------------------------
@@ -251,6 +270,21 @@ Route::resource('rabpleno', RABPlenoController::class);
             Route::get('/summary-detail', [RABController::class, 'getSummaryDetailRAB'])->name('getSummaryDetailRAB');
         });
 
+        // ---------------------------------------------------------------
+        // PENGAJUAN RAB (Pengajuan Rencana Anggaran Biaya)
+        // ---------------------------------------------------------------
+        Route::prefix('pengajuanrab')->name('pengajuanrab.')->group(function () {
+            Route::get('/', [PengajuanRABController::class, 'index'])->name('index');
+            Route::get('/create', [PengajuanRABController::class, 'create'])->name('create');
+            Route::post('/', [PengajuanRABController::class, 'store'])->name('store');
+            Route::get('/generate-no', [PengajuanRABController::class, 'generateNoPengajuan'])->name('generateNo');
+            Route::get('/{pengajuanrab:nopengajuan}', [PengajuanRABController::class, 'show'])->name('show');
+            Route::get('/{pengajuanrab:nopengajuan}/edit', [PengajuanRABController::class, 'edit'])->name('edit');
+            Route::put('/{pengajuanrab:nopengajuan}', [PengajuanRABController::class, 'update'])->name('update');
+            Route::delete('/{pengajuanrab:nopengajuan}', [PengajuanRABController::class, 'destroy'])->name('destroy');
+            Route::get('/{pengajuanrab:nopengajuan}/download/{type}', [PengajuanRABController::class, 'download'])->name('download');
+        });
+
         Route::prefix('progressproyek')->name('progressproyek.')->group(function () {
             Route::get('get-header-rab', [ProgressProyekController::class, 'getHeaderRAB'])->name('getheaderrab');
             Route::post('check-header-progress', [ProgressProyekController::class, 'checkHeaderProgress'])->name('checkheaderprogress');
@@ -312,23 +346,6 @@ Route::resource('rabpleno', RABPlenoController::class);
             Route::get('/{noPendapatan}/download', [PendapatanProyekController::class, 'download'])->name('download');
         });
     });
-});
-
-// SAP Import Routes
-Route::middleware(['auth'])->prefix('sap')->name('sap.')->group(function () {
-    Route::get('/', [SAPImportController::class, 'index'])->name('index');
-    Route::delete('/truncate', [SAPImportController::class, 'truncate'])->name('truncate');
-    Route::delete('/delete-by-source', [SAPImportController::class, 'deleteBySource'])->name('deleteBySource');
-    Route::get('/source-files', [SAPImportController::class, 'getSourceFiles'])->name('sourceFiles');
-    Route::get('/import-history', [SAPImportController::class, 'getImportHistory'])->name('importHistory');
-    Route::get('/error-logs', [SAPImportController::class, 'getErrorLogs'])->name('errorLogs');
-    Route::get('/import-logs', [SAPImportController::class, 'getImportLogs'])->name('importLogs');
-    Route::get('/auto-import-logs', [SAPImportController::class, 'getAutoImportLogs'])->name('autoImportLogs');
-
-    // FTP Routes (read-only monitoring)
-    Route::get('/ftp/test', [SAPImportController::class, 'testFtpConnection'])->name('ftp.test');
-    Route::get('/ftp/files', [SAPImportController::class, 'listFtpFiles'])->name('ftp.files');
-    Route::get('/ftp/info', [SAPImportController::class, 'getFtpInfo'])->name('ftp.info');
 });
 
 require __DIR__.'/auth.php';
