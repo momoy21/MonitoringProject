@@ -21,6 +21,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportProgramController;
 use App\Http\Controllers\MasterDivisiController;
+use App\Http\Controllers\JenisProyekController;
+use App\Http\Controllers\RABPlenoController;
+
 
 
 /*
@@ -49,12 +52,29 @@ Route::get('/laporan-progress-proyek/pdf', [ReportProgramController::class, 'exp
 Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'exportExcel'])->name('report.excel');
 
 
+// ===================================================================
+// MasterDivisi
+// =================================================================== 
 Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
     'masterdivisi' => 'masterdivisi:kode_divisi'
 ]);
 
 
-    
+// ===================================================================
+// Master JenisProyek
+// =================================================================== 
+
+Route::resource('jenisproyek', JenisProyekController::class);
+
+
+
+
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::resource('rabpleno', RABPlenoController::class);
     
     // ===================================================================
     // DASHBOARD - Redirect based on role

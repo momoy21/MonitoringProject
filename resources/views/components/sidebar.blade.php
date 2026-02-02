@@ -48,6 +48,14 @@
             </a>
         </li>
 
+        <!-- Master divisi -->
+        <li class="menu-item {{ request()->routeIs('jenisproyek.*') ? 'active' : '' }}">
+            <a href="{{ route('jenisproyek.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user-check"></i>
+                <div>Jenis Proyek</div>
+            </a>
+        </li>
+
         <!-- Kondisi Proyek -->
         <li class="menu-item {{ request()->routeIs('kondisiproyek.*') ? 'active' : '' }}">
             <a href="{{ route('kondisiproyek.index') }}" class="menu-link">
