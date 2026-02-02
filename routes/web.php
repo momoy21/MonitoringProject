@@ -55,6 +55,9 @@ Route::get('/laporan-progress-proyek/pdf', [ReportProgramController::class, 'exp
 Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'exportExcel'])->name('report.excel');
 
 
+// ===================================================================
+// MasterDivisi
+// =================================================================== 
 Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
     'masterdivisi' => 'masterdivisi:kode_divisi'
 ]);
@@ -71,8 +74,34 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
     Route::get('/detail-data', [LaporanHasilPlenoRABController::class, 'getDetailData'])->name('detail-data');
 });
 
+// ===================================================================
+// LAPORAN HASIL PLENO RAB
+// ===================================================================
+Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(function () {
+    Route::get('/', [LaporanHasilPlenoRABController::class, 'index'])->name('index');
+    Route::get('/divisi-data', [LaporanHasilPlenoRABController::class, 'getDivisiData'])->name('divisi-data');
+    Route::get('/kategori-data', [LaporanHasilPlenoRABController::class, 'getKategoriData'])->name('kategori-data');
+    Route::get('/divisi-kategori-data', [LaporanHasilPlenoRABController::class, 'getDivisiKategoriData'])->name('divisi-kategori-data');
+    Route::get('/jenis-proyek-data', [LaporanHasilPlenoRABController::class, 'getJenisProyekData'])->name('jenis-proyek-data');
+    Route::get('/detail-data', [LaporanHasilPlenoRABController::class, 'getDetailData'])->name('detail-data');
+});
 
-    
+
+// ===================================================================
+// Master JenisProyek
+// =================================================================== 
+
+Route::resource('jenisproyek', JenisProyekController::class);
+
+
+
+
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::resource('rabpleno', RABPlenoController::class);
     
     // ===================================================================
     // DASHBOARD - Redirect based on role
