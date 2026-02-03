@@ -71,7 +71,15 @@
                 <div>Summary RAB</div>
             </a>
         </li>
- 
+
+        <!--Detail RAB -->
+        <li class="menu-item {{ request()->routeIs('specrabdetail.*') ? 'active' : '' }}">
+            <a href="{{ route('specrabdetail.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-detail"></i>
+                <div>RAB Detail</div>
+            </a>
+        </li>
+        
         @endrole
 
         @role('Project Manager')
