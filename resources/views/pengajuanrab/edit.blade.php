@@ -331,7 +331,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Margin RKAP (%)</label>
                                 <div class="id-display">
-                                    {{ $pengajuanrab->marginrkap ? number_format($pengajuanrab->marginrkap, 2) . '%' : '-' }}
+                                    {{ $pengajuanrab->margin_rkap ? number_format($pengajuanrab->margin_rkap, 2) . '%' : '-' }}
                                 </div>
                             </div>
                         </div>
@@ -340,7 +340,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Margin Pleno (%)</label>
                                 <div class="id-display">
-                                    {{ $pengajuanrab->marginpleno ? number_format($pengajuanrab->marginpleno, 2) . '%' : '-' }}
+                                    {{ $pengajuanrab->margin_pleno ? number_format($pengajuanrab->margin_pleno, 2) . '%' : '-' }}
                                 </div>
                             </div>
                         </div>
