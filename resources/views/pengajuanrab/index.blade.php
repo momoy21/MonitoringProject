@@ -314,10 +314,10 @@
         }
 
         function getHasilPlenoBadge(hasilPleno) {
-            if (!hasilPleno) return '<span class="badge bg-label-secondary">Belum Pleno</span>';
-            if (hasilPleno === 'TT') return '<span class="badge bg-label-success">Terima Tanpa Catatan</span>';
-            if (hasilPleno === 'TR') return '<span class="badge bg-label-warning">Terima Revisi</span>';
-            return '<span class="badge bg-label-secondary">-</span>';
+            if (!hasilPleno) return '<span class="badge bg-secondary">-</span>';
+            if (hasilPleno === 'TT') return '<span class="badge bg-danger">Tidak Tercapai RKAP</span>';
+            if (hasilPleno === 'TR') return '<span class="badge bg-success">Tercapai RKAP</span>';
+            return '<span class="badge bg-secondary">-</span>';
         }
 
         function formatDate(dateString) {

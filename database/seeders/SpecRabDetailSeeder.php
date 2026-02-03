@@ -126,6 +126,7 @@ class SpecRabDetailSeeder extends Seeder
             ['id_spec' => '0012', 'cost_element' => '6011115', 'description_ce' => ''],
             ['id_spec' => '0012', 'cost_element' => '6012104', 'description_ce' => ''],
             ['id_spec' => '0012', 'cost_element' => '6013117', 'description_ce' => ''],
+            ['id_spec' => '0012', 'cost_element' => '6001113', 'description_ce' => 'Ekstra Food'],
 
             // ===============================================
             // 13. Biaya Kontijensi & Relasi Proyek (id_spec: 0013)
@@ -141,9 +142,12 @@ class SpecRabDetailSeeder extends Seeder
         DB::table('spec_rab_detail')->delete();
 
         foreach ($mappings as $mapping) {
+            // Pad cost_element to 10 digits with leading zeros (SAP format)
+            $costElement = str_pad($mapping['cost_element'], 10, '0', STR_PAD_LEFT);
+            
             DB::table('spec_rab_detail')->insert([
                 'id_spec' => $mapping['id_spec'],
-                'cost_element' => $mapping['cost_element'],
+                'cost_element' => $costElement,
                 'description_ce' => $mapping['description_ce'],
                 'created_at' => $now,
                 'updated_at' => $now,
