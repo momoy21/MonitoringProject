@@ -155,22 +155,22 @@ class PencatatanPlenoRABController extends Controller
                 'progress' => 'nullable|string|max:2',
                 'keterangan' => 'nullable|string|max:1',
                 'hasil_pleno' => 'nullable|string|max:2',
-                'marginrkap' => 'nullable|numeric|min:0|max:100',
-                'marginpleno' => 'nullable|numeric|min:0|max:100',
+                'margin_rkap' => 'nullable|numeric|min:0|max:100',
+                'margin_pleno' => 'nullable|numeric|min:0|max:100',
                 'catatan' => 'nullable|string|max:500',
                 'status' => 'nullable|string|max:1',
                 'hasil_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
             ], [
                 'hasil_upload.mimes' => 'File harus berformat Excel (.xlsx, .xls)',
                 'hasil_upload.max' => 'Ukuran file maksimal 10MB',
-                'marginrkap.numeric' => 'Margin RKAP harus berupa angka',
-                'marginpleno.numeric' => 'Margin Pleno harus berupa angka',
-                'marginrkap.max' => 'Margin RKAP maksimal 100%',
-                'marginpleno.max' => 'Margin Pleno maksimal 100%',
+                'margin_rkap.numeric' => 'Margin RKAP harus berupa angka',
+                'margin_pleno.numeric' => 'Margin Pleno harus berupa angka',
+                'margin_rkap.max' => 'Margin RKAP maksimal 100%',
+                'margin_pleno.max' => 'Margin Pleno maksimal 100%',
             ]);
 
             // Jika progress = Done (04), file upload wajib (kecuali sudah ada file sebelumnya)
-            if ($request->progress === '04' && !$request->hasFile('hasil_upload') && empty($rabProyek->hasilupload)) {
+            if ($request->progress === '04' && !$request->hasFile('hasil_upload') && empty($rabProyek->hasil_upload)) {
                 return back()->withErrors(['hasil_upload' => 'Jika Progress = Done, dokumen RAB Final wajib diunggah'])
                             ->withInput();
             }
@@ -179,22 +179,22 @@ class PencatatanPlenoRABController extends Controller
             $rabProyek->progress = $request->progress;
             $rabProyek->keterangan = $request->keterangan;
             $rabProyek->hasil_pleno = $request->hasil_pleno;
-            $rabProyek->marginrkap = $request->marginrkap;
-            $rabProyek->marginpleno = $request->marginpleno;
+            $rabProyek->margin_rkap = $request->margin_rkap;
+            $rabProyek->margin_pleno = $request->margin_pleno;
             $rabProyek->catatan = $request->catatan;
             $rabProyek->status = $request->status;
 
             // Handle file upload - Dokumen RAB Final
             if ($request->hasFile('hasil_upload')) {
                 // Delete old file if exists
-                if ($rabProyek->hasilupload && Storage::disk('public')->exists($rabProyek->hasilupload)) {
-                    Storage::disk('public')->delete($rabProyek->hasilupload);
+                if ($rabProyek->hasil_upload && Storage::disk('public')->exists($rabProyek->hasil_upload)) {
+                    Storage::disk('public')->delete($rabProyek->hasil_upload);
                 }
 
                 $file = $request->file('hasil_upload');
                 $fileName = 'RAB_Final_' . $nopengajuan . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('pengajuan_rab/hasil_pleno', $fileName, 'public');
-                $rabProyek->hasilupload = $path;
+                $rabProyek->hasil_upload = $path;
             }
 
             $rabProyek->save();
