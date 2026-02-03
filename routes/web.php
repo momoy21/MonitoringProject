@@ -26,7 +26,7 @@ use App\Http\Controllers\LaporanHasilPlenoRABController;
 use App\Http\Controllers\SpecRabDetailController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\BiayaProyekController;
-//use App\Http\Controllers\LemburInterfaceController;
+use App\Http\Controllers\LemburInterfaceController;
 
 
 /*
