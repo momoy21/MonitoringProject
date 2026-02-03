@@ -265,6 +265,16 @@ Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
             Route::get('/{pengajuanrab:nopengajuan}/download/{type}', [PengajuanRABController::class, 'download'])->name('download');
         });
 
+        // ---------------------------------------------------------------
+        // PENCATATAN PLENO RAB (Pencatatan Hasil Pleno RAB)
+        // ---------------------------------------------------------------
+        Route::prefix('pencatatanpleno')->name('pencatatanpleno.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'index'])->name('index');
+            Route::get('/{nopengajuan}', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'show'])->name('show');
+            Route::get('/{nopengajuan}/edit', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'edit'])->name('edit');
+            Route::put('/{nopengajuan}', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'update'])->name('update');
+        });
+
         Route::prefix('progressproyek')->name('progressproyek.')->group(function () {
             Route::get('get-header-rab', [ProgressProyekController::class, 'getHeaderRAB'])->name('getheaderrab');
             Route::post('check-header-progress', [ProgressProyekController::class, 'checkHeaderProgress'])->name('checkheaderprogress');

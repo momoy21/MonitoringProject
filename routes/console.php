@@ -23,7 +23,7 @@ Artisan::command('inspire', function () {
 */
 
 Schedule::command('sap:auto-import')
-    ->dailyAt('01:00')
+    ->dailyAt('00:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/sap-auto-import.log'))
     ->onSuccess(function () {

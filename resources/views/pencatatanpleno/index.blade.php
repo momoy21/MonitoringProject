@@ -1,10 +1,10 @@
-<x-layout title="Pengajuan RAB">
+<x-layout title="Pencatatan Pleno RAB">
     <!-- Header Section - Sticky -->
     <div class="sticky-header">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <h4 class="fw-bold mb-2">Daftar Pengajuan Pleno RAB</h4>
-                <p class="mb-0">Kelola data pengajuan rencana anggaran biaya proyek</p>
+                <h4 class="fw-bold mb-2">Daftar Pencatatan Pleno RAB</h4>
+                <p class="mb-0">Kelola pencatatan hasil pleno rencana anggaran biaya proyek</p>
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-3">
@@ -24,10 +24,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Add Button -->
-                    <a href="{{ route('pengajuanrab.create') }}" class="btn btn-primary">
-                        <i class="bx bx-plus me-1"></i> Tambah
-                    </a>
                 </div>
             </div>
         </div>
@@ -45,6 +41,12 @@
                     </select>
                     <span>data per halaman</span>
                 </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <small class="text-muted">
+                    <i class="bx bx-info-circle me-1"></i>
+                    Double-click pada baris untuk membuka form pencatatan pleno
+                </small>
             </div>
         </div>
     </div>
@@ -65,15 +67,15 @@
                         <th class="fw-bold">Nama Proyek</th>
                         <th class="fw-bold">Divisi</th>
                         <th class="fw-bold">Konsumen</th>
+                        <th class="fw-bold text-center">Progress</th>
                         <th class="fw-bold text-center">Hasil Pleno</th>
-                        <th class="fw-bold text-center">Status</th>
-                        <th class="fw-bold text-center" style="width: 120px;">Aksi</th>
+                        <th class="fw-bold text-center" style="width: 100px;">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="pengajuanRabTableBody">
-                    @forelse($pengajuanRab as $index => $item)
-                    <tr class="editable-row" ondblclick="window.location.href='{{ route('pengajuanrab.edit', $item->nopengajuan) }}'" title="Double-click untuk edit" style="cursor: pointer;">
-                        <td class="text-center">{{ $pengajuanRab->firstItem() + $index }}</td>
+                <tbody id="pencatatanPlenoTableBody">
+                    @forelse($rabProyek as $index => $item)
+                    <tr class="editable-row" ondblclick="window.location.href='{{ route('pencatatanpleno.edit', $item->nopengajuan) }}'" title="Double-click untuk pencatatan pleno" style="cursor: pointer;">
+                        <td class="text-center">{{ $rabProyek->firstItem() + $index }}</td>
                         <td>{{ $item->tgl_input_formatted }}</td>
                         <td>
                             <span class="fw-bold text-primary">{{ $item->nopengajuan }}</span>
@@ -89,15 +91,15 @@
                         <td>{{ $item->masterDivisi->nama_divisi ?? '-' }}</td>
                         <td>{{ $item->konsumen->konsumen ?? '-' }}</td>
                         <td class="text-center" onclick="event.stopPropagation();">
+                            {!! $item->progress_badge !!}
+                        </td>
+                        <td class="text-center" onclick="event.stopPropagation();">
                             {!! $item->hasil_pleno_badge !!}
                         </td>
                         <td class="text-center" onclick="event.stopPropagation();">
-                            {!! $item->status_badge !!}
-                        </td>
-                        <td class="text-center" onclick="event.stopPropagation();">
-                            <a href="{{ route('pengajuanrab.show', $item->nopengajuan) }}" 
+                            <a href="{{ route('pencatatanpleno.show', $item->nopengajuan) }}" 
                                class="btn btn-sm btn-outline-info" title="Lihat Detail">
-                                <i class="bx bx-show"></i> Detail
+                                <i class="bx bx-show"></i>
                             </a>
                         </td>
                     </tr>
@@ -111,12 +113,12 @@
                                     @if(request('search'))
                                         Tidak ditemukan data dengan pencarian "{{ request('search') }}"
                                     @else
-                                        Belum ada data pengajuan RAB yang ditambahkan
+                                        Belum ada data pengajuan RAB yang dapat dicatat
                                     @endif
                                 </p>
-                                @if(request('search'))
-                                    <a href="{{ route('pengajuanrab.index') }}" class="btn btn-outline-primary">
-                                        <i class="bx bx-refresh me-1"></i> Reset Pencarian
+                                @if(request('search') || request('progress') || request('hasil_pleno'))
+                                    <a href="{{ route('pencatatanpleno.index') }}" class="btn btn-outline-primary">
+                                        <i class="bx bx-refresh me-1"></i> Reset Filter
                                     </a>
                                 @endif
                             </div>
@@ -133,7 +135,7 @@
         <!-- Left: Showing entries info -->
         <div class="pagination-info">
             <span class="text-muted">
-                Menampilkan <span id="entriesFrom">{{ $pengajuanRab->firstItem() ?? 0 }}</span> hingga <span id="entriesTo">{{ $pengajuanRab->lastItem() ?? 0 }}</span> dari <span id="entriesTotal">{{ $pengajuanRab->total() }}</span> data
+                Menampilkan <span id="entriesFrom">{{ $rabProyek->firstItem() ?? 0 }}</span> hingga <span id="entriesTo">{{ $rabProyek->lastItem() ?? 0 }}</span> dari <span id="entriesTotal">{{ $rabProyek->total() }}</span> data
             </span>
         </div>
 
@@ -159,8 +161,8 @@
     <script>
     $(document).ready(function() {
         let searchTimeout;
-        let currentPage = {{ $pengajuanRab->currentPage() }};
-        let totalPages = {{ $pengajuanRab->lastPage() }};
+        let currentPage = {{ $rabProyek->currentPage() }};
+        let totalPages = {{ $rabProyek->lastPage() }};
         let perPage = {{ request('per_page', 10) }};
         let currentSearch = '{{ request('search') }}';
 
@@ -218,7 +220,7 @@
             spinner.show();
 
             $.ajax({
-                url: '{{ route('pengajuanrab.index') }}',
+                url: '{{ route('pencatatanpleno.index') }}',
                 type: 'GET',
                 data: {
                     search: currentSearch,
@@ -240,7 +242,7 @@
         }
 
         function renderTable(data) {
-            const tbody = $('#pengajuanRabTableBody');
+            const tbody = $('#pencatatanPlenoTableBody');
             tbody.empty();
 
             if (data.length === 0) {
@@ -251,9 +253,9 @@
                                 <i class="bx bx-folder-open mb-2" style="font-size: 48px; color: #a1a5b7;"></i>
                                 <h5 class="mt-3 text-muted">Tidak ada data pengajuan RAB</h5>
                                 <p class="text-muted">
-                                    ${currentSearch ? 'Tidak ditemukan data dengan pencarian "' + currentSearch + '"' : 'Belum ada data pengajuan RAB yang ditambahkan'}
+                                    ${currentSearch ? 'Tidak ditemukan data dengan pencarian "' + currentSearch + '"' : 'Belum ada data pengajuan RAB yang dapat dicatat'}
                                 </p>
-                                ${currentSearch ? '<button type="button" class="btn btn-outline-primary" onclick="$(\'#searchInput\').val(\'\'); currentSearch=\'\'; loadData();"><i class="bx bx-refresh me-1"></i> Reset Pencarian</button>' : ''}
+                                ${currentSearch ? '<button type="button" class="btn btn-outline-primary" onclick="$(\'\'#searchInput\'\').val(\'\'\'\'); currentSearch=\'\'\'\'; loadData();"><i class="bx bx-refresh me-1"></i> Reset Pencarian</button>' : ''}
                             </div>
                         </td>
                     </tr>
@@ -263,8 +265,8 @@
 
             let startIndex = (currentPage - 1) * perPage + 1;
             data.forEach((item, index) => {
+                const progressBadge = getProgressBadge(item.progress);
                 const hasilPlenoBadge = getHasilPlenoBadge(item.hasil_pleno);
-                const statusBadge = getStatusBadge(item.status);
                 const divisiNama = item.master_divisi ? item.master_divisi.nama_divisi : '-';
                 const konsumenNama = item.konsumen ? item.konsumen.konsumen : '-';
                 const namaProject = item.nama_project || '-';
@@ -272,7 +274,7 @@
                 const tglFormatted = formatDate(item.tgl_input);
 
                 tbody.append(`
-                    <tr class="editable-row" ondblclick="window.location.href='/pengajuanrab/${item.nopengajuan}/edit'" title="Double-click untuk edit" style="cursor: pointer;">
+                    <tr class="editable-row" ondblclick="window.location.href='/pencatatanpleno/${item.nopengajuan}/edit'" title="Double-click untuk pencatatan pleno" style="cursor: pointer;">
                         <td class="text-center">${startIndex + index}</td>
                         <td>${tglFormatted}</td>
                         <td><span class="fw-bold text-primary">${item.nopengajuan}</span></td>
@@ -280,11 +282,11 @@
                         <td><div class="truncate-text" title="${namaProject}" style="max-width: 200px;">${truncatedNama}</div></td>
                         <td>${divisiNama}</td>
                         <td>${konsumenNama}</td>
+                        <td class="text-center" onclick="event.stopPropagation();">${progressBadge}</td>
                         <td class="text-center" onclick="event.stopPropagation();">${hasilPlenoBadge}</td>
-                        <td class="text-center" onclick="event.stopPropagation();">${statusBadge}</td>
                         <td class="text-center" onclick="event.stopPropagation();">
-                            <a href="/pengajuanrab/${item.nopengajuan}" class="btn btn-sm btn-outline-info" title="Lihat Detail">
-                                <i class="bx bx-show"></i> Detail
+                            <a href="/pencatatanpleno/${item.nopengajuan}" class="btn btn-sm btn-outline-info" title="Lihat Detail">
+                                <i class="bx bx-show"></i>
                             </a>
                         </td>
                     </tr>
@@ -292,9 +294,14 @@
             });
         }
 
-        function getStatusBadge(status) {
-            if (status === 'F') return '<span class="badge bg-label-success">Final RAB</span>';
-            return '<span class="badge bg-label-warning">Draft RAB</span>';
+        function getProgressBadge(progress) {
+            const badges = {
+                '01': '<span class="badge bg-warning">Dokumen belum diterima</span>',
+                '02': '<span class="badge bg-info">Proses TTD BOD</span>',
+                '03': '<span class="badge bg-primary">Revisi RAB</span>',
+                '04': '<span class="badge bg-success">Done</span>'
+            };
+            return badges[progress] || '<span class="badge bg-secondary">-</span>';
         }
 
         function getHasilPlenoBadge(hasilPleno) {
@@ -361,16 +368,6 @@
         generatePageNumbers();
         $('#firstPageBtn, #prevPageBtn').prop('disabled', currentPage <= 1);
         $('#nextPageBtn, #lastPageBtn').prop('disabled', currentPage >= totalPages);
-
-        // Auto-focus search input if there's a search term
-        @if(request('search'))
-            const searchInput = $('#searchInput');
-            if (searchInput.length) {
-                searchInput.focus();
-                const inputValue = searchInput.val();
-                searchInput.val('').val(inputValue);
-            }
-        @endif
     });
     </script>
     @endpush

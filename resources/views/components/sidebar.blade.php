@@ -124,6 +124,14 @@
             </a>
         </li>
 
+        <!-- Pencatatan Pleno RAB -->
+        <li class="menu-item {{ request()->routeIs('pencatatanpleno.*') ? 'active' : '' }}">
+            <a href="{{ route('pencatatanpleno.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-edit"></i>
+                <div>Pencatatan Pleno RAB</div>
+            </a>
+        </li>
+
         <!-- Progress Project -->
         <li class="menu-item {{ request()->routeIs('progressproyek.*') ? 'active' : '' }}">
             <a href="{{ route('progressproyek.index') }}" class="menu-link">
