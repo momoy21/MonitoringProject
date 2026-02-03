@@ -145,6 +145,7 @@ class SpecRabDetailSeeder extends Seeder
                 'id_spec' => $mapping['id_spec'],
                 'cost_element' => $mapping['cost_element'],
                 'description_ce' => $mapping['description_ce'],
+                'status' => 'A', // Default aktif
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
