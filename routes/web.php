@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportProgramController;
 use App\Http\Controllers\MasterDivisiController;
+use App\Http\Controllers\LaporanHasilPlenoRABController;
+use App\Http\Controllers\SpecRabDetailController;
 
 
 /*
@@ -53,6 +55,18 @@ Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'e
 Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
     'masterdivisi' => 'masterdivisi:kode_divisi'
 ]);
+
+// ===================================================================
+// LAPORAN HASIL PLENO RAB
+// ===================================================================
+Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(function () {
+    Route::get('/', [LaporanHasilPlenoRABController::class, 'index'])->name('index');
+    Route::get('/divisi-data', [LaporanHasilPlenoRABController::class, 'getDivisiData'])->name('divisi-data');
+    Route::get('/kategori-data', [LaporanHasilPlenoRABController::class, 'getKategoriData'])->name('kategori-data');
+    Route::get('/divisi-kategori-data', [LaporanHasilPlenoRABController::class, 'getDivisiKategoriData'])->name('divisi-kategori-data');
+    Route::get('/jenis-proyek-data', [LaporanHasilPlenoRABController::class, 'getJenisProyekData'])->name('jenis-proyek-data');
+    Route::get('/detail-data', [LaporanHasilPlenoRABController::class, 'getDetailData'])->name('detail-data');
+});
 
 
     
@@ -142,6 +156,20 @@ Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
         Route::resource('spesifikasirab', SpesifikasiRABController::class)->parameters([
             'spesifikasirab' => 'spesifikasirab:id_spec'
         ]);
+
+        // ---------------------------------------------------------------
+        // SPESIFIKASI RAB DETAIL (RAB Detail)
+        // ---------------------------------------------------------------
+        Route::prefix('specrabdetail')->name('specrabdetail.')->group(function () {
+            Route::get('/', [SpecRabDetailController::class, 'index'])->name('index');
+            Route::post('/', [SpecRabDetailController::class, 'store'])->name('store');
+            Route::get('/{id_spec}/{cost_element}', [SpecRabDetailController::class, 'show'])->name('show');
+            Route::put('/{id_spec}/{cost_element}', [SpecRabDetailController::class, 'update'])->name('update');
+            Route::delete('/{id_spec}/{cost_element}', [SpecRabDetailController::class, 'destroy'])->name('destroy');
+        });
+        Route::get('/api/specrabdetail/active-specs', [SpecRabDetailController::class, 'getActiveSpecs'])
+            ->name('api.specrabdetail.active-specs');
+
 
         // ---------------------------------------------------------------
         // SUMMARY RAB - FIXED: Gunakan idsummary yang benar
