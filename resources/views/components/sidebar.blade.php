@@ -79,14 +79,6 @@
                 <div>RAB Detail</div>
             </a>
         </li>
-
-        <!-- Master Karyawan -->
-        <li class="menu-item {{ request()->routeIs('karyawan.*') ? 'active' : '' }}">
-            <a href="{{ route('karyawan.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-id-card"></i>
-                <div>Master Karyawan</div>
-            </a>
-        </li>
         
         @endrole
 
