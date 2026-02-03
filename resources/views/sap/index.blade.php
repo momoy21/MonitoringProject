@@ -26,7 +26,7 @@
         <!-- Enhanced KPI Stats Cards -->
         <div class="row g-4 mb-4">
             <!-- Total Records -->
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-4 col-md-6">
                 <div class="card border-start border-primary border-4 h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start">
@@ -43,76 +43,6 @@
                 </div>
             </div>
 
-            <!-- Total Biaya (Pengeluaran) - Amount Positif -->
-            <div class="col-xl-3 col-md-6">
-                <div class="card border-start border-danger border-4 h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="text-muted mb-1 small text-uppercase fw-semibold">
-                                    <i class="bx bx-trending-down text-danger"></i> Total Biaya
-                                </p>
-                                <h4 class="mb-0 fw-bold text-danger">
-                                    Rp {{ number_format($stats['total_pengeluaran'] ?? 0, 0, ',', '.') }}
-                                </h4>
-                                <small class="text-muted">pengeluaran proyek</small>
-                            </div>
-                            <div class="avatar bg-label-danger">
-                                <i class="bx bx-minus-circle fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Total Pendapatan - Amount Negatif -->
-            <div class="col-xl-3 col-md-6">
-                <div class="card border-start border-success border-4 h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="text-muted mb-1 small text-uppercase fw-semibold">
-                                    <i class="bx bx-trending-up text-success"></i> Total Pendapatan
-                                </p>
-                                <h4 class="mb-0 fw-bold text-success">
-                                    Rp {{ number_format($stats['total_pendapatan'] ?? 0, 0, ',', '.') }}
-                                </h4>
-                                <small class="text-muted">pemasukan proyek</small>
-                            </div>
-                            <div class="avatar bg-label-success">
-                                <i class="bx bx-plus-circle fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Net Position -->
-            <div class="col-xl-3 col-md-6">
-                @php
-                    $netAmount = $stats['net_amount'] ?? 0;
-                    $isProfit = $netAmount < 0;
-                    $netColor = $isProfit ? 'success' : ($netAmount > 0 ? 'warning' : 'secondary');
-                    $netIcon = $isProfit ? 'bx-trending-up' : ($netAmount > 0 ? 'bx-trending-down' : 'bx-minus');
-                    $netLabel = $isProfit ? 'LABA' : ($netAmount > 0 ? 'RUGI' : 'BALANCE');
-                @endphp
-                <div class="card border-start border-{{ $netColor }} border-4 h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="text-muted mb-1 small text-uppercase fw-semibold">Posisi Neto</p>
-                                <h4 class="mb-0 fw-bold text-{{ $netColor }}">
-                                    Rp {{ number_format(abs($netAmount), 0, ',', '.') }}
-                                </h4>
-                                <span class="badge bg-{{ $netColor }}">{{ $netLabel }}</span>
-                            </div>
-                            <div class="avatar bg-label-{{ $netColor }}">
-                                <i class="bx {{ $netIcon }} fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Info Row -->

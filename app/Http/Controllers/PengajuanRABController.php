@@ -27,10 +27,8 @@ class PengajuanRABController extends Controller
 
             $query = RABProyek::with(['konsumen', 'bidangJasa', 'masterDivisi']);
 
-            // Filter by status
-            if ($request->filled('status')) {
-                $query->where('status', $request->get('status'));
-            }
+            // Only show Draft status (D) - hide Final (F)
+            $query->where('status', 'D');
 
             // Universal Search - cari di semua field relevan
             if ($request->filled('search')) {
