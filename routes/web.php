@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportProgramController;
 use App\Http\Controllers\MasterDivisiController;
+use App\Http\Controllers\LaporanHasilPlenoRABController;
 
 
 /*
@@ -53,6 +54,18 @@ Route::get('/laporan-progress-proyek/excel', [ReportProgramController::class, 'e
 Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
     'masterdivisi' => 'masterdivisi:kode_divisi'
 ]);
+
+// ===================================================================
+// LAPORAN HASIL PLENO RAB
+// ===================================================================
+Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(function () {
+    Route::get('/', [LaporanHasilPlenoRABController::class, 'index'])->name('index');
+    Route::get('/divisi-data', [LaporanHasilPlenoRABController::class, 'getDivisiData'])->name('divisi-data');
+    Route::get('/kategori-data', [LaporanHasilPlenoRABController::class, 'getKategoriData'])->name('kategori-data');
+    Route::get('/divisi-kategori-data', [LaporanHasilPlenoRABController::class, 'getDivisiKategoriData'])->name('divisi-kategori-data');
+    Route::get('/jenis-proyek-data', [LaporanHasilPlenoRABController::class, 'getJenisProyekData'])->name('jenis-proyek-data');
+    Route::get('/detail-data', [LaporanHasilPlenoRABController::class, 'getDetailData'])->name('detail-data');
+});
 
 
     
