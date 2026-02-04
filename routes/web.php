@@ -23,7 +23,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ReportProgramController;
 use App\Http\Controllers\MasterDivisiController;
 use App\Http\Controllers\JenisProyekController;
-use App\Http\Controllers\RABPlenoController;
+
 
 
 
@@ -62,20 +62,11 @@ Route::resource('masterdivisi', MasterDivisiController::class)->parameters([
 
 
 // ===================================================================
-// Master JenisProyek
+// JenisProyek
 // =================================================================== 
 
 Route::resource('jenisproyek', JenisProyekController::class);
 
-
-
-
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::resource('rabpleno', RABPlenoController::class);
     
     // ===================================================================
     // DASHBOARD - Redirect based on role
