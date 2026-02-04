@@ -287,99 +287,70 @@
                     </div>
                 </div>
 
-                <!-- Keterangan & Progress RAB -->
+                <!-- Keterangan & Progress RAB (Read Only - Edit via Pencatatan Pleno) -->
                 <div class="form-section">
-                    <h6 class="mb-3"><i class="bx bx-info-circle me-2"></i>Keterangan & Progress RAB</h6>
+                    <h6 class="mb-3"><i class="bx bx-info-circle me-2"></i>Keterangan & Progress RAB <small class="text-muted">(Edit melalui Pencatatan Pleno RAB)</small></h6>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="keterangan" class="form-label">Keterangan</label>
-                                <select class="form-select @error('keterangan') is-invalid @enderror"
-                                        id="keterangan" name="keterangan">
-                                    <option value="">-- Pilih Keterangan --</option>
-                                    <option value="P" {{ old('keterangan', $pengajuanrab->keterangan) == 'P' ? 'selected' : '' }}>Pleno</option>
-                                    <option value="T" {{ old('keterangan', $pengajuanrab->keterangan) == 'T' ? 'selected' : '' }}>Tidak Pleno</option>
-                                    <option value="R" {{ old('keterangan', $pengajuanrab->keterangan) == 'R' ? 'selected' : '' }}>Revisi RAB</option>
-                                </select>
-                                @error('keterangan')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Keterangan</label>
+                                <div class="id-display">
+                                    @php
+                                        $keteranganOptions = ['P' => 'Pleno', 'T' => 'Tidak Pleno', 'R' => 'Revisi RAB'];
+                                    @endphp
+                                    {{ $keteranganOptions[$pengajuanrab->keterangan] ?? '-' }}
+                                </div>
                             </div>
                         </div>
 
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="progress" class="form-label">Progress</label>
-                                <select class="form-select @error('progress') is-invalid @enderror"
-                                        id="progress" name="progress">
-                                    <option value="">-- Pilih Progress --</option>
-                                    <option value="01" {{ old('progress', $pengajuanrab->progress) == '01' ? 'selected' : '' }}>Dokumen belum diterima</option>
-                                    <option value="02" {{ old('progress', $pengajuanrab->progress) == '02' ? 'selected' : '' }}>Proses tanda tangan BOD</option>
-                                    <option value="03" {{ old('progress', $pengajuanrab->progress) == '03' ? 'selected' : '' }}>Revisi RAB</option>
-                                    <option value="04" {{ old('progress', $pengajuanrab->progress) == '04' ? 'selected' : '' }}>Done</option>
-                                </select>
-                                @error('progress')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Progress</label>
+                                <div class="id-display">
+                                    {!! $pengajuanrab->progress_badge !!}
+                                </div>
                             </div>
                         </div>
 
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="hasil_pleno" class="form-label">Hasil Pleno</label>
-                                <select class="form-select @error('hasil_pleno') is-invalid @enderror"
-                                        id="hasil_pleno" name="hasil_pleno">
-                                    <option value="">-- Pilih Hasil Pleno --</option>
-                                    <option value="TT" {{ old('hasil_pleno', $pengajuanrab->hasil_pleno) == 'TT' ? 'selected' : '' }}>Tidak Tercapai RKAP</option>
-                                    <option value="TR" {{ old('hasil_pleno', $pengajuanrab->hasil_pleno) == 'TR' ? 'selected' : '' }}>Tercapai RKAP</option>
-                                </select>
-                                @error('hasil_pleno')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Hasil Pleno</label>
+                                <div class="id-display">
+                                    {!! $pengajuanrab->hasil_pleno_badge !!}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Margin & Catatan -->
+                <!-- Margin & Catatan (Read Only - Edit via Pencatatan Pleno) -->
                 <div class="form-section">
-                    <h6 class="mb-3"><i class="bx bx-calculator me-2"></i>Margin & Catatan</h6>
+                    <h6 class="mb-3"><i class="bx bx-calculator me-2"></i>Margin & Catatan <small class="text-muted">(Edit melalui Pencatatan Pleno RAB)</small></h6>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="margin_rkap" class="form-label">Margin RKAP (%)</label>
-                                <input type="text" class="form-control @error('margin_rkap') is-invalid @enderror"
-                                       id="margin_rkap" name="margin_rkap" 
-                                       value="{{ old('margin_rkap', $pengajuanrab->margin_rkap) }}"
-                                       placeholder="Contoh: 15.50">
-                                @error('margin_rkap')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Margin RKAP (%)</label>
+                                <div class="id-display">
+                                    {{ $pengajuanrab->marginrkap ? number_format($pengajuanrab->marginrkap, 2) . '%' : '-' }}
+                                </div>
                             </div>
                         </div>
 
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="margin_pleno" class="form-label">Margin Pleno (%)</label>
-                                <input type="text" class="form-control @error('margin_pleno') is-invalid @enderror"
-                                       id="margin_pleno" name="margin_pleno" 
-                                       value="{{ old('margin_pleno', $pengajuanrab->margin_pleno) }}"
-                                       placeholder="Contoh: 12.75">
-                                @error('margin_pleno')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Margin Pleno (%)</label>
+                                <div class="id-display">
+                                    {{ $pengajuanrab->marginpleno ? number_format($pengajuanrab->marginpleno, 2) . '%' : '-' }}
+                                </div>
                             </div>
                         </div>
 
                         <div class="col-md-12">
                             <div class="mb-3">
-                                <label for="catatan" class="form-label">Catatan Hasil Pleno</label>
-                                <textarea class="form-control @error('catatan') is-invalid @enderror"
-                                          id="catatan" name="catatan" rows="3"
-                                          placeholder="Masukkan catatan hasil pleno">{{ old('catatan', $pengajuanrab->catatan) }}</textarea>
-                                @error('catatan')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Catatan Hasil Pleno</label>
+                                <div class="id-display" style="min-height: 80px;">
+                                    {{ $pengajuanrab->catatan ?: '-' }}
+                                </div>
                             </div>
                         </div>
                     </div>

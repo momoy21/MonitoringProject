@@ -2,16 +2,20 @@
     <x-slot:title>Import Data SAP</x-slot:title>
 
     <div class="container-xxl flex-grow-1 container-p-y">
-        <!-- Header -->
+        <!-- Header - Enhanced -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h4 class="fw-bold mb-0">
-                    <span class="text-muted fw-light">SAP /</span> Import Data
+                <h4 class="fw-bold mb-1">
+                    <i class="bx bx-data text-primary me-2"></i>Import Data SAP
                 </h4>
+                <p class="text-muted mb-0">Kelola dan monitoring data transaksi SAP</p>
             </div>
-            <div>
-                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#logsModal">
-                    <i class="bx bx-file me-1"></i> Lihat Logs
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#logsModal">
+                    <i class="bx bx-history me-1"></i> History & Logs
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btnRefreshAll">
+                    <i class="bx bx-refresh me-1"></i> Refresh
                 </button>
             </div>
         </div>
@@ -19,73 +23,63 @@
         <!-- Alert Messages -->
         <div id="alertContainer"></div>
 
-        <!-- Stats Cards -->
+        <!-- Enhanced KPI Stats Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Total Records -->
+            <div class="col-xl-4 col-md-6">
+                <div class="card border-start border-primary border-4 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-semibold">Total Records</p>
+                                <h3 class="mb-0 fw-bold">{{ number_format($stats['total_records']) }}</h3>
+                                <small class="text-muted">dari {{ $stats['unique_files'] ?? 0 }} file</small>
+                            </div>
+                            <div class="avatar bg-label-primary">
+                                <i class="bx bx-data fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Info Row -->
         <div class="row mb-4">
-            <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
+            <div class="col-md-6">
+                <div class="card bg-label-info">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bx bx-folder-open fs-3 me-3"></i>
                             <div>
-                                <span class="fw-semibold d-block mb-1">Total Records</span>
-                                <h3 class="card-title mb-0" id="statTotalRecords">{{ number_format($stats['total_records']) }}</h3>
-                            </div>
-                            <div class="avatar">
-                                <span class="avatar-initial rounded bg-label-primary">
-                                    <i class="bx bx-data"></i>
-                                </span>
+                                <h6 class="mb-0">{{ $stats['unique_projects'] }} Proyek Aktif</h6>
+                                <small class="text-muted">Proyek dengan transaksi SAP</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
+            <div class="col-md-6">
+                <div class="card bg-label-secondary">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bx bx-time fs-3 me-3"></i>
                             <div>
-                                <span class="fw-semibold d-block mb-1">Total Amount</span>
-                                <h5 class="card-title mb-0" id="statTotalAmount">Rp {{ number_format($stats['total_amount'], 0, ',', '.') }}</h5>
-                            </div>
-                            <div class="avatar">
-                                <span class="avatar-initial rounded bg-label-success">
-                                    <i class="bx bx-money"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <span class="fw-semibold d-block mb-1">Unique Projects</span>
-                                <h3 class="card-title mb-0" id="statUniqueProjects">{{ number_format($stats['unique_projects']) }}</h3>
-                            </div>
-                            <div class="avatar">
-                                <span class="avatar-initial rounded bg-label-info">
-                                    <i class="bx bx-folder"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <span class="fw-semibold d-block mb-1">Last Import</span>
-                                <h6 class="card-title mb-0" id="statLastImport">
-                                    {{ $stats['last_import'] ? \Carbon\Carbon::parse($stats['last_import'])->format('d/m/Y H:i') : '-' }}
+                                <h6 class="mb-0">
+                                    @if($stats['last_import'])
+                                        {{ \Carbon\Carbon::parse($stats['last_import'])->diffForHumans() }}
+                                    @else
+                                        Belum ada import
+                                    @endif
                                 </h6>
-                            </div>
-                            <div class="avatar">
-                                <span class="avatar-initial rounded bg-label-warning">
-                                    <i class="bx bx-time"></i>
-                                </span>
+                                <small class="text-muted">
+                                    @if($stats['last_import'])
+                                        {{ \Carbon\Carbon::parse($stats['last_import'])->format('d M Y, H:i') }}
+                                    @else
+                                        -
+                                    @endif
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -93,27 +87,73 @@
             </div>
         </div>
 
+        <!-- Mapping Status to Aktual Biaya -->
+        <div class="card mb-4 border-start border-info border-4">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar bg-label-info me-3">
+                            <i class="bx bx-transfer-alt fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Mapping ke Aktual Biaya</h6>
+                            <small class="text-muted">Status sinkronisasi data SAP ke tabel Aktual Biaya</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="text-center">
+                            <h5 class="mb-0 text-success">{{ number_format($stats['total_mapped'] ?? 0) }}</h5>
+                            <small class="text-muted">Berhasil Mapping</small>
+                        </div>
+                        <div class="text-center">
+                            <h5 class="mb-0 {{ ($stats['total_unmapped'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}">{{ number_format($stats['total_unmapped'] ?? 0) }}</h5>
+                            <small class="text-muted">Belum Mapping</small>
+                        </div>
+                        @php
+                            $mappingPercent = ($stats['total_records'] > 0) 
+                                ? round(($stats['total_mapped'] ?? 0) / $stats['total_records'] * 100, 1)
+                                : 0;
+                        @endphp
+                        <div class="text-center">
+                            <h5 class="mb-0 {{ $mappingPercent >= 90 ? 'text-success' : ($mappingPercent >= 50 ? 'text-warning' : 'text-danger') }}">{{ $mappingPercent }}%</h5>
+                            <small class="text-muted">Coverage</small>
+                        </div>
+                    </div>
+                </div>
+                @if($mappingPercent < 100 && ($stats['total_unmapped'] ?? 0) > 0)
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $mappingPercent }}%"></div>
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ 100 - $mappingPercent }}%"></div>
+                </div>
+                @endif
+            </div>
+        </div>
+
         <!-- FTP Monitoring Section -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="mb-0"><i class="bx bx-server me-2"></i>File di FTP Server</h5>
-                    <small class="text-muted" id="ftpConnectionInfo">Checking connection...</small>
+                    <h5 class="mb-0"><i class="bx bx-server me-2 text-primary"></i>File di FTP Server</h5>
+                    <small class="text-muted" id="ftpConnectionInfo">
+                        <i class="bx bx-loader-alt bx-spin"></i> Memeriksa koneksi...
+                    </small>
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-primary btn-sm" id="btnRefreshFtp">
-                        <i class="bx bx-refresh me-1"></i> Refresh
+                        <i class="bx bx-refresh"></i>
                     </button>
                     <button type="button" class="btn btn-outline-info btn-sm" id="btnTestFtp">
-                        <i class="bx bx-plug me-1"></i> Test Koneksi
+                        <i class="bx bx-plug"></i> Test
                     </button>
                 </div>
             </div>
             <div class="card-body">
-                <div class="alert alert-info mb-3">
-                    <i class="bx bx-info-circle me-1"></i>
-                    <strong>Mode Otomatis:</strong> File akan diimport secara otomatis setiap hari oleh scheduler.
-                    File berhasil dipindah ke <code>/Processed</code>, file gagal ke <code>/Error</code>.
+                <div class="alert alert-light border mb-3 d-flex align-items-center">
+                    <i class="bx bx-info-circle text-info fs-4 me-2"></i>
+                    <div>
+                        <strong>Mode Otomatis Aktif</strong> - File akan diimport secara otomatis oleh scheduler.
+                        Berhasil → <code class="text-success">/Processed</code> | Gagal → <code class="text-danger">/Error</code>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover" id="ftpFilesTable">
@@ -141,31 +181,35 @@
         <!-- Source Files -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bx bx-file me-2"></i>File yang Sudah Diimport</h5>
+                <div>
+                    <h5 class="mb-0"><i class="bx bx-check-circle me-2 text-success"></i>File yang Sudah Diimport</h5>
+                    <small class="text-muted">Riwayat file yang berhasil diproses</small>
+                </div>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-primary btn-sm" id="btnRefreshSourceFiles">
-                        <i class="bx bx-refresh me-1"></i> Refresh
+                        <i class="bx bx-refresh"></i>
                     </button>
                     <button type="button" class="btn btn-outline-danger btn-sm" id="btnTruncateAll">
-                        <i class="bx bx-trash me-1"></i> Hapus Semua Data
+                        <i class="bx bx-trash me-1"></i> Reset Data
                     </button>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-striped" id="sourceFilesTable">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0" id="sourceFilesTable">
+                        <thead class="table-light">
                             <tr>
                                 <th>Nama File</th>
-                                <th>Jumlah Record</th>
-                                <th>Total Amount</th>
+                                <th class="text-center">Records</th>
+                                <th class="text-end">Total Biaya</th>
+                                <th class="text-end">Total Pendapatan</th>
                                 <th>Waktu Import</th>
-                                <th>Aksi</th>
+                                <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="sourceFilesBody">
                             <tr>
-                                <td colspan="5" class="text-center">Memuat data...</td>
+                                <td colspan="6" class="text-center py-3 text-muted">Memuat data...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -175,26 +219,32 @@
 
         <!-- Data Table -->
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bx bx-table me-2"></i>Data SAP</h5>
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h5 class="mb-0"><i class="bx bx-table me-2 text-info"></i>Detail Data SAP</h5>
+                    <small class="text-muted">{{ number_format($data->total()) }} transaksi</small>
+                </div>
                 <div class="d-flex gap-2 align-items-center">
-                    <input type="text" class="form-control form-control-sm" id="searchInput"
-                           placeholder="Cari..." style="width: 200px;">
-                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnRefreshData">
-                        <i class="bx bx-refresh me-1"></i> Refresh
-                    </button>
+                    <div class="input-group" style="width: 250px;">
+                        <span class="input-group-text bg-white"><i class="bx bx-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Cari transaksi...">
+                    </div>
+                    <select class="form-select" id="perPageSelect" style="width: auto;">
+                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                    </select>
                 </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Internal Order</th>
                                 <th>CC Projek</th>
-                                <th>Description IO</th>
+                                <th style="max-width: 200px;">Description</th>
                                 <th>Cost Element</th>
-                                <th>Description CE</th>
                                 <th class="text-end">Amount</th>
                                 <th>Posting Date</th>
                                 <th>Profit Center</th>
@@ -203,20 +253,55 @@
                         <tbody id="dataTableBody">
                             @forelse($data as $item)
                             <tr>
-                                <td>{{ $item->internal_order }}</td>
-                                <td><strong>{{ $item->cc_projek }}</strong></td>
-                                <td>{{ $item->description_io }}</td>
-                                <td>{{ $item->cost_element }}</td>
-                                <td>{{ $item->description_ce }}</td>
-                                <td class="text-end">{{ number_format($item->amount_local, 0, ',', '.') }}</td>
-                                <td>{{ $item->posting_date ? $item->posting_date->format('d/m/Y') : '-' }}</td>
-                                <td>{{ $item->profit_center }}</td>
+                                <td>
+                                    <code class="text-primary">{{ $item->internal_order }}</code>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">{{ $item->cc_projek }}</span>
+                                </td>
+                                <td style="max-width: 200px;">
+                                    <div class="text-truncate" title="{{ $item->description_io }}">
+                                        {{ $item->description_io ?: '-' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <code>{{ $item->cost_element }}</code>
+                                    @if($item->description_ce)
+                                    <div class="small text-muted text-truncate" style="max-width: 150px;" title="{{ $item->description_ce }}">
+                                        {{ $item->description_ce }}
+                                    </div>
+                                    @endif
+                                </td>
+                                <td class="text-end">
+                                    @php
+                                        $amount = $item->amount_local;
+                                        $isNegative = $amount < 0;
+                                    @endphp
+                                    <span class="fw-semibold {{ $isNegative ? 'text-success' : 'text-danger' }}">
+                                        {{ $isNegative ? '+' : '-' }} Rp {{ number_format(abs($amount), 0, ',', '.') }}
+                                    </span>
+                                    <div class="small text-muted">
+                                        {{ $isNegative ? 'Pendapatan' : 'Biaya' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-nowrap">{{ $item->posting_date ? $item->posting_date->format('d/m/Y') : '-' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-label-secondary">{{ $item->profit_center ?: '-' }}</span>
+                                    @if($item->description_pca)
+                                    <div class="small text-muted">{{ $item->description_pca }}</div>
+                                    @endif
+                                </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4">
-                                    <i class="bx bx-data" style="font-size: 48px; color: #d9dee3;"></i>
-                                    <p class="text-muted mt-2">Belum ada data SAP</p>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="mb-3">
+                                        <i class="bx bx-data" style="font-size: 64px; color: #d9dee3;"></i>
+                                    </div>
+                                    <h6 class="text-muted">Belum ada data SAP</h6>
+                                    <p class="text-muted small mb-0">Data akan muncul setelah proses import berjalan</p>
                                 </td>
                             </tr>
                             @endforelse
@@ -225,8 +310,73 @@
                 </div>
             </div>
             @if($data->hasPages())
-            <div class="card-footer">
-                {{ $data->links() }}
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="text-muted small">
+                        Menampilkan {{ $data->firstItem() }} - {{ $data->lastItem() }} dari {{ $data->total() }} data
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {{-- Previous --}}
+                            @if($data->onFirstPage())
+                                <li class="page-item disabled">
+                                    <span class="page-link">&laquo;</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $data->previousPageUrl() }}" rel="prev">&laquo;</a>
+                                </li>
+                            @endif
+
+                            {{-- Page Numbers --}}
+                            @php
+                                $start = max(1, $data->currentPage() - 2);
+                                $end = min($data->lastPage(), $data->currentPage() + 2);
+                            @endphp
+
+                            @if($start > 1)
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $data->url(1) }}">1</a>
+                                </li>
+                                @if($start > 2)
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                @endif
+                            @endif
+
+                            @for($i = $start; $i <= $end; $i++)
+                                @if($i == $data->currentPage())
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ $i }}</span>
+                                    </li>
+                                @else
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ $data->url($i) }}">{{ $i }}</a>
+                                    </li>
+                                @endif
+                            @endfor
+
+                            @if($end < $data->lastPage())
+                                @if($end < $data->lastPage() - 1)
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                @endif
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $data->url($data->lastPage()) }}">{{ $data->lastPage() }}</a>
+                                </li>
+                            @endif
+
+                            {{-- Next --}}
+                            @if($data->hasMorePages())
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $data->nextPageUrl() }}" rel="next">&raquo;</a>
+                                </li>
+                            @else
+                                <li class="page-item disabled">
+                                    <span class="page-link">&raquo;</span>
+                                </li>
+                            @endif
+                        </ul>
+                    </nav>
+                </div>
             </div>
             @endif
         </div>
@@ -425,6 +575,21 @@
         border-bottom: 1px solid #f0f0f0;
         transition: background-color 0.2s;
     }
+    
+    /* Avatar Styles for KPI Cards */
+    .avatar {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+    .avatar.avatar-sm {
+        width: 32px;
+        height: 32px;
+    }
+    
     .timeline-item:hover {
         background-color: #f8f9fa;
     }
@@ -627,6 +792,28 @@
     .nav-tabs .nav-link.active {
         font-weight: 600;
     }
+
+    /* Pagination Fix - Prevent SVG overflow */
+    .pagination {
+        margin-bottom: 0;
+    }
+    .pagination .page-link svg {
+        width: 16px !important;
+        height: 16px !important;
+        display: inline-block;
+    }
+    .pagination .page-item .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        height: 38px;
+        padding: 0.375rem 0.75rem;
+    }
+    .card-footer .pagination {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
     </style>
 
     @push('scripts')
@@ -754,9 +941,34 @@
             setTimeout(() => btn.find('i').removeClass('bx-spin'), 500);
         });
 
-        // Refresh Data Table
-        $('#btnRefreshData').on('click', function() {
+        // Refresh Data Table / Refresh All
+        $('#btnRefreshData, #btnRefreshAll').on('click', function() {
             location.reload();
+        });
+
+        // Per page selector
+        $('#perPageSelect').on('change', function() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', $(this).val());
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        });
+
+        // Search with debounce
+        let dataSearchTimeout;
+        $('#searchInput').on('input', function() {
+            clearTimeout(dataSearchTimeout);
+            const query = $(this).val();
+            dataSearchTimeout = setTimeout(() => {
+                const url = new URL(window.location.href);
+                if (query) {
+                    url.searchParams.set('search', query);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                url.searchParams.set('page', 1);
+                window.location.href = url.toString();
+            }, 500);
         });
 
         // Truncate all
@@ -777,21 +989,36 @@
             });
         });
 
-        // Load source files
+        // Load source files - Enhanced with Biaya/Pendapatan split
         function loadSourceFiles() {
             $.get('{{ route("sap.sourceFiles") }}', function(response) {
                 if (response.success && response.data.length > 0) {
                     let html = '';
                     response.data.forEach(function(file) {
+                        // Calculate biaya (positive amounts) and pendapatan (negative amounts)
+                        const totalAmount = parseFloat(file.total_amount) || 0;
+                        const biaya = file.total_biaya || (totalAmount > 0 ? totalAmount : 0);
+                        const pendapatan = file.total_pendapatan || (totalAmount < 0 ? Math.abs(totalAmount) : 0);
+                        
                         html += `
                             <tr>
-                                <td>${file.source_file || '-'}</td>
-                                <td>${Number(file.record_count).toLocaleString('id-ID')}</td>
-                                <td>Rp ${Number(file.total_amount).toLocaleString('id-ID')}</td>
-                                <td>${file.imported_at ? new Date(file.imported_at).toLocaleString('id-ID') : '-'}</td>
                                 <td>
+                                    <i class="bx bx-file-blank text-success me-2"></i>
+                                    <span class="fw-medium">${file.source_file || '-'}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">${Number(file.record_count).toLocaleString('id-ID')}</span>
+                                </td>
+                                <td class="text-end text-danger">
+                                    Rp ${Number(biaya).toLocaleString('id-ID')}
+                                </td>
+                                <td class="text-end text-success">
+                                    Rp ${Number(pendapatan).toLocaleString('id-ID')}
+                                </td>
+                                <td><small class="text-muted">${file.imported_at ? new Date(file.imported_at).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-'}</small></td>
+                                <td class="text-center">
                                     <button type="button" class="btn btn-outline-danger btn-sm btn-delete-source"
-                                            data-source="${file.source_file}">
+                                            data-source="${file.source_file}" title="Hapus data file ini">
                                         <i class="bx bx-trash"></i>
                                     </button>
                                 </td>
@@ -807,7 +1034,14 @@
                         }
                     });
                 } else {
-                    $('#sourceFilesBody').html('<tr><td colspan="5" class="text-center text-muted">Belum ada file yang diimport</td></tr>');
+                    $('#sourceFilesBody').html(`
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bx bx-file" style="font-size: 32px;"></i>
+                                <p class="mb-0 mt-2">Belum ada file yang diimport</p>
+                            </td>
+                        </tr>
+                    `);
                 }
             });
         }

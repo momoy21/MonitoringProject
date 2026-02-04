@@ -32,6 +32,9 @@
     <!-- Additional Styles -->
     @stack('styles')
 
+    {{-- Vite assets (HMR client + app assets) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <!-- Global Styles for Editable Rows -->
     <style>
         /* Editable row hover effect */

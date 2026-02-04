@@ -14,12 +14,11 @@ class SAPImportService
     protected string $logFolder;
     protected string $processedFolder;
 
-    // Konfigurasi field wajib - bisa disesuaikan
+    // Konfigurasi field wajib - hanya field yang benar-benar diperlukan
     protected array $requiredFields = [
         'InternalOrder',
         'CCProjek',
         'CostElement',
-        'DescriptionCE',
         'AmountLocal',
         'PostingDate',
     ];
@@ -27,6 +26,7 @@ class SAPImportService
     // Field yang boleh kosong
     protected array $optionalFields = [
         'DescriptionIO',
+        'DescriptionCE',
         'ProfitCenter',
         'DescriptioPCA',
     ];
@@ -317,7 +317,8 @@ class SAPImportService
 
     /**
      * Import data dari file CSV SAP
-     * Mode: ALL OR NOTHING - Jika ada satu baris error, seluruh file ditolak
+     * Mode: PER-BARIS - Baris valid diimport, baris invalid dilewati
+     * File dipindahkan ke Processed jika ada 1+ baris berhasil, ke Error jika 0 berhasil
      * @param string $filePath Path ke file CSV
      * @param bool $force Force import meskipun sudah ada
      * @param string|null $originalFilename Nama file asli (opsional, untuk FTP import)
@@ -446,9 +447,14 @@ class SAPImportService
             // PRE-VALIDATION: Baca dan validasi SEMUA baris terlebih dahulu
             // ================================================================
             $allRows = [];
+            $validRows = [];
             $errorRows = [];
             $warningRows = [];
             $rowCount = 0;
+
+            // Simpan juga raw data untuk file split nanti
+            $validRawRows = [];
+            $errorRawRows = [];
 
             while (($row = fgetcsv($handle)) !== false) {
                 $rowCount++;
@@ -471,22 +477,36 @@ class SAPImportService
                     ];
                 }
 
-                // Jika ada error, kumpulkan untuk ditampilkan
+                // Jika ada error, kumpulkan untuk log tapi TIDAK menghentikan proses
                 if (!$rowValidation['valid']) {
+                    $errorReason = implode('; ', $rowValidation['errors']);
                     $errorRows[] = [
                         'row' => $currentRowNum,
                         'errors' => $rowValidation['errors'],
+                        'error_reason' => $errorReason,
                         'data' => $this->getRowPreview($row, $columnMap)
                     ];
 
-                    // Log setiap error per baris
-                    $errorMsg = implode('; ', $rowValidation['errors']);
-                    $this->logError($sourceFile, 'DATA_INCOMPLETE', $errorMsg, $currentRowNum);
+                    // Simpan raw row dengan tambahan Error_Reason untuk file error
+                    $errorRawRows[] = [
+                        'row_number' => $currentRowNum,
+                        'raw_data' => $row,
+                        'error_reason' => $errorReason
+                    ];
+
+                    // Log setiap error per baris dengan alasan detailnya
+                    $this->logError($sourceFile, 'ROW_SKIPPED', $errorReason, $currentRowNum);
                 } else {
-                    // Simpan baris yang valid untuk diproses nanti
-                    $allRows[] = [
+                    // Simpan baris yang valid untuk diproses
+                    $validRows[] = [
                         'row_number' => $currentRowNum,
                         'data' => $row
+                    ];
+
+                    // Simpan raw data untuk file processed
+                    $validRawRows[] = [
+                        'row_number' => $currentRowNum,
+                        'raw_data' => $row
                     ];
                 }
             }
@@ -494,54 +514,32 @@ class SAPImportService
             fclose($handle);
 
             // ================================================================
-            // JIKA ADA ERROR, TOLAK SELURUH FILE (ALL OR NOTHING)
+            // STEP 4: PROSES BARIS YANG VALID (Per-Baris Import)
             // ================================================================
-            if (!empty($errorRows)) {
+            if (empty($validRows)) {
+                // Tidak ada baris valid sama sekali -> Error
                 $totalErrors = count($errorRows);
-                $errorSummary = "File ditolak! Ditemukan {$totalErrors} baris dengan data tidak lengkap/tidak valid.";
-                
-                // Log semua error summary
-                $this->logImport($sourceFile, 'REJECTED', $errorSummary);
-                
-                // Pindahkan file ke folder Error
-                $this->moveToErrorFolder($filePath);
-
-                // Build detail message
-                $detailMessage = $errorSummary . " Baris bermasalah: ";
-                $rowNumbers = array_column($errorRows, 'row');
-                if (count($rowNumbers) <= 10) {
-                    $detailMessage .= implode(', ', $rowNumbers);
-                } else {
-                    $detailMessage .= implode(', ', array_slice($rowNumbers, 0, 10)) . "... dan " . (count($rowNumbers) - 10) . " baris lainnya";
-                }
-                $detailMessage .= ". Silakan perbaiki file dan upload ulang.";
-
-                return [
-                    'success' => false,
-                    'error_type' => 'DATA_VALIDATION_FAILED',
-                    'message' => $detailMessage,
-                    'data' => [
-                        'total_rows' => $rowCount,
-                        'valid_rows' => count($allRows),
-                        'error_rows' => $totalErrors,
-                        'warning_rows' => count($warningRows)
-                    ],
-                    'errors' => $errorRows,
-                    'warnings' => $warningRows
-                ];
-            }
-
-            // ================================================================
-            // STEP 4: SEMUA DATA VALID - LAKUKAN INSERT
-            // ================================================================
-            if (empty($allRows)) {
-                $message = "File tidak memiliki data yang bisa diimport.";
+                $message = "Tidak ada data yang bisa diimport. {$totalErrors} baris memiliki data tidak valid.";
                 $this->logImport($sourceFile, 'FAILED', $message);
 
+                // Log detail error untuk setiap baris
+                foreach ($errorRows as $errRow) {
+                    $this->logImport($sourceFile, 'ROW_ERROR', "Baris {$errRow['row']}: {$errRow['error_reason']}");
+                }
+
                 return [
                     'success' => false,
-                    'error_type' => 'NO_DATA',
-                    'message' => $message
+                    'error_type' => 'NO_VALID_DATA',
+                    'message' => $message,
+                    'data' => [
+                        'total_rows' => $rowCount,
+                        'valid_rows' => 0,
+                        'error_rows' => $totalErrors,
+                    ],
+                    'errors' => $errorRows,
+                    'header' => $header,
+                    'valid_raw_rows' => [],
+                    'error_raw_rows' => $errorRawRows,
                 ];
             }
 
@@ -550,7 +548,7 @@ class SAPImportService
             try {
                 $importedCount = 0;
 
-                foreach ($allRows as $rowData) {
+                foreach ($validRows as $rowData) {
                     $row = $rowData['data'];
 
                     // Parse data
@@ -584,16 +582,31 @@ class SAPImportService
                 $this->recordImportHistory($filePath, 'SUCCESS', $importedCount, $sourceFile);
 
                 // Build success message
-                $message = "Import berhasil! {$importedCount} record diimport dari total {$rowCount} baris.";
+                $skippedCount = count($errorRows);
+                if ($skippedCount > 0) {
+                    $message = "Import berhasil! {$importedCount} dari {$rowCount} baris diimport ({$skippedCount} baris dilewati karena data tidak valid).";
+                } else {
+                    $message = "Import berhasil! {$importedCount} record diimport dari total {$rowCount} baris.";
+                }
+                
                 if (!empty($warningRows)) {
                     $message .= " (" . count($warningRows) . " baris dengan warning pada field opsional)";
                 }
 
                 $this->logImport($sourceFile, 'SUCCESS', $message);
 
+                // Log detail baris yang dilewati dengan alasan error
+                if ($skippedCount > 0) {
+                    $this->logImport($sourceFile, 'SKIPPED_SUMMARY', "{$skippedCount} baris dilewati karena data tidak valid:");
+                    foreach ($errorRows as $errRow) {
+                        $this->logImport($sourceFile, 'SKIPPED_ROW', "Baris {$errRow['row']}: {$errRow['error_reason']}");
+                    }
+                }
+
                 Log::info("SAP Import completed", [
                     'file' => $sourceFile,
                     'imported' => $importedCount,
+                    'skipped' => $skippedCount,
                     'warnings' => count($warningRows)
                 ]);
 
@@ -603,11 +616,15 @@ class SAPImportService
                     'data' => [
                         'total_rows' => $rowCount,
                         'imported' => $importedCount,
-                        'skipped' => 0,
-                        'error_count' => 0,
+                        'skipped' => $skippedCount,
+                        'error_count' => $skippedCount,
                         'warning_count' => count($warningRows)
                     ],
-                    'warnings' => $warningRows
+                    'errors' => $errorRows,
+                    'warnings' => $warningRows,
+                    'header' => $header,
+                    'valid_raw_rows' => $validRawRows,
+                    'error_raw_rows' => $errorRawRows,
                 ];
 
             } catch (\Exception $e) {
@@ -642,8 +659,8 @@ class SAPImportService
             'InternalOrder' => trim($row[$columnMap['InternalOrder'] ?? 0] ?? ''),
             'CCProjek' => trim($row[$columnMap['CCProjek'] ?? 1] ?? ''),
             'CostElement' => trim($row[$columnMap['CostElement'] ?? 3] ?? ''),
-            'DescriptionCE' => trim($row[$columnMap['DescriptionCE'] ?? 4] ?? ''),
             'AmountLocal' => trim($row[$columnMap['AmountLocal'] ?? 5] ?? ''),
+            'PostingDate' => trim($row[$columnMap['PostingDate'] ?? 6] ?? ''),
         ];
     }
 

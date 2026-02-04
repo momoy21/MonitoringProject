@@ -96,7 +96,7 @@ class SpesifikasiRABSeeder extends Seeder
             ],
             [
                 'id_spec' => '0013',
-                'spec_rab' => 'Biaya Tunjangan Lainnya & Relasi Proyek',
+                'spec_rab' => 'Biaya Kontijensi & Relasi Proyek',
                 'norutspec' => '07',
                 'kategori' => 'HPP',
                 'status' => 'A'
@@ -118,22 +118,20 @@ class SpesifikasiRABSeeder extends Seeder
 
         ];
 
-        // Delete existing data instead of truncate to avoid foreign key issues
-        DB::table('spec_rab')->delete();
-
-        // Insert data
+        // Use updateOrInsert to avoid foreign key issues
         foreach ($spesifikasiRAB as $data) {
-            DB::table('spec_rab')->insert([
-                'id_spec' => $data['id_spec'],
-                'spec_rab' => $data['spec_rab'],
-                'norutspec' => $data['norutspec'],
-                'kategori' => $data['kategori'],
-                'status' => $data['status'],
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            DB::table('spec_rab')->updateOrInsert(
+                ['id_spec' => $data['id_spec']],
+                [
+                    'spec_rab' => $data['spec_rab'],
+                    'norutspec' => $data['norutspec'],
+                    'kategori' => $data['kategori'],
+                    'status' => $data['status'],
+                    'updated_at' => now()
+                ]
+            );
         }
 
-        $this->command->info('SpesifikasiRAB seeder completed. Inserted ' . count($spesifikasiRAB) . ' records.');
+        $this->command->info('SpesifikasiRAB seeder completed. Upserted ' . count($spesifikasiRAB) . ' records.');
     }
 }
