@@ -24,6 +24,7 @@ use App\Http\Controllers\ReportProgramController;
 use App\Http\Controllers\MasterDivisiController;
 use App\Http\Controllers\LaporanHasilPlenoRABController;
 use App\Http\Controllers\SpecRabDetailController;
+use App\Http\Controllers\KaryawanController;
 
 
 /*
@@ -181,6 +182,16 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
         Route::prefix('api/summaryrab')->name('api.summaryrab.')->group(function () {
             Route::get('active', [SummaryRABController::class, 'getActiveSummaryRAB'])->name('active');
         });
+
+        // ---------------------------------------------------------------
+        // MASTER KARYAWAN
+        // ---------------------------------------------------------------
+        Route::resource('karyawan', KaryawanController::class)->parameters([
+            'karyawan' => 'karyawan:nik'
+        ]);
+        // Karyawan - Additional API Routes
+        Route::get('/api/karyawan/active', [KaryawanController::class, 'getActiveKaryawan'])
+            ->name('api.karyawan.active');
     });
 
     // ===================================================================
