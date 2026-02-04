@@ -27,6 +27,9 @@ use App\Http\Controllers\SpecRabDetailController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\BiayaProyekController;
 use App\Http\Controllers\LemburInterfaceController;
+use App\Http\Controllers\JenisProyekController;
+
+
 
 
 /*
@@ -88,20 +91,11 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
 
 
 // ===================================================================
-// Master JenisProyek
+// JenisProyek
 // =================================================================== 
 
 Route::resource('jenisproyek', JenisProyekController::class);
 
-
-
-
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::resource('rabpleno', RABPlenoController::class);
     
     // ===================================================================
     // DASHBOARD - Redirect based on role

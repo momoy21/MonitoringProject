@@ -1,93 +1,100 @@
-<x-layout title="Pencatatan Hasil Pleno RAB">
-    <div class="card border-primary" style="max-width: 900px; margin: auto;">
-        <div class="card-header bg-primary text-white p-2">
-            <h6 class="mb-0">Pencatatan Hasil Pleno RAB</h6>
+<x-layout title="Edit Jenis Proyek">
+    <x-slot name="breadcrumbs">
+        @php
+        $breadcrumbs = [
+            ['name' => 'Jenis Proyek', 'url' => route('jenisproyek.index')],
+            ['name' => 'Edit Jenis Proyek']
+        ];
+        @endphp
+    </x-slot>
+
+    <x-breadcrumb :breadcrumbs="$breadcrumbs" />
+
+    <div class="nonsticky-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h4 class="fw-bold mb-2">Edit Jenis Proyek: {{ $item->idjenisproyek }}</h4>
+                <p class="mb-0">Perbarui informasi detail untuk jenis proyek ini</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="{{ route('jenisproyek.index') }}" class="btn btn-outline-secondary">
+                    <i class="bx bx-arrow-back me-1"></i> Kembali
+                </a>
+            </div>
         </div>
+    </div>
+
+    <div class="card">
         <div class="card-body">
-            <form action="{{ route('rabpleno.update', $item->nopengajuan) }}" method="POST" enctype="multipart/form-data">
+            <form id="editJenisProyekForm" action="{{ route('jenisproyek.update', $item->idjenisproyek) }}" method="POST">
                 @csrf
                 @method('PUT')
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">NO Pengajuan</label>
-                            <div class="col-sm-8 small">: **{{ $item->nopengajuan }}**</div>
+
+                <div class="form-section">
+                    <h6 class="mb-3">Informasi Jenis Proyek</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ID Jenis Proyek</label>
+                                <input type="text" class="form-control bg-light" value="{{ $item->idjenisproyek }}" readonly>
+                                <small class="text-muted">ID jenis proyek tidak dapat diubah.</small>
+                            </div>
                         </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Dokumen IO</label>
-                            <div class="col-sm-8"><input type="text" name="dokumen_io" class="form-control form-control-sm" value="{{ $item->dokumen_io }}"></div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Cost Center</label>
-                            <div class="col-sm-8"><input type="text" name="cost_center" class="form-control form-control-sm" value="{{ $item->cost_center }}"></div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Nama Proyek</label>
-                            <div class="col-sm-8"><input type="text" name="namaproject" class="form-control form-control-sm" value="{{ $item->namaproject }}"></div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Progress</label>
-                            <div class="col-sm-8">
-                                <select name="progress" class="form-select form-select-sm">
-                                    <option value="01" {{ $item->progress == '01' ? 'selected' : '' }}>01</option>
-                                    <option value="04" {{ $item->progress == '04' ? 'selected' : '' }}>04 (Done)</option>
-                                </select>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="jenisproyek" class="form-label">Nama Jenis Proyek <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       name="jenisproyek" 
+                                       id="jenisproyek"
+                                       class="form-control @error('jenisproyek') is-invalid @enderror" 
+                                       maxlength="100" 
+                                       value="{{ old('jenisproyek', $item->jenisproyek) }}" 
+                                       required>
+                                <div class="invalid-feedback">
+                                    @error('jenisproyek'){{ $message }}@enderror
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Tanggal Pengajuan</label>
-                            <div class="col-sm-8 small">: {{ \Carbon\Carbon::parse($item->tglinput)->format('d/m/Y') }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Konsumen</label>
-                            <div class="col-sm-8">
-                                <select name="idkonsumen" class="form-select form-select-sm">
-                                    @foreach($konsumens as $k)
-                                        <option value="{{ $k->id }}" {{ $item->idkonsumen == $k->id ? 'selected' : '' }}>{{ $k->nama_konsumen }}</option>
-                                    @endforeach
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                <select name="status" id="status" class="form-select @error('status') is-invalid @enderror" required>
+                                    <option value="A" {{ old('status', $item->status) == 'A' ? 'selected' : '' }}>Aktif</option>
+                                    <option value="N" {{ old('status', $item->status) == 'N' ? 'selected' : '' }}>Non Aktif</option>
                                 </select>
+                                <div class="invalid-feedback">
+                                    @error('status'){{ $message }}@enderror
+                                </div>
                             </div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Bidang Jasa</label>
-                            <div class="col-sm-8"><input type="text" name="bidang_jasa" class="form-control form-control-sm" value="{{ $item->bidang_jasa }}"></div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Hasil Pleno</label>
-                            <div class="col-sm-8">
-                                <select class="form-select form-select-sm" disabled>
-                                    <option>{{ $item->hasil_pleno == 'TR' ? 'TERCAPAI' : 'TIDAK TERCAPAI' }}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Margin RKAP</label>
-                            <div class="col-sm-8"><input type="number" name="marginrkap" class="form-control form-control-sm" value="{{ $item->marginrkap }}"></div>
-                        </div>
-                        <div class="row mb-2">
-                            <label class="col-sm-4 small">Margin Pleno</label>
-                            <div class="col-sm-8"><input type="number" name="marginpleno" class="form-control form-control-sm" value="{{ $item->marginpleno }}"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="small">Dokumen RAB Final</label>
-                    <input type="file" name="hasilupload" class="form-control form-control-sm">
-                </div>
-
-                <div class="mb-3">
-                    <label class="small">Catatan</label>
-                    <textarea name="catatan" class="form-control" rows="3">{{ $item->catatan }}</textarea>
-                </div>
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary px-5">Update</button>
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <a href="{{ route('jenisproyek.index') }}" class="btn btn-outline-secondary">
+                        <i class="bx bx-x me-1"></i> Batal
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner"></span>
+                        <i class="bx bx-save me-1" id="submitIcon"></i>
+                        <span id="submitText">Update Data</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+
+    @push('scripts')
+    <script src="{{ asset('js/jenisproyek.js') }}?v={{ time() }}"></script>
+    <script>
+    $(document).ready(function() {
+        $('#submitBtn')
+            .data('default-text', 'Update Data')
+            .data('loading-text', 'Memperbarui...');
+    });
+    </script>
+    @endpush
 </x-layout>
