@@ -99,9 +99,10 @@ function loadBiayaProyekData(idRab) {
         data: { id_rab: idRab },
         success: function (response) {
             if (response.success) {
-                // Update month header
+                // Update month header and label
                 if (response.data.current_month) {
                     $('#bulanIniHeader').text('Bulan Ini (' + response.data.current_month + ')');
+                    $('#bulanIniLabel').text('Periode: ' + response.data.current_month);
                 }
 
                 // Render Pendapatan table
