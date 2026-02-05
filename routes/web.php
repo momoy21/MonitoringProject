@@ -24,6 +24,8 @@ use App\Http\Controllers\ReportProgramController;
 use App\Http\Controllers\MasterDivisiController;
 use App\Http\Controllers\LaporanHasilPlenoRABController;
 use App\Http\Controllers\SpecRabDetailController;
+use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\BiayaProyekController;
 
 
 /*
@@ -181,6 +183,16 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
         Route::prefix('api/summaryrab')->name('api.summaryrab.')->group(function () {
             Route::get('active', [SummaryRABController::class, 'getActiveSummaryRAB'])->name('active');
         });
+
+        // ---------------------------------------------------------------
+        // MASTER KARYAWAN
+        // ---------------------------------------------------------------
+        Route::resource('karyawan', KaryawanController::class)->parameters([
+            'karyawan' => 'karyawan:nik'
+        ]);
+        // Karyawan - Additional API Routes
+        Route::get('/api/karyawan/active', [KaryawanController::class, 'getActiveKaryawan'])
+            ->name('api.karyawan.active');
     });
 
     // ===================================================================
@@ -362,6 +374,20 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
 
             // Download file
             Route::get('/{noPendapatan}/download', [PendapatanProyekController::class, 'download'])->name('download');
+        });
+
+        // ---------------------------------------------------------------
+        // Biaya Proyek - Cost Monitoring (Rencana vs Aktual)
+        // ---------------------------------------------------------------
+        Route::prefix('biayaproyek')->name('biayaproyek.')->group(function () {
+            // Main index page
+            Route::get('/', [BiayaProyekController::class, 'index'])->name('index');
+
+            // Get Cost Center dropdown data
+            Route::get('/cost-center', [BiayaProyekController::class, 'getCostCenterDropdown'])->name('getCostCenter');
+
+            // Get Biaya Proyek data (Pendapatan & HPP)
+            Route::get('/data', [BiayaProyekController::class, 'getBiayaProyekData'])->name('getData');
         });
     });
 });
