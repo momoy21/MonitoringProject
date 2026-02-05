@@ -278,8 +278,8 @@ class SAPImportService
                     $cleanedAmount = '-' . substr($cleanedAmount, 0, -1);
                 }
                 
-                // Remove thousand separators and normalize decimal
-                $normalizedAmount = str_replace(['.', ','], ['', '.'], $cleanedAmount);
+                // Smart detection: comma sebagai thousand atau decimal separator
+                $normalizedAmount = $this->normalizeAmountForValidation($cleanedAmount);
                 
                 if (empty($cleanedAmount) || !is_numeric($normalizedAmount)) {
                     $errors[] = "AmountLocal bukan format angka valid: '{$amount}'";
@@ -718,10 +718,21 @@ class SAPImportService
             }
         }
 
-        // Format dd/mm/yyyy
+        // Format dd/mm/yyyy (with leading zeros)
         if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $value)) {
             try {
                 return Carbon::createFromFormat('d/m/Y', $value)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // Format M/D/YYYY atau MM/DD/YYYY (Excel export format - US date)
+        // Contoh: 1/31/2025, 12/5/2025, 01/31/2025
+        if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $value)) {
+            try {
+                // Parse as US date format (month/day/year)
+                return Carbon::createFromFormat('n/j/Y', $value)->format('Y-m-d');
             } catch (\Exception $e) {
                 return null;
             }
@@ -737,6 +748,47 @@ class SAPImportService
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Normalize amount untuk validasi - smart detection comma/dot sebagai thousand/decimal
+     */
+    private function normalizeAmountForValidation(string $value): string
+    {
+        if (empty($value)) return '0';
+
+        // Jika ada titik DAN koma, tentukan mana yang decimal
+        if (strpos($value, ',') !== false && strpos($value, '.') !== false) {
+            // Cek posisi terakhir
+            $lastComma = strrpos($value, ',');
+            $lastDot = strrpos($value, '.');
+            
+            if ($lastComma > $lastDot) {
+                // Koma terakhir = koma adalah decimal (format Eropa: 1.234,56)
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            } else {
+                // Titik terakhir = titik adalah decimal (format US: 1,234.56)
+                $value = str_replace(',', '', $value);
+            }
+        } elseif (strpos($value, ',') !== false) {
+            // Hanya ada koma - deteksi apakah thousand atau decimal
+            $lastComma = strrpos($value, ',');
+            $afterComma = substr($value, $lastComma + 1);
+            
+            // Jika 3 digit setelah koma = thousand separator
+            // Jika 1-2 digit setelah koma = decimal separator
+            if (strlen($afterComma) === 3) {
+                // Koma adalah thousand separator (format: 228,511,960)
+                $value = str_replace(',', '', $value);
+            } else {
+                // Koma adalah decimal separator (format: 1234,56)
+                $value = str_replace(',', '.', $value);
+            }
+        }
+        // Jika hanya ada titik, biarkan (bisa jadi thousand atau decimal, is_numeric akan handle)
+
+        return $value;
     }
 
     /**
