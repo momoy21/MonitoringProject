@@ -1,0 +1,82 @@
+image: docker:latest
+services:
+  - name: docker:dind
+    command: ["--experimental"]
+
+stages:
+  - deploy
+  - composer-install
+  - npm-install
+
+.script-prepare-ssh:
+  script:
+    - eval $(ssh-agent -s)
+    - echo "${SERVER_KEY}" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
+prod-deploy:
+  stage: deploy
+  only:
+    - main
+  environment: production
+  resource_group: production
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - !reference [.script-prepare-ssh, script]
+    - |
+      ssh -T $SERVER_USER@$SERVER_IP <<EOA
+      cd ${APP_FOLDER}
+      expect - <<_END_EXPECT
+        spawn git pull
+        expect "Username for*"
+        send "gitlab-ci-token\r"
+        expect "Password for*"
+        send "${CI_JOB_TOKEN}\r"
+        set timeout -1;
+        expect eof
+      _END_EXPECT
+      php8.2 artisan config:clear && php8.2 artisan cache:clear && php8.2 artisan view:clear && php8.2 artisan route:clear
+      EOA
+
+prod-composer-install:
+  stage: composer-install
+  only:
+    refs:
+      - main
+    changes:
+      - composer.json
+  environment: production
+  resource_group: production
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - !reference [.script-prepare-ssh, script]
+    - |
+      ssh -T $SERVER_USER@$SERVER_IP <<EOA
+      cd ${APP_FOLDER} && \
+      rm -rf composer.lock && \
+      php8.2 \$(which composer) install
+      EOA
+
+prod-npm-install:
+  stage: npm-install
+  only:
+    refs:
+      - main
+    changes:
+      - package.json
+  environment: production
+  resource_group: production
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - !reference [.script-prepare-ssh, script]
+    - |
+      ssh -T $SERVER_USER@$SERVER_IP <<EOA
+      cd ${APP_FOLDER} && \
+      rm -rf package-lock.json && \
+      npm install && \
+      npm run build
+      EOA
