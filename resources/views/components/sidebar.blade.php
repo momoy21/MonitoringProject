@@ -108,6 +108,14 @@
             <span class="menu-header-text">Transaksi/Operasional</span>
         </li>
 
+        <!-- Pengajuan RAB -->
+        <li class="menu-item {{ request()->routeIs('pengajuanrab.*') ? 'active' : '' }}">
+            <a href="{{ route('pengajuanrab.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-file-find"></i>
+                <div>Pengajuan RAB</div>
+            </a>
+        </li>
+
         <!-- Data Peluang -->
         <li class="menu-item {{ request()->routeIs('datapeluang.*') ? 'active' : '' }}">
             <a href="{{ route('datapeluang.index') }}" class="menu-link">
@@ -129,22 +137,6 @@
             <a href="{{ route('rab.upload') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-upload"></i>
                 <div>Upload RAB</div>
-            </a>
-        </li>
-
-         <!-- Pengajuan RAB -->
-        <li class="menu-item {{ request()->routeIs('pengajuanrab.*') ? 'active' : '' }}">
-            <a href="{{ route('pengajuanrab.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-file-find"></i>
-                <div>Pengajuan RAB</div>
-            </a>
-        </li>
-
-        <!-- Pencatatan Pleno RAB -->
-        <li class="menu-item {{ request()->routeIs('pencatatanpleno.*') ? 'active' : '' }}">
-            <a href="{{ route('pencatatanpleno.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-edit"></i>
-                <div>Pencatatan Pleno RAB</div>
             </a>
         </li>
 
@@ -172,6 +164,20 @@
             </a>
         </li>
 
+
+
+    <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">Transaksi Monitoring</span>
+        </li>
+            <!-- Pencatatan Pleno RAB -->
+        <li class="menu-item {{ request()->routeIs('pencatatanpleno.*') ? 'active' : '' }}">
+            <a href="{{ route('pencatatanpleno.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-edit"></i>
+                <div>Pencatatan Pleno RAB</div>
+            </a>
+        </li>
+
+        
         
     <li class="menu-header small text-uppercase">
             <span class="menu-header-text">laporan proyek</span>
