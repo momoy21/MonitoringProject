@@ -113,6 +113,7 @@
                         <tr>
                             <th width="50">No</th>
                             <th width="130">Tanggal</th>
+                            <th>Cost Center</th> {{-- Tambahan Kolom --}}
                             <th>Nama Proyek</th> {{-- Tambahan kolom --}}
                             <th>Issue / Kendala</th>
                             <th>Mitigasi Issue</th>
@@ -134,6 +135,7 @@
                             <td class="text-center">{{ $key + 1 }}</td>
                             @if(request('jenis_report') == 'issue_project')
                                 <td class="text-center">{{ date('d/m/Y', strtotime($item->tanggal)) }}</td>
+                                <td>{{ $item->cost_center ?? '-' }}</td> 
                                 <td>{{ $item->namaproject }}</td> {{-- Tambahan data nama proyek --}}
                                 <td>{{ $item->issue }}</td>
                                 <td>{{ $item->mitigasi }}</td>
