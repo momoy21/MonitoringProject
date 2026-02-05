@@ -164,6 +164,14 @@
             </a>
         </li>
 
+        <!-- Biaya Proyek -->
+        <li class="menu-item {{ request()->routeIs('biayaproyek.*') ? 'active' : '' }}">
+            <a href="{{ route('biayaproyek.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-calculator"></i>
+                <div>Biaya Proyek</div>
+            </a>
+        </li>
+
         
     <li class="menu-header small text-uppercase">
             <span class="menu-header-text">laporan proyek</span>
