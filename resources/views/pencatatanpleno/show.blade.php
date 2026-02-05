@@ -183,11 +183,11 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="detail-label">Margin RKAP</div>
-                        <div class="detail-value">{{ $rabProyek->marginrkap ? number_format($rabProyek->marginrkap, 2) . '%' : '-' }}</div>
+                        <div class="detail-value">{{ $rabProyek->margin_rkap ? number_format($rabProyek->margin_rkap, 2) . '%' : '-' }}</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="detail-label">Margin Pleno</div>
-                        <div class="detail-value">{{ $rabProyek->marginpleno ? number_format($rabProyek->marginpleno, 2) . '%' : '-' }}</div>
+                        <div class="detail-value">{{ $rabProyek->margin_pleno ? number_format($rabProyek->margin_pleno, 2) . '%' : '-' }}</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="detail-label">Status RAB</div>
@@ -251,11 +251,11 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="detail-label">Dokumen RAB Final (Hasil Pleno)</div>
-                        @if($rabProyek->hasilupload)
+                        @if($rabProyek->hasil_upload)
                             <div class="file-download">
                                 <i class="bx bx-spreadsheet text-success" style="font-size: 24px;"></i>
                                 <div>
-                                    <a href="{{ Storage::url($rabProyek->hasilupload) }}" target="_blank" class="text-primary fw-bold">
+                                    <a href="{{ Storage::url($rabProyek->hasil_upload) }}" target="_blank" class="text-primary fw-bold">
                                         <i class="bx bx-download me-1"></i> Download
                                     </a>
                                 </div>
