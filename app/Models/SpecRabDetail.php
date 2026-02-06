@@ -17,7 +17,32 @@ class SpecRabDetail extends Model
         'id_spec',
         'cost_element',
         'description_ce',
+        'status',
     ];
+
+    /**
+     * Scope untuk hanya data aktif
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'A');
+    }
+
+    /**
+     * Scope untuk hanya data non-aktif
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('status', 'N');
+    }
+
+    /**
+     * Accessor untuk status label
+     */
+    public function getStatusLabelAttribute()
+    {
+        return $this->status === 'A' ? 'Aktif' : 'Non Aktif';
+    }
 
     /**
      * Override getKey untuk composite key

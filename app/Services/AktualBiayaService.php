@@ -171,7 +171,14 @@ class AktualBiayaService
         }
 
         // Cek apakah cost_element ada di mapping
-        $costElement = $plsap->cost_element;
+        // Normalize: pad cost_element ke 10 digit (sesuai format di database)
+        // CSV bisa menyimpan tanpa leading zeros (5101148), tapi DB pakai 10 digit (0005101148)
+        $costElement = str_pad(ltrim($plsap->cost_element, '0'), 10, '0', STR_PAD_LEFT);
+        
+        // Jika cost_element asli sudah 10 digit, gunakan yang asli
+        if (strlen($plsap->cost_element) === 10) {
+            $costElement = $plsap->cost_element;
+        }
         
         if (!isset($costElementMapping[$costElement])) {
             return [

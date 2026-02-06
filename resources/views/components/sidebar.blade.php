@@ -71,7 +71,23 @@
                 <div>Summary RAB</div>
             </a>
         </li>
- 
+
+        <!--Detail RAB -->
+        <li class="menu-item {{ request()->routeIs('specrabdetail.*') ? 'active' : '' }}">
+            <a href="{{ route('specrabdetail.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-detail"></i>
+                <div>RAB Detail</div>
+            </a>
+        </li>
+
+        <!-- Master Karyawan -->
+        <li class="menu-item {{ request()->routeIs('karyawan.*') ? 'active' : '' }}">
+            <a href="{{ route('karyawan.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-id-card"></i>
+                <div>Master Karyawan</div>
+            </a>
+        </li>
+        
         @endrole
 
         @role('Project Manager')
@@ -90,6 +106,14 @@
 
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Transaksi/Operasional</span>
+        </li>
+
+        <!-- Pengajuan RAB -->
+        <li class="menu-item {{ request()->routeIs('pengajuanrab.*') ? 'active' : '' }}">
+            <a href="{{ route('pengajuanrab.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-file-find"></i>
+                <div>Pengajuan RAB</div>
+            </a>
         </li>
 
         <!-- Data Peluang -->
@@ -116,22 +140,6 @@
             </a>
         </li>
 
-         <!-- Pengajuan RAB -->
-        <li class="menu-item {{ request()->routeIs('pengajuanrab.*') ? 'active' : '' }}">
-            <a href="{{ route('pengajuanrab.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-file-find"></i>
-                <div>Pengajuan RAB</div>
-            </a>
-        </li>
-
-        <!-- Pencatatan Pleno RAB -->
-        <li class="menu-item {{ request()->routeIs('pencatatanpleno.*') ? 'active' : '' }}">
-            <a href="{{ route('pencatatanpleno.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-edit"></i>
-                <div>Pencatatan Pleno RAB</div>
-            </a>
-        </li>
-
         <!-- Progress Project -->
         <li class="menu-item {{ request()->routeIs('progressproyek.*') ? 'active' : '' }}">
             <a href="{{ route('progressproyek.index') }}" class="menu-link">
@@ -148,6 +156,28 @@
             </a>
         </li>
 
+        <!-- Biaya Proyek -->
+        <li class="menu-item {{ request()->routeIs('biayaproyek.*') ? 'active' : '' }}">
+            <a href="{{ route('biayaproyek.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-calculator"></i>
+                <div>Biaya Proyek</div>
+            </a>
+        </li>
+
+
+
+    <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">Transaksi Monitoring</span>
+        </li>
+            <!-- Pencatatan Pleno RAB -->
+        <li class="menu-item {{ request()->routeIs('pencatatanpleno.*') ? 'active' : '' }}">
+            <a href="{{ route('pencatatanpleno.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-edit"></i>
+                <div>Pencatatan Pleno RAB</div>
+            </a>
+        </li>
+
+        
         
     <li class="menu-header small text-uppercase">
             <span class="menu-header-text">laporan proyek</span>
@@ -161,5 +191,12 @@
             </a>
         </li>
         
+        <!-- Laporan Hasil Pleno RAB -->
+        <li class="menu-item {{ request()->routeIs('laporanhasilplenorab.*') ? 'active' : '' }}">
+            <a href="{{ route('laporanhasilplenorab.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-file-find"></i>
+                <div>Laporan Hasil Pleno RAB</div>
+            </a>
+        </li>
     </ul>
 </aside>

@@ -245,15 +245,15 @@
                         <!-- Margin RKAP -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="marginrkap" class="form-label">Margin RKAP (%)</label>
+                                <label for="margin_rkap" class="form-label">Margin RKAP (%)</label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" min="0" max="100"
-                                           class="form-control @error('marginrkap') is-invalid @enderror"
-                                           id="marginrkap" name="marginrkap" 
-                                           value="{{ old('marginrkap', $rabProyek->marginrkap) }}"
+                                           class="form-control @error('margin_rkap') is-invalid @enderror"
+                                           id="margin_rkap" name="margin_rkap" 
+                                           value="{{ old('margin_rkap', $rabProyek->margin_rkap) }}"
                                            placeholder="0.00">
                                     <span class="input-group-text">%</span>
-                                    @error('marginrkap')
+                                    @error('margin_rkap')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -263,15 +263,15 @@
                         <!-- Margin Pleno -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="marginpleno" class="form-label">Margin Pleno (%)</label>
+                                <label for="margin_pleno" class="form-label">Margin Pleno (%)</label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" min="0" max="100"
-                                           class="form-control @error('marginpleno') is-invalid @enderror"
-                                           id="marginpleno" name="marginpleno" 
-                                           value="{{ old('marginpleno', $rabProyek->marginpleno) }}"
+                                           class="form-control @error('margin_pleno') is-invalid @enderror"
+                                           id="margin_pleno" name="margin_pleno" 
+                                           value="{{ old('margin_pleno', $rabProyek->margin_pleno) }}"
                                            placeholder="0.00">
                                     <span class="input-group-text">%</span>
-                                    @error('marginpleno')
+                                    @error('margin_pleno')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -335,13 +335,13 @@
                                         <i class="bx bx-x"></i>
                                     </button>
                                 </div>
-                                @if($rabProyek->hasilupload)
+                                @if($rabProyek->hasil_upload)
                                     <div class="existing-file" id="existingFile">
                                         <i class="bx bx-file text-success" style="font-size: 24px;"></i>
                                         <div>
                                             <strong>File tersimpan:</strong><br>
-                                            <a href="{{ Storage::url($rabProyek->hasilupload) }}" target="_blank" class="text-primary">
-                                                {{ basename($rabProyek->hasilupload) }}
+                                            <a href="{{ Storage::url($rabProyek->hasil_upload) }}" target="_blank" class="text-primary">
+                                                {{ basename($rabProyek->hasil_upload) }}
                                             </a>
                                         </div>
                                     </div>
