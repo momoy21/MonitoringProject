@@ -9,23 +9,17 @@ class JenisProyek extends Model
 {
     use HasFactory;
 
-    protected $table = 'jenisproyek';
-    
-    // Primary key menggunakan string (P1, P2, dst)
-    protected $primaryKey = 'idjenisproyek';
+    protected $table = 'jenis_proyek';
+    protected $primaryKey = 'kode_jenis';
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
-        'idjenisproyek', 
-        'jenisproyek', 
+        'kode_jenis',
+        'nama_jenis',
         'status'
     ];
 
-    /**
-     * Scope untuk mengambil hanya data yang aktif
-     * Cara pakai: JenisProyek::active()->get();
-     */
     public function scopeActive($query)
     {
         return $query->where('status', 'A');

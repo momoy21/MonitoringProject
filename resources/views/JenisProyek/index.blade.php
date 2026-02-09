@@ -11,7 +11,7 @@
                         <form action="{{ route('jenisproyek.index') }}" method="GET">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bx bx-search"></i></span>
-                                <input type="text" name="search" class="form-control" placeholder="Cari ID atau Jenis..." value="{{ request('search') }}" autocomplete="off">
+                                <input type="text" name="search" class="form-control" placeholder="Cari Kode atau Nama..." value="{{ request('search') }}" autocomplete="off">
                             </div>
                         </form>
                     </div>
@@ -44,17 +44,18 @@
             <table class="table table-striped table-hover mb-0">
                 <thead>
                     <tr>
-                        <th class="fw-bold text-muted small uppercase">ID Jenis</th>
-                        <th class="fw-bold text-muted small uppercase">Jenis Proyek</th>
+                        <th class="fw-bold text-muted small uppercase">Kode</th>
+                        <th class="fw-bold text-muted small uppercase">Nama Jenis Proyek</th>
                         <th class="fw-bold text-muted small uppercase text-center">Status</th>
                         <th class="fw-bold text-muted small uppercase text-end px-4">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($dataJenis as $item)
-                    <tr ondblclick="window.location='{{ route('jenisproyek.edit', $item->idjenisproyek) }}'" style="cursor: pointer;" title="Klik 2x untuk edit">
-                        <td class="fw-semibold text-primary">{{ $item->idjenisproyek }}</td>
-                        <td>{{ $item->jenisproyek }}</td>
+                    {{-- Double click diarahkan ke kode_jenis --}}
+                    <tr ondblclick="window.location='{{ route('jenisproyek.edit', $item->kode_jenis) }}'" style="cursor: pointer;" title="Klik 2x untuk edit">
+                        <td class="fw-semibold text-primary">{{ $item->kode_jenis }}</td>
+                        <td>{{ $item->nama_jenis }}</td>
                         <td class="text-center">
                             @if($item->status == 'A')
                                 <span class="badge bg-success px-3">AKTIF</span>
@@ -69,17 +70,16 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                     <li>
-                                        <button class="dropdown-item py-2" data-bs-toggle="modal" data-bs-target="#viewJenisModal{{ $item->idjenisproyek }}">
+                                        <button class="dropdown-item py-2" data-bs-toggle="modal" data-bs-target="#viewJenisModal{{ $item->kode_jenis }}">
                                             <i class="bx bx-show me-2 text-primary"></i> Lihat Detail
                                         </button>
                                     </li>
-                                    {{-- Tombol Edit dihapus karena sudah ada fungsi double click pada baris --}}
                                 </ul>
                             </div>
                         </td>
                     </tr>
 
-                    <div class="modal fade" id="viewJenisModal{{ $item->idjenisproyek }}" tabindex="-1">
+                    <div class="modal fade" id="viewJenisModal{{ $item->kode_jenis }}" tabindex="-1">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-header border-bottom-0 pb-0">
@@ -90,13 +90,13 @@
                                     <h6 class="text-primary fw-bold mb-4 border-bottom pb-2">Informasi Detail</h6>
                                     
                                     <div class="row mb-3">
-                                        <div class="col-md-4 text-muted small fw-bold">ID JENIS:</div>
-                                        <div class="col-md-8 fw-bold text-dark">{{ $item->idjenisproyek }}</div>
+                                        <div class="col-md-4 text-muted small fw-bold">KODE JENIS:</div>
+                                        <div class="col-md-8 fw-bold text-dark">{{ $item->kode_jenis }}</div>
                                     </div>
                                     
                                     <div class="row mb-3">
                                         <div class="col-md-4 text-muted small fw-bold">NAMA JENIS PROYEK:</div>
-                                        <div class="col-md-8 fw-bold text-dark">{{ $item->jenisproyek }}</div>
+                                        <div class="col-md-8 fw-bold text-dark">{{ $item->nama_jenis }}</div>
                                     </div>
 
                                     <div class="row mb-4">
@@ -109,7 +109,6 @@
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="d-flex justify-content-end border-top pt-3">
                                 </div>
                             </div>
                         </div>

@@ -13,7 +13,8 @@
     <div class="nonsticky-header">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <h4 class="fw-bold mb-2">Edit Jenis Proyek: {{ $item->idjenisproyek }}</h4>
+                {{-- Menampilkan kode_jenis terbaru --}}
+                <h4 class="fw-bold mb-2">Edit Jenis Proyek: {{ $item->kode_jenis }}</h4>
                 <p class="mb-0">Perbarui informasi detail untuk jenis proyek ini</p>
             </div>
             <div class="col-md-6 text-end">
@@ -26,7 +27,8 @@
 
     <div class="card">
         <div class="card-body">
-            <form id="editJenisProyekForm" action="{{ route('jenisproyek.update', $item->idjenisproyek) }}" method="POST">
+            {{-- Update route menggunakan kode_jenis --}}
+            <form id="editJenisProyekForm" action="{{ route('jenisproyek.update', $item->kode_jenis) }}" method="POST">
                 @csrf
                 @method('PUT')
 
@@ -35,23 +37,24 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">ID Jenis Proyek</label>
-                                <input type="text" class="form-control bg-light" value="{{ $item->idjenisproyek }}" readonly>
+                                <label class="form-label">ID Jenis Proyek (Kode)</label>
+                                <input type="text" class="form-control bg-light" value="{{ $item->kode_jenis }}" readonly>
                                 <small class="text-muted">ID jenis proyek tidak dapat diubah.</small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="jenisproyek" class="form-label">Nama Jenis Proyek <span class="text-danger">*</span></label>
+                                {{-- Penyesuaian ke nama_jenis --}}
+                                <label for="nama_jenis" class="form-label">Nama Jenis Proyek <span class="text-danger">*</span></label>
                                 <input type="text" 
-                                       name="jenisproyek" 
-                                       id="jenisproyek"
-                                       class="form-control @error('jenisproyek') is-invalid @enderror" 
-                                       maxlength="100" 
-                                       value="{{ old('jenisproyek', $item->jenisproyek) }}" 
+                                       name="nama_jenis" 
+                                       id="nama_jenis"
+                                       class="form-control @error('nama_jenis') is-invalid @enderror" 
+                                       maxlength="50" 
+                                       value="{{ old('nama_jenis', $item->nama_jenis) }}" 
                                        required>
                                 <div class="invalid-feedback">
-                                    @error('jenisproyek'){{ $message }}@enderror
+                                    @error('nama_jenis'){{ $message }}@enderror
                                 </div>
                             </div>
                         </div>

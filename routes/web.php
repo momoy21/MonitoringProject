@@ -75,11 +75,13 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
 });
 
 
-// ===================================================================
-// JenisProyek
-// =================================================================== 
+    // ===================================================================
+    // JenisProyek
+    // =================================================================== 
 
-Route::resource('jenisproyek', JenisProyekController::class);
+    Route::resource('jenisproyek', JenisProyekController::class)->parameters([
+        'jenisproyek' => 'jenisproyek:kode_jenis'
+    ]);
 
     
     // ===================================================================
