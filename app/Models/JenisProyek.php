@@ -2,52 +2,32 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JenisProyek extends Model
 {
-    /**
-     * The table associated with the model.
-     */
-    protected $table = 'jenis_proyek';
+    use HasFactory;
 
-    /**
-     * The primary key associated with the table.
-     */
-    protected $primaryKey = 'kode_jenis';
-
-    /**
-     * The data type of the primary key.
-     */
+    protected $table = 'jenisproyek';
+    
+    // Primary key menggunakan string (P1, P2, dst)
+    protected $primaryKey = 'idjenisproyek';
     protected $keyType = 'string';
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     */
     public $incrementing = false;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
-        'kode_jenis',
-        'nama_jenis',
+        'idjenisproyek', 
+        'jenisproyek', 
+        'status'
     ];
 
     /**
-     * Get RAB Proyek for this Jenis Proyek
+     * Scope untuk mengambil hanya data yang aktif
+     * Cara pakai: JenisProyek::active()->get();
      */
-    public function rabProyek(): HasMany
+    public function scopeActive($query)
     {
-        return $this->hasMany(RABProyek::class, 'jenis_proyek', 'kode_jenis');
-    }
-
-    /**
-     * Get formatted label [Kode] Nama
-     */
-    public function getLabelAttribute(): string
-    {
-        return "[{$this->kode_jenis}] {$this->nama_jenis}";
+        return $query->where('status', 'A');
     }
 }
