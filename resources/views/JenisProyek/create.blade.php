@@ -34,30 +34,31 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">ID Jenis Proyek</label>
+                                <label class="form-label">ID Jenis Proyek (Kode)</label>
                                 <input type="text" 
                                        class="form-control bg-light" 
                                        placeholder="Otomatis (Sistem)" 
                                        readonly 
                                        disabled>
-                                <small class="text-muted">ID akan di-generate otomatis oleh sistem (P1, P2, dst)</small>
+                                <small class="text-muted">Akan di-generate otomatis (P1, P2, dst)</small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="jenisproyek" class="form-label">Nama Jenis Proyek <span class="text-danger">*</span></label>
+                                {{-- Penyesuaian name dan id ke nama_jenis --}}
+                                <label for="nama_jenis" class="form-label">Nama Jenis Proyek <span class="text-danger">*</span></label>
                                 <input type="text"
-                                       class="form-control @error('jenisproyek') is-invalid @enderror"
-                                       id="jenisproyek"
-                                       name="jenisproyek"
-                                       maxlength="100"
+                                       class="form-control @error('nama_jenis') is-invalid @enderror"
+                                       id="nama_jenis"
+                                       name="nama_jenis"
+                                       maxlength="50"
                                        placeholder="Masukkan nama jenis proyek"
-                                       value="{{ old('jenisproyek') }}"
+                                       value="{{ old('nama_jenis') }}"
                                        required>
                                 <div class="invalid-feedback">
-                                    @error('jenisproyek'){{ $message }}@enderror
+                                    @error('nama_jenis'){{ $message }}@enderror
                                 </div>
-                                <small class="form-text text-muted">Maksimal 100 karakter</small>
+                                <small class="form-text text-muted">Maksimal 50 karakter</small>
                             </div>
                         </div>
                     </div>
@@ -99,16 +100,14 @@
     </div>
 
     @push('scripts')
-    {{-- Pastikan Anda membuat file jenisproyek.js atau sesuaikan logic JS-nya --}}
     <script src="{{ asset('js/jenisproyek.js') }}?v={{ time() }}"></script>
     <script>
     $(document).ready(function() {
-        // Clear state jika ada manager state khusus
+        // Naming section: State management logic
         if (window.StateManagers?.jenisProyek) {
             window.StateManagers.jenisProyek.clearState();
         }
 
-        // Initialize manager (asumsi polanya sama dengan divisi)
         if (typeof JenisProyekManager === 'function') {
             window.jenisProyekManager = new JenisProyekManager();
             window.jenisProyekManager.init({
