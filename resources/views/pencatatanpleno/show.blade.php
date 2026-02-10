@@ -253,7 +253,7 @@
                         <div class="detail-label">Dokumen RAB Final (Hasil Pleno)</div>
                         @if($rabProyek->hasil_upload)
                             <div class="file-download">
-                                <i class="bx bx-spreadsheet text-success" style="font-size: 24px;"></i>
+                                <i class="bx bxs-file-pdf text-danger" style="font-size: 24px;"></i>
                                 <div>
                                     <a href="{{ Storage::url($rabProyek->hasil_upload) }}" target="_blank" class="text-primary fw-bold">
                                         <i class="bx bx-download me-1"></i> Download

@@ -159,9 +159,9 @@ class PencatatanPlenoRABController extends Controller
                 'margin_pleno' => 'nullable|numeric|min:0|max:100',
                 'catatan' => 'nullable|string|max:500',
                 'status' => 'nullable|string|max:1',
-                'hasil_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
+                'hasil_upload' => 'nullable|file|mimes:pdf|max:10240',
             ], [
-                'hasil_upload.mimes' => 'File harus berformat Excel (.xlsx, .xls)',
+                'hasil_upload.mimes' => 'File harus berformat PDF (.pdf)',
                 'hasil_upload.max' => 'Ukuran file maksimal 10MB',
                 'margin_rkap.numeric' => 'Margin RKAP harus berupa angka',
                 'margin_pleno.numeric' => 'Margin Pleno harus berupa angka',
@@ -175,14 +175,14 @@ class PencatatanPlenoRABController extends Controller
                             ->withInput();
             }
 
-            // Update data
-            $rabProyek->progress = $request->progress;
-            $rabProyek->keterangan = $request->keterangan;
-            $rabProyek->hasil_pleno = $request->hasil_pleno;
-            $rabProyek->margin_rkap = $request->margin_rkap;
-            $rabProyek->margin_pleno = $request->margin_pleno;
-            $rabProyek->catatan = $request->catatan;
-            $rabProyek->status = $request->status;
+            // Update data - convert empty strings to null
+            $rabProyek->progress = $request->progress ?: null;
+            $rabProyek->keterangan = $request->keterangan ?: null;
+            $rabProyek->hasil_pleno = $request->hasil_pleno ?: null;
+            $rabProyek->margin_rkap = $request->margin_rkap ?: null;
+            $rabProyek->margin_pleno = $request->margin_pleno ?: null;
+            $rabProyek->catatan = $request->catatan ?: null;
+            $rabProyek->status = $request->status ?: null;
 
             // Handle file upload - Dokumen RAB Final
             if ($request->hasFile('hasil_upload')) {

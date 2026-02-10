@@ -26,6 +26,7 @@ use App\Http\Controllers\LaporanHasilPlenoRABController;
 use App\Http\Controllers\SpecRabDetailController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\BiayaProyekController;
+//use App\Http\Controllers\LemburInterfaceController;
 
 
 /*
@@ -130,6 +131,25 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
             Route::get('/ftp/files', [SAPImportController::class, 'listFtpFiles'])->name('ftp.files');
             Route::get('/ftp/info', [SAPImportController::class, 'getFtpInfo'])->name('ftp.info');
         });
+
+        // ---------------------------------------------------------------
+        // PENCATATAN PLENO RAB (Pencatatan Hasil Pleno RAB)
+        // ---------------------------------------------------------------
+        Route::prefix('pencatatanpleno')->name('pencatatanpleno.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'index'])->name('index');
+            Route::get('/{nopengajuan}', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'show'])->name('show');
+            Route::get('/{nopengajuan}/edit', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'edit'])->name('edit');
+            Route::put('/{nopengajuan}', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'update'])->name('update');
+        });
+
+       
+
+
+        // ---------------------------------------------------------------
+        // INTERFACE LEMBUR KE EMS
+        // ---------------------------------------------------------------
+       
+
         // ---------------------------------------------------------------
         // BIDANG JASA
         // ---------------------------------------------------------------
@@ -305,21 +325,12 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
             Route::get('/{pengajuanrab:nopengajuan}/download/{type}', [PengajuanRABController::class, 'download'])->name('download');
         });
 
-        // ---------------------------------------------------------------
-        // PENCATATAN PLENO RAB (Pencatatan Hasil Pleno RAB)
-        // ---------------------------------------------------------------
-        Route::prefix('pencatatanpleno')->name('pencatatanpleno.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'index'])->name('index');
-            Route::get('/{nopengajuan}', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'show'])->name('show');
-            Route::get('/{nopengajuan}/edit', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'edit'])->name('edit');
-            Route::put('/{nopengajuan}', [\App\Http\Controllers\PencatatanPlenoRABController::class, 'update'])->name('update');
-        });
+        
 
-        Route::prefix('progressproyek')->name('progressproyek.')->group(function () {
+         Route::prefix('progressproyek')->name('progressproyek.')->group(function () {
             Route::get('get-header-rab', [ProgressProyekController::class, 'getHeaderRAB'])->name('getheaderrab');
             Route::post('check-header-progress', [ProgressProyekController::class, 'checkHeaderProgress'])->name('checkheaderprogress');
         });
-
         // ---------------------------------------------------------------
         // Progress Project - Resource Routes
         // ---------------------------------------------------------------
