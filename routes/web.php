@@ -26,7 +26,7 @@ use App\Http\Controllers\LaporanHasilPlenoRABController;
 use App\Http\Controllers\SpecRabDetailController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\BiayaProyekController;
-use App\Http\Controllers\LemburInterfaceController;
+//use App\Http\Controllers\LemburInterfaceController;
 
 
 /*
@@ -148,13 +148,7 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
         // ---------------------------------------------------------------
         // INTERFACE LEMBUR KE EMS
         // ---------------------------------------------------------------
-        Route::prefix('lembur')->name('lembur.')->group(function () {
-            Route::get('/', [LemburInterfaceController::class, 'index'])->name('index');
-            Route::post('/submit', [LemburInterfaceController::class, 'submit'])->name('submit');
-            Route::post('/sync', [LemburInterfaceController::class, 'sync'])->name('sync');
-            Route::get('/logs', [LemburInterfaceController::class, 'getLogs'])->name('logs');
-            Route::get('/test-ftp', [LemburInterfaceController::class, 'testFtp'])->name('testFtp');
-        });
+       
 
         // ---------------------------------------------------------------
         // BIDANG JASA
