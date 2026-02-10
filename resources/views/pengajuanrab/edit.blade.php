@@ -49,6 +49,61 @@
         }
         .existing-file i {
             font-size: 24px;
+            flex-shrink: 0;
+        }
+        .existing-file .file-name-wrap {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .existing-file .file-name-wrap div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .existing-file .btn {
+            flex-shrink: 0;
+        }
+        /* Upload card wrapper for consistent height */
+        .upload-card-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .upload-card-wrapper .mb-3 {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .upload-card-wrapper .file-upload-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100px;
+        }
+        /* Make row items equal height */
+        .upload-docs-row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .upload-docs-row > [class*="col-"] {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+        .upload-docs-row > [class*="col-"] > .mb-3 {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .upload-docs-row .file-upload-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
         }
     </style>
     @endpush
@@ -359,7 +414,7 @@
                 <!-- Upload Dokumen -->
                 <div class="form-section">
                     <h6 class="mb-3"><i class="bx bx-upload me-2"></i>Upload Dokumen Pendukung</h6>
-                    <div class="row">
+                    <div class="row upload-docs-row">
                         <!-- Upload RAB -->
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -367,9 +422,9 @@
                                 @if($pengajuanrab->rab_upload)
                                     <div class="existing-file">
                                         <i class="bx bx-spreadsheet text-success"></i>
-                                        <div class="flex-grow-1">
+                                        <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div>{{ basename($pengajuanrab->rab_upload) }}</div>
+                                            <div title="{{ basename($pengajuanrab->rab_upload) }}">{{ basename($pengajuanrab->rab_upload) }}</div>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'rab']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>
@@ -398,9 +453,9 @@
                                 @if($pengajuanrab->file_upload)
                                     <div class="existing-file">
                                         <i class="bx bxs-file-pdf text-danger"></i>
-                                        <div class="flex-grow-1">
+                                        <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div>{{ basename($pengajuanrab->file_upload) }}</div>
+                                            <div title="{{ basename($pengajuanrab->file_upload) }}">{{ basename($pengajuanrab->file_upload) }}</div>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'kontrak']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>
@@ -421,7 +476,8 @@
                                 </div>
                             </div>
                         </div>
-
+                    </div>
+                    <div class="row upload-docs-row">
                         <!-- Upload Peta Risiko -->
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -429,9 +485,9 @@
                                 @if($pengajuanrab->peta_risk_upload)
                                     <div class="existing-file">
                                         <i class="bx bxs-file text-success"></i>
-                                        <div class="flex-grow-1">
+                                        <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div>{{ basename($pengajuanrab->peta_risk_upload) }}</div>
+                                            <div title="{{ basename($pengajuanrab->peta_risk_upload) }}">{{ basename($pengajuanrab->peta_risk_upload) }}</div>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'peta_risiko']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>
@@ -460,9 +516,9 @@
                                 @if($pengajuanrab->hasil_upload)
                                     <div class="existing-file">
                                         <i class="bx bxs-file-pdf text-danger"></i>
-                                        <div class="flex-grow-1">
+                                        <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div>{{ basename($pengajuanrab->hasil_upload) }}</div>
+                                            <div title="{{ basename($pengajuanrab->hasil_upload) }}">{{ basename($pengajuanrab->hasil_upload) }}</div>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'hasil']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>

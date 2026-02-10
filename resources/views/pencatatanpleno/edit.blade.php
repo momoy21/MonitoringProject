@@ -320,14 +320,14 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="hasil_upload" class="form-label">
-                                    Dokumen RAB Final (Excel)
+                                    Dokumen RAB Final (PDF)
                                     <span class="text-danger" id="uploadRequired" style="display: none;">*</span>
                                 </label>
                                 <div class="file-upload-box" id="hasilUploadBox">
-                                    <i class="bx bx-spreadsheet" style="font-size: 32px; color: #28a745;"></i>
+                                    <i class="bx bxs-file-pdf" style="font-size: 32px; color: #dc3545;"></i>
                                     <p class="mb-1">Klik atau drag & drop file</p>
-                                    <small class="text-muted">Format: .xlsx, .xls (max 10MB)</small>
-                                    <input type="file" class="d-none" id="hasil_upload" name="hasil_upload" accept=".xlsx,.xls">
+                                    <small class="text-muted">Format: .pdf (max 10MB)</small>
+                                    <input type="file" class="d-none" id="hasil_upload" name="hasil_upload" accept=".pdf">
                                 </div>
                                 <div class="file-info d-none" id="hasilFileInfo">
                                     <span id="hasilFileName"></span>
@@ -337,7 +337,7 @@
                                 </div>
                                 @if($rabProyek->hasil_upload)
                                     <div class="existing-file" id="existingFile">
-                                        <i class="bx bx-file text-success" style="font-size: 24px;"></i>
+                                        <i class="bx bxs-file-pdf text-danger" style="font-size: 24px;"></i>
                                         <div>
                                             <strong>File tersimpan:</strong><br>
                                             <a href="{{ Storage::url($rabProyek->hasil_upload) }}" target="_blank" class="text-primary">
