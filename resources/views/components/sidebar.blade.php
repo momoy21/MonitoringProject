@@ -87,6 +87,8 @@
                 <div>Master Karyawan</div>
             </a>
         </li>
+
+        
         
         @endrole
 
@@ -165,7 +167,7 @@
         </li>
 
 
-
+    @role('Super Admin')
     <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Transaksi Monitoring</span>
         </li>
@@ -176,7 +178,7 @@
                 <div>Pencatatan Pleno RAB</div>
             </a>
         </li>
-
+    @endrole
         
         
     <li class="menu-header small text-uppercase">
