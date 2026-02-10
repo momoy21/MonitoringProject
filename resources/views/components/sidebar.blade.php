@@ -86,10 +86,7 @@
                 <i class="menu-icon tf-icons bx bx-id-card"></i>
                 <div>Master Karyawan</div>
             </a>
-        </li>
-
-        
-        
+        </li>           
         @endrole
 
         @role('Project Manager')
