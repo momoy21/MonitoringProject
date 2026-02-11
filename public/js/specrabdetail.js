@@ -1,6 +1,6 @@
-/**
- * SpecRabDetailManager - Manager class for Spesifikasi RAB Detail module
- */
+
+ //SpecRabDetailManager - Manager class for Spesifikasi RAB Detail module
+ 
 class SpecRabDetailManager {
     constructor() {
         this.stateManager = window.StateManagers?.specRabDetail;
@@ -26,9 +26,9 @@ class SpecRabDetailManager {
         this.urls = {
             index: '/specrabdetail',
             store: '/specrabdetail',
-            show: '/specrabdetail',
-            update: '/specrabdetail',
-            destroy: '/specrabdetail',
+            show: '/specrabdetail',   // /{cost_element}
+            update: '/specrabdetail', // /{cost_element}
+            destroy: '/specrabdetail', // /{cost_element}
             activeSpecs: '/api/specrabdetail/active-specs'
         };
 
@@ -118,7 +118,7 @@ class SpecRabDetailManager {
         // Delete confirmation
         $('#confirmDeleteBtn').on('click', () => {
             if (this.deleteTarget) {
-                this.performDelete(this.deleteTarget.id_spec, this.deleteTarget.cost_element);
+                this.performDelete(this.deleteTarget.cost_element);
             }
         });
 
@@ -248,7 +248,7 @@ class SpecRabDetailManager {
                 : '<span class="badge bg-secondary">Non Aktif</span>';
 
             const row = `
-                <tr class="editable-row" ondblclick="editSpecRabDetail('${item.id_spec}', '${item.cost_element}')" title="Double-click untuk edit" style="cursor: pointer;">
+                <tr class="editable-row" ondblclick="editSpecRabDetail('${item.cost_element}')" title="Double-click untuk edit" style="cursor: pointer;">
                     <td>${startIndex + index + 1}</td>
                     <td>
                         <div class="truncate-text" title="${this.escapeHtml(specDescription)}">
@@ -270,12 +270,12 @@ class SpecRabDetailManager {
                                 <i class="bx bx-dots-vertical-rounded"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="javascript:void(0);" onclick="viewSpecRabDetail('${item.id_spec}', '${item.cost_element}')">
+                                <li><a class="dropdown-item" href="javascript:void(0);" onclick="viewSpecRabDetail('${item.cost_element}')">
                                     <i class="bx bx-show me-1"></i> Lihat Detail</a></li>
-                                <li><a class="dropdown-item" href="javascript:void(0);" onclick="editSpecRabDetail('${item.id_spec}', '${item.cost_element}')">
+                                <li><a class="dropdown-item" href="javascript:void(0);" onclick="editSpecRabDetail('${item.cost_element}')">
                                     <i class="bx bx-edit me-1"></i> Edit</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteSpecRabDetail('${item.id_spec}', '${item.cost_element}')">
+                                <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteSpecRabDetail('${item.cost_element}')">
                                     <i class="bx bx-trash me-1"></i> Hapus</a></li>
                             </ul>
                         </div>
@@ -362,27 +362,26 @@ class SpecRabDetailManager {
     openAddModal() {
         $('#formMode').val('add');
         $('#formModalLabel').text('Tambah Spesifikasi RAB Detail');
-        $('#id_spec').prop('disabled', false);
-        $('#cost_element').prop('readonly', false);
+        $('#id_spec').prop('disabled', false); // Can select group
+        $('#cost_element').prop('readonly', false); // Can set cost element
         this.resetForm();
         // Ensure any other modal is closed so only one detail modal is open
         $('.modal.show').modal('hide');
         this.elements.formModal.modal('show');
     }
 
-    openEditModal(id_spec, cost_element) {
+    openEditModal(cost_element) {
         $('#formMode').val('edit');
         $('#formModalLabel').text('Edit Spesifikasi RAB Detail');
-        $('#originalIdSpec').val(id_spec);
         $('#originalCostElement').val(cost_element);
 
-        // Make id_spec and cost_element readonly for edit
-        $('#id_spec').prop('disabled', true);
+        // Make ONLY cost_element readonly (PK), but id_spec (group) editable
         $('#cost_element').prop('readonly', true);
+        $('#id_spec').prop('disabled', false);
 
         // Load data
         $.ajax({
-            url: `${this.urls.show}/${id_spec}/${cost_element}`,
+            url: `${this.urls.show}/${cost_element}`,
             type: 'GET',
             success: (response) => {
                 if (response.success) {
@@ -403,9 +402,9 @@ class SpecRabDetailManager {
         });
     }
 
-    viewSpecRabDetail(id_spec, cost_element) {
+    viewSpecRabDetail(cost_element) {
         $.ajax({
-            url: `${this.urls.show}/${id_spec}/${cost_element}`,
+            url: `${this.urls.show}/${cost_element}`,
             type: 'GET',
             success: (response) => {
                 if (response.success) {
@@ -473,16 +472,16 @@ class SpecRabDetailManager {
         $('#viewModalContent').html(content);
     }
 
-    deleteSpecRabDetail(id_spec, cost_element) {
-        this.deleteTarget = { id_spec, cost_element };
+    deleteSpecRabDetail(cost_element) {
+        this.deleteTarget = { cost_element };
         // Close any other open modal before showing delete confirmation
         $('.modal.show').modal('hide');
         this.elements.deleteModal.modal('show');
     }
 
-    performDelete(id_spec, cost_element) {
+    performDelete(cost_element) {
         $.ajax({
-            url: `${this.urls.destroy}/${id_spec}/${cost_element}`,
+            url: `${this.urls.destroy}/${cost_element}`,
             type: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -538,9 +537,8 @@ class SpecRabDetailManager {
             url = this.urls.store;
             method = 'POST';
         } else {
-            const origIdSpec = $('#originalIdSpec').val();
             const origCostElement = $('#originalCostElement').val();
-            url = `${this.urls.update}/${origIdSpec}/${origCostElement}`;
+            url = `${this.urls.update}/${origCostElement}`;
             method = 'PUT';
         }
 
@@ -567,9 +565,6 @@ class SpecRabDetailManager {
                         Object.keys(errors).forEach(key => {
                             this.showFieldError(key, errors[key][0]);
                         });
-                    }
-                    if (xhr.responseJSON?.message) {
-                        this.showAlert(xhr.responseJSON.message, 'danger');
                     }
                 } else {
                     this.showAlert('Terjadi kesalahan saat menyimpan data.', 'danger');
@@ -630,7 +625,7 @@ class SpecRabDetailManager {
 
     showAlert(message, type = 'info') {
         const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert" style="z-index: 9999; position: relative; margin-bottom: 20px;">
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -638,13 +633,26 @@ class SpecRabDetailManager {
 
         $('.alert').remove();
 
-        if ($('.sticky-header').length) {
-            $('.sticky-header').after(alertHtml);
-        } else {
-            $('main').prepend(alertHtml);
-        }
+        // Check if modal is open - prepend to modal body's container or before form
+        if ($('.modal.show').length > 0) {
+            // Find the visible modal
+            const $modal = $('.modal.show');
+            const $body = $modal.find('.modal-body');
 
-        $('html, body').animate({ scrollTop: 0 }, 300);
+            // Prepend to top of modal body
+            $body.prepend(alertHtml);
+
+            // Scroll to top of modal
+            $modal.animate({ scrollTop: 0 }, 300);
+        } else {
+            // Normal behavior
+            if ($('.sticky-header').length) {
+                $('.sticky-header').after(alertHtml);
+            } else {
+                $('main').prepend(alertHtml);
+            }
+            $('html, body').animate({ scrollTop: 0 }, 300);
+        }
 
         setTimeout(() => {
             $('.alert').fadeOut(300, function () {
@@ -673,20 +681,20 @@ class SpecRabDetailManager {
 // GLOBAL FUNCTIONS (for onclick handlers)
 // ========================================
 
-window.editSpecRabDetail = function (id_spec, cost_element) {
+window.editSpecRabDetail = function (cost_element) {
     if (window.specRabDetailManager) {
-        window.specRabDetailManager.openEditModal(id_spec, cost_element);
+        window.specRabDetailManager.openEditModal(cost_element);
     }
 };
 
-window.viewSpecRabDetail = function (id_spec, cost_element) {
+window.viewSpecRabDetail = function (cost_element) {
     if (window.specRabDetailManager) {
-        window.specRabDetailManager.viewSpecRabDetail(id_spec, cost_element);
+        window.specRabDetailManager.viewSpecRabDetail(cost_element);
     }
 };
 
-window.deleteSpecRabDetail = function (id_spec, cost_element) {
+window.deleteSpecRabDetail = function (cost_element) {
     if (window.specRabDetailManager) {
-        window.specRabDetailManager.deleteSpecRabDetail(id_spec, cost_element);
+        window.specRabDetailManager.deleteSpecRabDetail(cost_element);
     }
 };
