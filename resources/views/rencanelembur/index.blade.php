@@ -8,13 +8,6 @@
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-2">
-                    <!-- Search -->
-                    <div class="position-relative">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bx bx-search"></i></span>
-                            <input type="text" id="searchInput" class="form-control" placeholder="Cari NIK atau Nama..." autocomplete="off">
-                        </div>
-                    </div>
                     <!-- Download Template -->
                     <button type="button" class="btn btn-outline-success" id="btnDownloadTemplate" title="Download Template Excel">
                         <i class="bx bx-download me-1"></i> Template
@@ -63,6 +56,14 @@
                     <input type="text" class="form-control form-control-sm" id="info_namaproject" readonly>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Search Bar (hidden until Cost Centre is selected) -->
+    <div class="mt-3" id="searchBarSection" style="display: none;">
+        <div class="input-group" style="max-width: 400px;">
+            <span class="input-group-text"><i class="bx bx-search"></i></span>
+            <input type="text" id="searchInput" class="form-control" placeholder="Cari NIK atau Nama..." autocomplete="off">
         </div>
     </div>
 

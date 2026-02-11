@@ -64,6 +64,7 @@ function initCostCenterSelect() {
             currentNamaProject = data.namaproject || '-';
             currentDokIo = data.dokumen_io || '-';
             $('#info_namaproject').val(currentNamaProject);
+            $('#searchBarSection').show();
             currentPage = 1;
             loadData();
         } else {
@@ -71,6 +72,9 @@ function initCostCenterSelect() {
             currentNamaProject = '';
             currentDokIo = '';
             $('#info_namaproject').val('');
+            $('#searchBarSection').hide();
+            $('#searchInput').val('');
+            currentSearch = '';
             showEmptyState();
         }
     });
@@ -243,9 +247,9 @@ function renderTable(data) {
     data.forEach(function (item) {
         const periodeAwal = item.periode_awal ? formatDate(item.periode_awal) : '-';
         const periodeAkhir = item.periode_akhir ? formatDate(item.periode_akhir) : '-';
-        const statusBadge = item.status === 'A'
-            ? '<span class="badge bg-success px-3">Aktif</span>'
-            : '<span class="badge bg-secondary px-3">Tidak Aktif</span>';
+        const statusBadge = item.status === 'F'
+            ? '<span class="badge bg-success px-3">Sudah Terkirim</span>'
+            : '<span class="badge bg-warning px-3">Belum Terkirim</span>';
 
         const row = `
             <tr class="editable-row" ondblclick="editKuotaLembur(${item.id})" title="Double-click untuk edit" style="cursor: pointer;"

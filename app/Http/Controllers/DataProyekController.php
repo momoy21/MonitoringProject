@@ -171,7 +171,7 @@ class DataProyekController extends Controller
                 '1' => 'Kontrak Induk',
                 '2' => 'Bukan Kontrak Induk'
             ],
-            'defaultKeterangan' => '1'
+            'defaultKeterangan' => '2'
         ];
 
         return view('dataproyek.create', $data);
