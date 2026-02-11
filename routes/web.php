@@ -225,9 +225,9 @@ Route::prefix('penugasan')->name('penugasan.')->group(function () {
         Route::prefix('specrabdetail')->name('specrabdetail.')->group(function () {
             Route::get('/', [SpecRabDetailController::class, 'index'])->name('index');
             Route::post('/', [SpecRabDetailController::class, 'store'])->name('store');
-            Route::get('/{id_spec}/{cost_element}', [SpecRabDetailController::class, 'show'])->name('show');
-            Route::put('/{id_spec}/{cost_element}', [SpecRabDetailController::class, 'update'])->name('update');
-            Route::delete('/{id_spec}/{cost_element}', [SpecRabDetailController::class, 'destroy'])->name('destroy');
+            Route::get('/{cost_element}', [SpecRabDetailController::class, 'show'])->name('show');
+            Route::put('/{cost_element}', [SpecRabDetailController::class, 'update'])->name('update');
+            Route::delete('/{cost_element}', [SpecRabDetailController::class, 'destroy'])->name('destroy');
         });
         Route::get('/api/specrabdetail/active-specs', [SpecRabDetailController::class, 'getActiveSpecs'])
             ->name('api.specrabdetail.active-specs');

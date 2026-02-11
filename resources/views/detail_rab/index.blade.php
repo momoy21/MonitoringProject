@@ -63,7 +63,7 @@
                 <tbody id="specRabDetailTableBody">
                     @forelse($details as $index => $item)
                     <tr class="editable-row" 
-                        ondblclick="editSpecRabDetail('{{ $item->id_spec }}', '{{ $item->cost_element }}')" 
+                        ondblclick="editSpecRabDetail('{{ $item->cost_element }}')" 
                         title="Double-click untuk edit" 
                         style="cursor: pointer;">
                         <td>{{ $details->firstItem() + $index }}</td>
@@ -89,12 +89,12 @@
                                     <i class="bx bx-dots-vertical-rounded"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="viewSpecRabDetail('{{ $item->id_spec }}', '{{ $item->cost_element }}')">
+                                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="viewSpecRabDetail('{{ $item->cost_element }}')">
                                         <i class="bx bx-show me-1"></i> Lihat Detail</a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="editSpecRabDetail('{{ $item->id_spec }}', '{{ $item->cost_element }}')">
+                                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="editSpecRabDetail('{{ $item->cost_element }}')">
                                         <i class="bx bx-edit me-1"></i> Edit</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteSpecRabDetail('{{ $item->id_spec }}', '{{ $item->cost_element }}')">
+                                    <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteSpecRabDetail('{{ $item->cost_element }}')">
                                         <i class="bx bx-trash me-1"></i> Hapus</a></li>
                                 </ul>
                             </div>
@@ -150,7 +150,6 @@
                 <form id="specRabDetailForm">
                     <div class="modal-body">
                         <input type="hidden" id="formMode" value="add">
-                        <input type="hidden" id="originalIdSpec" value="">
                         <input type="hidden" id="originalCostElement" value="">
                         
                         <!-- ID Spec Dropdown -->
