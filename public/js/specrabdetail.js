@@ -1,6 +1,6 @@
-/**
- * SpecRabDetailManager - Manager class for Specifications RAB Detail module
- */
+
+ //SpecRabDetailManager - Manager class for Spesifikasi RAB Detail module
+ 
 class SpecRabDetailManager {
     constructor() {
         this.stateManager = window.StateManagers?.specRabDetail;
@@ -565,9 +565,6 @@ class SpecRabDetailManager {
                         Object.keys(errors).forEach(key => {
                             this.showFieldError(key, errors[key][0]);
                         });
-                    }
-                    if (xhr.responseJSON?.message) {
-                        this.showAlert(xhr.responseJSON.message, 'danger');
                     }
                 } else {
                     this.showAlert('Terjadi kesalahan saat menyimpan data.', 'danger');

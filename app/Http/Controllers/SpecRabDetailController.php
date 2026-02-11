@@ -67,6 +67,7 @@ class SpecRabDetailController extends Controller
             'id_spec.exists' => 'ID Spec tidak valid.',
             'cost_element.required' => 'Cost Element harus diisi.',
             'cost_element.max' => 'Cost Element maksimal 10 karakter.',
+            'cost_element.unique' => 'Cost Element sudah terdaftar.',
             'status.in' => 'Status harus berupa Aktif atau Non Aktif.',
         ]);
 
