@@ -9,9 +9,10 @@ class SpecRabDetail extends Model
 {
     protected $table = 'spec_rab_detail';
     
-    // Composite primary key - tidak ada auto increment
+    // Primary key is cost_element (unique)
+    protected $primaryKey = 'cost_element';
     public $incrementing = false;
-    protected $primaryKey = null; // Composite key
+    protected $keyType = 'string';
 
     protected $fillable = [
         'id_spec',
@@ -45,17 +46,6 @@ class SpecRabDetail extends Model
     }
 
     /**
-     * Override getKey untuk composite key
-     */
-    public function getKey()
-    {
-        return [
-            'id_spec' => $this->id_spec,
-            'cost_element' => $this->cost_element,
-        ];
-    }
-
-    /**
      * Relasi ke SpesifikasiRAB (Config Spec RAB)
      */
     public function spesifikasiRab(): BelongsTo
@@ -72,37 +62,12 @@ class SpecRabDetail extends Model
     }
 
     /**
-     * Scope untuk mencari berdasarkan cost element
-     */
-    public function scopeByCostElement($query, string $costElement)
-    {
-        return $query->where('cost_element', $costElement);
-    }
-
-    /**
-     * Scope untuk mencari berdasarkan id_spec
-     */
-    public function scopeByIdSpec($query, string $idSpec)
-    {
-        return $query->where('id_spec', $idSpec);
-    }
-
-    /**
-     * Static method untuk find by composite key
-     */
-    public static function findByCompositeKey(string $idSpec, string $costElement)
-    {
-        return static::where('id_spec', $idSpec)
-                     ->where('cost_element', $costElement)
-                     ->first();
-    }
-
-    /**
      * Static method untuk mendapatkan id_spec dari cost_element
      */
     public static function getIdSpecByCostElement(string $costElement): ?string
     {
-        $detail = static::where('cost_element', $costElement)->first();
+        // Karena cost_element sekarang PK, kita bisa langsung find
+        $detail = static::find($costElement);
         return $detail?->id_spec;
     }
 
@@ -111,9 +76,7 @@ class SpecRabDetail extends Model
      */
     public static function getKategoriByCostElement(string $costElement): ?string
     {
-        $detail = static::with('spesifikasiRab')
-                        ->where('cost_element', $costElement)
-                        ->first();
+        $detail = static::with('spesifikasiRab')->find($costElement);
         return $detail?->spesifikasiRab?->kategori;
     }
 }
