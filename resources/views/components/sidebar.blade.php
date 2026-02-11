@@ -172,6 +172,13 @@
             </a>
         </li>
 
+        <!-- Rencana Lembur -->
+        <li class="menu-item {{ request()->routeIs('rencanelembur.*') ? 'active' : '' }}">
+            <a href="{{ route('rencanelembur.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-time-five"></i>
+                <div>Input Rencana Lembur</div>
+            </a>
+        </li>
 
 
     <li class="menu-header small text-uppercase">
