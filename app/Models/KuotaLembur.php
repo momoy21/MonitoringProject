@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KuotaLembur extends Model
 {
+    use HasFactory;
+
     protected $table = 'kuota_lembur';
+
+    // Composite primary key
+    protected $primaryKey = ['cost_center', 'dok_io', 'nik', 'bulan'];
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'cost_center',
@@ -29,10 +37,53 @@ class KuotaLembur extends Model
         'jml_wd' => 'integer',
         'jml_we' => 'integer',
         'jml_hn' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
-     * Relationship to Karyawan
+     * Status options
+     */
+    public const STATUS_OPTIONS = [
+        null => 'Belum Terkirim',
+        'F' => 'Sudah Terkirim',
+    ];
+
+    /**
+     * Override setKeysForSaveQuery for composite key support
+     */
+    protected function setKeysForSaveQuery($query)
+    {
+        $keys = $this->getKeyName();
+        if (!is_array($keys)) {
+            return parent::setKeysForSaveQuery($query);
+        }
+
+        foreach ($keys as $keyName) {
+            $query->where($keyName, '=', $this->getKeyForSaveQuery($keyName));
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get the primary key value for a save query.
+     */
+    protected function getKeyForSaveQuery($keyName = null)
+    {
+        if (is_null($keyName)) {
+            $keyName = $this->getKeyName();
+        }
+
+        if (isset($this->original[$keyName])) {
+            return $this->original[$keyName];
+        }
+
+        return $this->getAttribute($keyName);
+    }
+
+    /**
+     * Relation to Karyawan
      */
     public function karyawan(): BelongsTo
     {
@@ -40,69 +91,51 @@ class KuotaLembur extends Model
     }
 
     /**
-     * Relationship to DataProyek via cost_center
+     * Relation to DataProyek via cost_center
      */
-    public function project(): BelongsTo
+    public function proyek(): BelongsTo
     {
         return $this->belongsTo(DataProyek::class, 'cost_center', 'cost_center');
     }
 
-    /* -------------------------------------------------------------------------- */
-    /* LOGIC STATUS SESUAI BPS 22                         */
-    /* -------------------------------------------------------------------------- */
-
     /**
-     * Cek apakah data masih Draft (Belum terkirim)
+     * Scope for unsynced data (status is null)
      */
-    public function getIsDraftAttribute(): bool
-    {
-        return is_null($this->status);
-    }
-
-    /**
-     * Cek apakah data sudah Terkirim (Final)
-     */
-    public function getIsTerkirimAttribute(): bool
-    {
-        return $this->status === 'F';
-    }
-
-    /**
-     * Scope untuk mengambil data yang sudah terkirim ('F')
-     */
-    public function scopeTerkirim($query)
-    {
-        return $query->where('status', 'F');
-    }
-
-    /**
-     * Scope untuk mengambil data draft (NULL)
-     */
-    public function scopeDraft($query)
+    public function scopeUnsynced($query)
     {
         return $query->whereNull('status');
     }
 
     /**
-     * Get status label untuk Tampilan
+     * Scope for synced data (status = F)
      */
-    public function getStatusLabelAttribute(): string
+    public function scopeSynced($query)
     {
-        if ($this->status === 'F') {
-            return 'Terkirim ke Path';
-        }
-        return 'Draft / Belum Terkirim';
+        return $query->where('status', 'F');
     }
 
     /**
-     * Get status badge class untuk UI (Bootstrap)
+     * Scope for period filter
      */
-    public function getStatusBadgeAttribute(): string
+    public function scopeInPeriod($query, $periodeAwal, $periodeAkhir)
     {
-        return match ($this->status) {
-            'F' => 'badge bg-success',    
-            null => 'badge bg-warning',   
-            default => 'badge bg-secondary',
-        };
+        return $query->where('periode_awal', '>=', $periodeAwal)
+            ->where('periode_akhir', '<=', $periodeAkhir);
+    }
+
+    /**
+     * Get status label
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return self::STATUS_OPTIONS[$this->status] ?? 'Unknown';
+    }
+
+    /**
+     * Get total jam lembur
+     */
+    public function getTotalJamAttribute(): int
+    {
+        return $this->jml_wd + $this->jml_we + $this->jml_hn;
     }
 }

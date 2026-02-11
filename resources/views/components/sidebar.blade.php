@@ -94,8 +94,7 @@
                 <i class="menu-icon tf-icons bx bx-id-card"></i>
                 <div>Master Karyawan</div>
             </a>
-        </li>
-        
+        </li>           
         @endrole
 
         @role('Project Manager')
@@ -180,7 +179,7 @@
             </a>
         </li>
 
-
+    @role('Super Admin')
     <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Transaksi Monitoring</span>
         </li>
@@ -191,7 +190,7 @@
                 <div>Pencatatan Pleno RAB</div>
             </a>
         </li>
-
+    @endrole
         
         
     <li class="menu-header small text-uppercase">

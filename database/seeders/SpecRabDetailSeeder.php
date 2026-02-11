@@ -126,7 +126,7 @@ class SpecRabDetailSeeder extends Seeder
             ['id_spec' => '0012', 'cost_element' => '6011115', 'description_ce' => ''],
             ['id_spec' => '0012', 'cost_element' => '6012104', 'description_ce' => ''],
             ['id_spec' => '0012', 'cost_element' => '6013117', 'description_ce' => ''],
-            ['id_spec' => '0012', 'cost_element' => '6001113', 'description_ce' => 'Ekstra Food'],
+            ['id_spec' => '0012', 'cost_element' => '6001113', 'description_ce' => ''],
 
             // ===============================================
             // 13. Biaya Kontijensi & Relasi Proyek (id_spec: 0013)
