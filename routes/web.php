@@ -26,6 +26,7 @@ use App\Http\Controllers\JenisProyekController;
 use App\Http\Controllers\LaporanHasilPlenoRABController;
 use App\Http\Controllers\SpecRabDetailController;
 use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\PenugasanController;
 
 
 /*
@@ -80,6 +81,34 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
 
 Route::resource('jenisproyek', JenisProyekController::class);
 
+
+
+
+
+
+
+
+// Grouping route untuk Penugasan agar lebih rapi
+Route::prefix('penugasan')->name('penugasan.')->group(function () {
+    
+    // Route Utama (Daftar Penugasan)
+    Route::get('/', [PenugasanController::class, 'index'])->name('index');
+
+    // Route Tambah Data
+    Route::get('/create', [PenugasanController::class, 'create'])->name('create');
+    Route::post('/store', [PenugasanController::class, 'store'])->name('store');
+
+    // Route Edit & Update
+    Route::get('/{id}/edit', [PenugasanController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
+
+    // Route Fitur Tambahan sesuai BPS
+    Route::get('/template', [PenugasanController::class, 'downloadTemplate'])->name('template');
+    Route::post('/upload', [PenugasanController::class, 'uploadExcel'])->name('upload');
+
+    // Route AJAX (Jika kamu ingin mengambil data via JavaScript/Fetch)
+    Route::get('/get-proyek/{costcenter}', [PenugasanController::class, 'getProyek'])->name('getProyek');
+});
     
     // ===================================================================
     // DASHBOARD - Redirect based on role
