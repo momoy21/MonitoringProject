@@ -1,6 +1,6 @@
-
- //SpecRabDetailManager - Manager class for Spesifikasi RAB Detail module
- 
+/**
+ * SpecRabDetailManager - Manager class for Specifications RAB Detail module
+ */
 class SpecRabDetailManager {
     constructor() {
         this.stateManager = window.StateManagers?.specRabDetail;
