@@ -2,21 +2,19 @@
     <!-- Header Section - Sticky -->
     <div class="sticky-header">
         <div class="row align-items-center">
-            <div class="col-md-6">
+            <div class="col-12">
                 <h4 class="fw-bold mb-2">Biaya Proyek</h4>
                 <p class="mb-0">Monitoring Rencana vs Aktual untuk Pendapatan dan HPP</p>
             </div>
         </div>
 
-        <!-- Cost Center Selection -->
-        <div class="row mt-3 align-items-center">
-            <div class="col-md-8">
-                <div class="d-flex align-items-center gap-2">
-                    <label for="cost_center_select" class="form-label mb-0 fw-bold">Pilih Cost Center:</label>
-                    <select id="cost_center_select" class="form-select" style="width: 100%; max-width: 600px;">
-                        <option value="">-- Pilih Cost Center --</option>
-                    </select>
-                </div>
+        <!-- Cost Center Selection - Full Width -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <label for="cost_center_select" class="form-label fw-bold text-uppercase">Pilih Cost Center</label>
+                <select id="cost_center_select" class="form-select" style="width: 100%;">
+                    <option value="">-- Pilih Cost Center --</option>
+                </select>
                 <small class="text-muted">Hanya menampilkan proyek yang sudah memiliki Header RAB dengan Mulai & Lama</small>
             </div>
         </div>
@@ -25,54 +23,31 @@
     <!-- Info Section Card (hidden by default) -->
     <div class="card" id="projectInfoSection" style="display: none;">
         <div class="card-body">
-            <!-- Baris 1: Cost Center, Nama Proyek, Konsumen -->
+            <!-- Baris 1: Cost Center, Nama Proyek, Konsumen (3 kolom) -->
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">Cost Center</label>
-                    <input type="text" class="form-control" id="info_cost_center" readonly>
+                    <label class="form-label fw-bold">COST CENTER</label>
+                    <input type="text" class="form-control" id="info_cost_center" disabled readonly>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">Nama Proyek</label>
-                    <input type="text" class="form-control" id="info_namaproject" readonly>
+                    <label class="form-label fw-bold">NAMA PROYEK</label>
+                    <input type="text" class="form-control" id="info_namaproject" disabled readonly>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">Konsumen</label>
-                    <input type="text" class="form-control" id="info_konsumen" readonly>
+                    <label class="form-label fw-bold">KONSUMEN</label>
+                    <input type="text" class="form-control" id="info_konsumen" disabled readonly>
                 </div>
             </div>
 
-            <!-- Baris 2: Mulai, Lama, No Kontrak -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Mulai</label>
-                    <input type="text" class="form-control" id="info_mulai" readonly>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Lama</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="info_lama" readonly>
-                        <span class="input-group-text">Bulan</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">No. Kontrak</label>
-                    <input type="text" class="form-control" id="info_no_kontrak" readonly>
-                </div>
-            </div>
-
-            <!-- Baris 3: Nilai Proyek, Tanggal Kontrak, Akhir Kontrak -->
+            <!-- Baris 2: Nilai Proyek, No Kontrak (2 kolom, sejajar baris 1) -->
             <div class="row">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">Nilai Proyek</label>
-                    <input type="text" class="form-control" id="info_nilai_proyek" readonly>
+                    <label class="form-label fw-bold">NILAI PROYEK</label>
+                    <input type="text" class="form-control" id="info_nilai_proyek" disabled readonly>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">Tanggal Kontrak</label>
-                    <input type="text" class="form-control" id="info_tanggal_kontrak" readonly>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Akhir Kontrak</label>
-                    <input type="text" class="form-control" id="info_akhir_kontrak" readonly>
+                    <label class="form-label fw-bold">NO. KONTRAK</label>
+                    <input type="text" class="form-control" id="info_no_kontrak" disabled readonly>
                 </div>
             </div>
         </div>
@@ -84,30 +59,20 @@
             <table class="table table-striped table-hover biayaproyek-table" id="pendapatanTable">
                 <thead>
                     <tr class="table-primary">
-                        <th colspan="8" class="fw-bold text-white">
+                        <th colspan="4" class="fw-bold text-white">
                             <i class="bx bx-trending-up me-2"></i>Pendapatan
-                            <span class="float-end text-white" id="bulanIniLabel" style="font-weight: normal; font-size: 0.875rem; opacity: 0.9;"></span>
                         </th>
                     </tr>
                     <tr>
-                        <th rowspan="2" class="text-center align-middle fw-bold" style="width: 50px;">No</th>
-                        <th rowspan="2" class="text-center align-middle fw-bold">Keterangan</th>
-                        <th colspan="2" class="text-center fw-bold">Bulan Ini</th>
-                        <th colspan="2" class="text-center fw-bold">S.D. Bulan Ini</th>
-                        <th colspan="2" class="text-center fw-bold">Total</th>
-                    </tr>
-                    <tr>
-                        <th class="text-center fw-bold">Rencana</th>
-                        <th class="text-center fw-bold">Aktual</th>
-                        <th class="text-center fw-bold">Rencana</th>
-                        <th class="text-center fw-bold">Aktual</th>
-                        <th class="text-center fw-bold">Rencana</th>
-                        <th class="text-center fw-bold">Aktual</th>
+                        <th class="text-center fw-bold" style="width: 50px;">No</th>
+                        <th class="text-center fw-bold">Keterangan</th>
+                        <th class="text-center fw-bold">Bulan</th>
+                        <th class="text-center fw-bold">Total</th>
                     </tr>
                 </thead>
                 <tbody id="pendapatanTableBody">
                     <tr>
-                        <td colspan="8" class="text-center py-4">
+                        <td colspan="4" class="text-center py-4">
                             <div class="d-flex flex-column align-items-center">
                                 <i class="bx bx-search-alt-2 mb-2" style="font-size: 48px; color: #ccc;"></i>
                                 <p class="mb-0 text-muted">Pilih Cost Center untuk melihat data</p>
@@ -175,7 +140,19 @@
         position: sticky;
         top: 0;
         z-index: 10;
+    }
+    .biayaproyek-table thead th {
         background-color: #fff;
+        box-shadow: 0 1px 0 0 #dee2e6;
+    }
+    .biayaproyek-table tfoot {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+    }
+    .biayaproyek-table tfoot td {
+        background-color: #e9ecef;
+        box-shadow: 0 -1px 0 0 #dee2e6;
     }
     .biayaproyek-table th,
     .biayaproyek-table td {
@@ -190,11 +167,13 @@
     .biayaproyek-table .table-primary th * {
         background-color: #0d6efd !important;
         color: #fff !important;
+        box-shadow: none;
     }
     .biayaproyek-table .table-danger th,
     .biayaproyek-table .table-danger th * {
         background-color: #dc3545 !important;
         color: #fff !important;
+        box-shadow: none;
     }
 </style>
 @endpush

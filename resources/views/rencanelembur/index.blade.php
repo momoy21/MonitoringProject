@@ -78,9 +78,9 @@
                         <th class="fw-bold text-muted small">Bulan Ke</th>
                         <th class="fw-bold text-muted small">Periode Awal</th>
                         <th class="fw-bold text-muted small">Periode Akhir</th>
-                        <th class="fw-bold text-muted small text-center">Jml WD</th>
-                        <th class="fw-bold text-muted small text-center">Jml WE</th>
-                        <th class="fw-bold text-muted small text-center">Jml HN</th>
+                        <th class="fw-bold text-muted small text-center">Jumlah Weekday</th>
+                        <th class="fw-bold text-muted small text-center">Jumlah Weekend</th>
+                        <th class="fw-bold text-muted small text-center">Jumlah Hari Libur Nasional</th>
                         <th class="fw-bold text-muted small text-center">Status</th>
                         <th class="fw-bold text-muted small text-end px-4">Aksi</th>
                     </tr>
