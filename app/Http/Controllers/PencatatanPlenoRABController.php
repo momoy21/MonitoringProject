@@ -56,8 +56,12 @@ class PencatatanPlenoRABController extends Controller
                 });
             }
 
-            $rabProyek = $query->orderBy('tgl_input', 'desc')
-                               ->orderBy('nopengajuan', 'desc')
+            // Sorting by tgl_input
+            $sortOrder = $request->get('sort_order', 'desc');
+            $sortOrder = in_array($sortOrder, ['asc', 'desc']) ? $sortOrder : 'desc';
+
+            $rabProyek = $query->orderBy('tgl_input', $sortOrder)
+                               ->orderBy('nopengajuan', $sortOrder)
                                ->paginate($perPage);
 
             // For AJAX requests

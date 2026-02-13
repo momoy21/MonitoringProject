@@ -1,4 +1,14 @@
 <x-layout title="Pencatatan Pleno RAB">
+    <style>
+        .sortable-header:hover {
+            background-color: #e9ecef;
+            transition: background-color 0.2s;
+        }
+        .sortable-header i {
+            font-size: 14px;
+            vertical-align: middle;
+        }
+    </style>
     <!-- Header Section - Sticky -->
     <div class="sticky-header">
         <div class="row align-items-center">
@@ -61,7 +71,10 @@
                 <thead class="table-light">
                     <tr>
                         <th class="fw-bold text-center" style="width: 50px;">No</th>
-                        <th class="fw-bold">Tanggal Pengajuan</th>
+                        <th class="fw-bold sortable-header" id="sortTglHeader" style="cursor: pointer;" title="Klik untuk mengurutkan">
+                            Tanggal Pengajuan
+                            <i class="bx bx-sort-down ms-1" id="sortIcon"></i>
+                        </th>
                         <th class="fw-bold">Nomor</th>
                         <th class="fw-bold">Cost Center</th>
                         <th class="fw-bold">Nama Proyek</th>
@@ -165,6 +178,7 @@
         let totalPages = {{ $rabProyek->lastPage() }};
         let perPage = {{ request('per_page', 10) }};
         let currentSearch = '{{ request('search') }}';
+        let sortOrder = '{{ request('sort_order', 'desc') }}';
 
         // Search input with debounce
         $('#searchInput').on('input', function() {
@@ -185,6 +199,23 @@
             currentPage = 1;
             loadData();
         });
+
+        // Sort by tanggal pengajuan
+        $('#sortTglHeader').on('click', function() {
+            sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+            updateSortIcon();
+            currentPage = 1;
+            loadData();
+        });
+
+        function updateSortIcon() {
+            const icon = $('#sortIcon');
+            if (sortOrder === 'desc') {
+                icon.removeClass('bx-sort-up').addClass('bx-sort-down');
+            } else {
+                icon.removeClass('bx-sort-down').addClass('bx-sort-up');
+            }
+        }
 
         // Pagination buttons
         $('#firstPageBtn').on('click', function() {
@@ -225,7 +256,8 @@
                 data: {
                     search: currentSearch,
                     per_page: perPage,
-                    page: currentPage
+                    page: currentPage,
+                    sort_order: sortOrder
                 },
                 success: function(response) {
                     spinner.hide();
