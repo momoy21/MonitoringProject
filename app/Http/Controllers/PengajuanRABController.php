@@ -289,7 +289,8 @@ class PengajuanRABController extends Controller
     public function update(Request $request, RABProyek $pengajuanrab)
     {
         // Clean numeric format before validation (remove thousand separators)
-        $numericFields = ['nilai_proyek', 'margin_rkap', 'margin_pleno'];
+        // Note: margin_rkap, margin_pleno removed - they are read-only on this form
+        $numericFields = ['nilai_proyek'];
         foreach ($numericFields as $field) {
             if ($request->has($field) && $request->$field) {
                 $request->merge([
@@ -308,12 +309,8 @@ class PengajuanRABController extends Controller
             'divisi' => 'nullable|string|exists:master_divisi,kode_divisi',
             'jenis_proyek' => 'nullable|string|exists:jenis_proyek,kode_jenis',
             'nilai_proyek' => 'nullable|numeric|min:0',
-            'keterangan' => 'nullable|in:P,T,R',
-            'progress' => 'nullable|in:01,02,03,04',
-            'hasil_pleno' => 'nullable|in:TT,TR',
-            'catatan' => 'nullable|string',
-            'margin_rkap' => 'nullable|numeric',
-            'margin_pleno' => 'nullable|numeric',
+            // Note: keterangan, progress, hasil_pleno, margin_rkap, margin_pleno, catatan
+            // are read-only on this form - validated only on Pencatatan Pleno RAB
             'rab_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
             'file_upload' => 'nullable|file|mimes:pdf|max:10240',
             'peta_risk_upload' => 'nullable|file|mimes:xlsx,xls|max:10240',
@@ -329,9 +326,6 @@ class PengajuanRABController extends Controller
             'divisi.exists' => 'Divisi tidak valid.',
             'nilai_proyek.numeric' => 'Nilai Proyek harus berupa angka.',
             'nilai_proyek.min' => 'Nilai Proyek tidak boleh negatif.',
-            'keterangan.in' => 'Keterangan tidak valid.',
-            'progress.in' => 'Progress tidak valid.',
-            'hasil_pleno.in' => 'Hasil Pleno tidak valid.',
             'rab_upload.mimes' => 'File RAB harus berformat Excel (xlsx, xls).',
             'rab_upload.max' => 'File RAB maksimal 10MB.',
             'file_upload.mimes' => 'File Kontrak harus berformat PDF.',
@@ -358,6 +352,9 @@ class PengajuanRABController extends Controller
         try {
             DB::beginTransaction();
 
+            // Only update fields that are actually editable on this form
+            // Fields like keterangan, progress, hasil_pleno, margin_rkap, margin_pleno, catatan
+            // are read-only here and should only be updated via Pencatatan Pleno RAB
             $data = [
                 'dokumen_io' => $request->dokumen_io,
                 'cost_center' => strtoupper($request->cost_center),
@@ -368,12 +365,8 @@ class PengajuanRABController extends Controller
                 'divisi' => $request->divisi,
                 'jenis_proyek' => $request->jenis_proyek,
                 'nilai_proyek' => $request->nilai_proyek ?: null,
-                'keterangan' => $request->keterangan,
-                'progress' => $request->progress,
-                'hasil_pleno' => $request->hasil_pleno,
-                'catatan' => $request->catatan,
-                'margin_rkap' => $request->margin_rkap ?: null,
-                'margin_pleno' => $request->margin_pleno ?: null,
+                // Note: keterangan, progress, hasil_pleno, catatan, margin_rkap, margin_pleno
+                // are NOT included here - they are read-only and edited via Pencatatan Pleno RAB
             ];
 
             // Handle file uploads - delete old files if new ones are uploaded
