@@ -30,8 +30,8 @@ class SpecRabDetailController extends Controller
         }
 
         // Ordering - now just plain ordering
-        $details = $query->orderBy('id_spec', 'asc')
-                         ->orderBy('cost_element', 'asc')
+        $details = $query->orderBy('updated_at', 'desc')
+                         ->orderBy('created_at', 'desc')
                          ->paginate($request->get('per_page', 10));
 
         if ($request->ajax()) {
@@ -67,7 +67,7 @@ class SpecRabDetailController extends Controller
             'id_spec.exists' => 'ID Spec tidak valid.',
             'cost_element.required' => 'Cost Element harus diisi.',
             'cost_element.max' => 'Cost Element maksimal 10 karakter.',
-            'cost_element.unique' => 'Cost Element sudah terdaftar.',
+            'cost_element.unique' => 'GAGAL: Cost Element sudah dipakai pada spesifikasi lain.',
             'status.in' => 'Status harus berupa Aktif atau Non Aktif.',
         ]);
 
