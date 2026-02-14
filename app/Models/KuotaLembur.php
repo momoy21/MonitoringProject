@@ -11,7 +11,7 @@ class KuotaLembur extends Model
     use HasFactory;
 
     protected $table = 'kuota_lembur';
-    
+
     // Composite primary key
     protected $primaryKey = ['cost_center', 'dok_io', 'nik', 'bulan'];
     public $incrementing = false;
@@ -120,7 +120,7 @@ class KuotaLembur extends Model
     public function scopeInPeriod($query, $periodeAwal, $periodeAkhir)
     {
         return $query->where('periode_awal', '>=', $periodeAwal)
-                     ->where('periode_akhir', '<=', $periodeAkhir);
+            ->where('periode_akhir', '<=', $periodeAkhir);
     }
 
     /**

@@ -22,14 +22,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportProgramController;
 use App\Http\Controllers\MasterDivisiController;
+use App\Http\Controllers\JenisProyekController;
 use App\Http\Controllers\LaporanHasilPlenoRABController;
 use App\Http\Controllers\SpecRabDetailController;
 use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\PenugasanController;
 use App\Http\Controllers\BiayaProyekController;
+use App\Http\Controllers\KuotaLemburController;
 use App\Http\Controllers\LemburInterfaceController;
-use App\Http\Controllers\JenisProyekController;
-
-
 
 
 /*
@@ -77,18 +77,6 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
     Route::get('/detail-data', [LaporanHasilPlenoRABController::class, 'getDetailData'])->name('detail-data');
 });
 
-// ===================================================================
-// LAPORAN HASIL PLENO RAB
-// ===================================================================
-Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(function () {
-    Route::get('/', [LaporanHasilPlenoRABController::class, 'index'])->name('index');
-    Route::get('/divisi-data', [LaporanHasilPlenoRABController::class, 'getDivisiData'])->name('divisi-data');
-    Route::get('/kategori-data', [LaporanHasilPlenoRABController::class, 'getKategoriData'])->name('kategori-data');
-    Route::get('/divisi-kategori-data', [LaporanHasilPlenoRABController::class, 'getDivisiKategoriData'])->name('divisi-kategori-data');
-    Route::get('/jenis-proyek-data', [LaporanHasilPlenoRABController::class, 'getJenisProyekData'])->name('jenis-proyek-data');
-    Route::get('/detail-data', [LaporanHasilPlenoRABController::class, 'getDetailData'])->name('detail-data');
-});
-
 
     // ===================================================================
     // JenisProyek
@@ -98,6 +86,27 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
         'jenisproyek' => 'jenisproyek:kode_jenis'
     ]);
 
+// Grouping route untuk Penugasan
+Route::prefix('penugasan')->name('penugasan.')->group(function () {
+    
+    // Route Utama (Daftar Penugasan)
+    Route::get('/', [PenugasanController::class, 'index'])->name('index');
+
+    // Route Tambah Data
+    Route::get('/create', [PenugasanController::class, 'create'])->name('create');
+    Route::post('/store', [PenugasanController::class, 'store'])->name('store');
+
+    // Route Edit & Update
+    Route::get('/{id}/edit', [PenugasanController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
+
+    // Route Fitur Tambahan sesuai BPS
+    Route::get('/template', [PenugasanController::class, 'downloadTemplate'])->name('template');
+    Route::post('/upload', [PenugasanController::class, 'uploadExcel'])->name('upload');
+
+    // Route AJAX (Jika kamu ingin mengambil data via JavaScript/Fetch)
+    Route::get('/get-proyek/{costcenter}', [PenugasanController::class, 'getProyek'])->name('getProyek');
+});
     
     // ===================================================================
     // DASHBOARD - Redirect based on role
@@ -430,6 +439,22 @@ Route::prefix('laporanhasilplenorab')->name('laporanhasilplenorab.')->group(func
 
             // Get Biaya Proyek data (Pendapatan & HPP)
             Route::get('/data', [BiayaProyekController::class, 'getBiayaProyekData'])->name('getData');
+        });
+
+        // ---------------------------------------------------------------
+        // Rencana Lembur (Kuota Lembur) - Input Rencana Lembur
+        // ---------------------------------------------------------------
+        Route::prefix('rencanelembur')->name('rencanelembur.')->group(function () {
+            Route::get('/', [KuotaLemburController::class, 'index'])->name('index');
+            Route::get('/cost-center', [KuotaLemburController::class, 'getCostCenterDropdown'])->name('getCostCenter');
+            Route::get('/data', [KuotaLemburController::class, 'getData'])->name('getData');
+            Route::get('/next-bulan', [KuotaLemburController::class, 'getNextBulan'])->name('getNextBulan');
+            Route::get('/karyawan', [KuotaLemburController::class, 'getKaryawanDropdown'])->name('getKaryawan');
+            Route::post('/store', [KuotaLemburController::class, 'store'])->name('store');
+            Route::put('/update/{id}', [KuotaLemburController::class, 'update'])->name('update');
+            Route::delete('/destroy/{id}', [KuotaLemburController::class, 'destroy'])->name('destroy');
+            Route::post('/upload', [KuotaLemburController::class, 'upload'])->name('upload');
+            Route::get('/download-template', [KuotaLemburController::class, 'downloadTemplate'])->name('downloadTemplate');
         });
     });
 });
