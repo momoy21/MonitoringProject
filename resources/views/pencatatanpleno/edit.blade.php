@@ -127,55 +127,137 @@
                 @csrf
                 @method('PUT')
 
-                <!-- Informasi Proyek (Read-only) -->
+                <!-- Informasi Proyek -->
                 <div class="form-section">
                     <h6 class="mb-3"><i class="bx bx-folder me-2"></i>Informasi Proyek</h6>
                     <div class="row">
                         <!-- Dokumen IO -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Dokumen IO</label>
-                                <div class="read-only-field">{{ $rabProyek->dokumen_io ?: '-' }}</div>
+                                <label for="dokumen_io" class="form-label">Dokumen IO</label>
+                                <input type="text" class="form-control @error('dokumen_io') is-invalid @enderror"
+                                       id="dokumen_io" name="dokumen_io"
+                                       value="{{ old('dokumen_io', $rabProyek->dokumen_io) }}"
+                                       placeholder="Masukkan Dokumen IO" maxlength="9">
+                                @error('dokumen_io')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <!-- Cost Center -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Cost Center</label>
-                                <div class="read-only-field">{{ $rabProyek->cost_center }}</div>
+                                <label for="cost_center" class="form-label">Cost Center <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('cost_center') is-invalid @enderror"
+                                       id="cost_center" name="cost_center"
+                                       value="{{ old('cost_center', $rabProyek->cost_center) }}"
+                                       placeholder="Masukkan Cost Center" maxlength="9" required>
+                                @error('cost_center')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <!-- Nama Proyek -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Nama Proyek</label>
-                                <div class="read-only-field">{{ $rabProyek->nama_project }}</div>
+                                <label for="nama_project" class="form-label">Nama Proyek <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('nama_project') is-invalid @enderror"
+                                       id="nama_project" name="nama_project"
+                                       value="{{ old('nama_project', $rabProyek->nama_project) }}"
+                                       placeholder="Masukkan Nama Proyek" required>
+                                @error('nama_project')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <!-- Konsumen -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Konsumen</label>
-                                <div class="read-only-field">{{ $rabProyek->konsumen->konsumen ?? '-' }}</div>
+                                <label for="id_konsumen" class="form-label">Konsumen <span class="text-danger">*</span></label>
+                                <select class="form-select @error('id_konsumen') is-invalid @enderror"
+                                        id="id_konsumen" name="id_konsumen" required>
+                                    <option value="">-- Pilih Konsumen --</option>
+                                    @foreach($konsumenList as $konsumen)
+                                        <option value="{{ $konsumen->id_konsumen }}" {{ old('id_konsumen', $rabProyek->id_konsumen) == $konsumen->id_konsumen ? 'selected' : '' }}>
+                                            {{ $konsumen->konsumen }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('id_konsumen')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <!-- Bidang Jasa -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Bidang Jasa</label>
-                                <div class="read-only-field">{{ $rabProyek->bidangJasa->desc_bidjasa ?? '-' }}</div>
+                                <label for="id_bidjasa" class="form-label">Bidang Jasa <span class="text-danger">*</span></label>
+                                <select class="form-select @error('id_bidjasa') is-invalid @enderror"
+                                        id="id_bidjasa" name="id_bidjasa" required>
+                                    <option value="">-- Pilih Bidang Jasa --</option>
+                                    @foreach($bidangJasaList as $bidangJasa)
+                                        <option value="{{ $bidangJasa->id_bidjasa }}" {{ old('id_bidjasa', $rabProyek->id_bidjasa) == $bidangJasa->id_bidjasa ? 'selected' : '' }}>
+                                            {{ $bidangJasa->desc_bidjasa }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('id_bidjasa')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Divisi -->
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="divisi" class="form-label">Divisi</label>
+                                <select class="form-select @error('divisi') is-invalid @enderror"
+                                        id="divisi" name="divisi">
+                                    <option value="">-- Pilih Divisi --</option>
+                                    @foreach($divisiList as $divisi)
+                                        <option value="{{ $divisi->kode_divisi }}" {{ old('divisi', $rabProyek->divisi) == $divisi->kode_divisi ? 'selected' : '' }}>
+                                            {{ $divisi->nama_divisi }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('divisi')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- PM -->
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pm" class="form-label">Project Manager</label>
+                                <input type="text" class="form-control @error('pm') is-invalid @enderror"
+                                       id="pm" name="pm"
+                                       value="{{ old('pm', $rabProyek->pm) }}"
+                                       placeholder="Nama Project Manager" maxlength="100">
+                                @error('pm')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <!-- Nilai Proyek -->
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Nilai Proyek</label>
-                                <div class="read-only-field">Rp {{ number_format($rabProyek->nilai_proyek ?? 0, 0, ',', '.') }}</div>
+                                <label for="nilai_proyek" class="form-label">Nilai Proyek</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="text" class="form-control @error('nilai_proyek') is-invalid @enderror"
+                                           id="nilai_proyek" name="nilai_proyek"
+                                           value="{{ old('nilai_proyek', $rabProyek->nilai_proyek ? number_format($rabProyek->nilai_proyek, 0, ',', '.') : '') }}"
+                                           placeholder="0">
+                                    @error('nilai_proyek')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -423,8 +505,23 @@
         // Trigger on load
         $('#progress').trigger('change');
 
-        // Form submit
+        // Format nilai proyek with thousand separators
+        $('#nilai_proyek').on('input', function() {
+            let value = $(this).val().replace(/[^\d]/g, '');
+            if (value) {
+                value = parseInt(value).toLocaleString('id-ID');
+            }
+            $(this).val(value);
+        });
+
+        // Form submit - clean number format before submitting
         $('#pencatatanPlenoForm').on('submit', function() {
+            // Clean nilai_proyek
+            let nilaiProyek = $('#nilai_proyek').val();
+            if (nilaiProyek) {
+                $('#nilai_proyek').val(nilaiProyek.replace(/\./g, ''));
+            }
+
             $('#submitSpinner').removeClass('d-none');
             $('#submitIcon').addClass('d-none');
             $('#submitText').text('Menyimpan...');
