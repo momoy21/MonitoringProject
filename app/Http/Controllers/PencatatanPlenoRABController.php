@@ -56,8 +56,12 @@ class PencatatanPlenoRABController extends Controller
                 });
             }
 
-            $rabProyek = $query->orderBy('tgl_input', 'desc')
-                               ->orderBy('nopengajuan', 'desc')
+            // Sorting by tgl_input
+            $sortOrder = $request->get('sort_order', 'desc');
+            $sortOrder = in_array($sortOrder, ['asc', 'desc']) ? $sortOrder : 'desc';
+
+            $rabProyek = $query->orderBy('tgl_input', $sortOrder)
+                               ->orderBy('nopengajuan', $sortOrder)
                                ->paginate($perPage);
 
             // For AJAX requests
@@ -100,6 +104,11 @@ class PencatatanPlenoRABController extends Controller
                                   ->where('nopengajuan', $nopengajuan)
                                   ->firstOrFail();
 
+            // Data for dropdowns
+            $konsumenList = Konsumen::orderBy('konsumen')->get();
+            $bidangJasaList = BidangJasa::orderBy('desc_bidjasa')->get();
+            $divisiList = MasterDivisi::active()->orderBy('nama_divisi')->get();
+
             // Progress options
             $progressOptions = [
                 '01' => 'Dokumen belum diterima',
@@ -129,6 +138,9 @@ class PencatatanPlenoRABController extends Controller
 
             return view('pencatatanpleno.edit', compact(
                 'rabProyek',
+                'konsumenList',
+                'bidangJasaList',
+                'divisiList',
                 'progressOptions',
                 'keteranganOptions',
                 'hasilPlenoOptions',
@@ -152,6 +164,16 @@ class PencatatanPlenoRABController extends Controller
 
             // Validation
             $validated = $request->validate([
+                // Informasi Proyek
+                'dokumen_io' => 'nullable|string|max:9',
+                'cost_center' => 'required|string|max:9',
+                'nama_project' => 'required|string',
+                'id_konsumen' => 'required|string|exists:konsumen,id_konsumen',
+                'id_bidjasa' => 'required|string|exists:bidangjasa,id_bidjasa',
+                'divisi' => 'nullable|string|exists:master_divisi,kode_divisi',
+                'pm' => 'nullable|string|max:100',
+                'nilai_proyek' => 'nullable|numeric|min:0',
+                // Pencatatan Pleno
                 'progress' => 'nullable|string|max:2',
                 'keterangan' => 'nullable|string|max:1',
                 'hasil_pleno' => 'nullable|string|max:2',
@@ -161,6 +183,13 @@ class PencatatanPlenoRABController extends Controller
                 'status' => 'nullable|string|max:1',
                 'hasil_upload' => 'nullable|file|mimes:pdf|max:10240',
             ], [
+                'cost_center.required' => 'Cost Center wajib diisi.',
+                'nama_project.required' => 'Nama Proyek wajib diisi.',
+                'id_konsumen.required' => 'Konsumen wajib dipilih.',
+                'id_konsumen.exists' => 'Konsumen tidak valid.',
+                'id_bidjasa.required' => 'Bidang Jasa wajib dipilih.',
+                'id_bidjasa.exists' => 'Bidang Jasa tidak valid.',
+                'nilai_proyek.numeric' => 'Nilai Proyek harus berupa angka.',
                 'hasil_upload.mimes' => 'File harus berformat PDF (.pdf)',
                 'hasil_upload.max' => 'Ukuran file maksimal 10MB',
                 'margin_rkap.numeric' => 'Margin RKAP harus berupa angka',
@@ -175,7 +204,17 @@ class PencatatanPlenoRABController extends Controller
                             ->withInput();
             }
 
-            // Update data - convert empty strings to null
+            // Update data - Informasi Proyek
+            $rabProyek->dokumen_io = $request->dokumen_io ?: null;
+            $rabProyek->cost_center = strtoupper($request->cost_center);
+            $rabProyek->nama_project = $request->nama_project;
+            $rabProyek->id_konsumen = $request->id_konsumen;
+            $rabProyek->id_bidjasa = $request->id_bidjasa;
+            $rabProyek->divisi = $request->divisi ?: null;
+            $rabProyek->pm = $request->pm ?: null;
+            $rabProyek->nilai_proyek = $request->nilai_proyek ?: null;
+
+            // Update data - Pencatatan Pleno (convert empty strings to null)
             $rabProyek->progress = $request->progress ?: null;
             $rabProyek->keterangan = $request->keterangan ?: null;
             $rabProyek->hasil_pleno = $request->hasil_pleno ?: null;

@@ -73,12 +73,8 @@ function updateProjectInfo(data) {
     $('#info_cost_center').val(data.cost_center || '-');
     $('#info_namaproject').val(data.namaproject || '-');
     $('#info_konsumen').val(data.konsumen_nama || '-');
-    $('#info_mulai').val(data.mulai || '-');
-    $('#info_lama').val(data.lama || '-');
-    $('#info_no_kontrak').val(data.no_kontrak || '-');
     $('#info_nilai_proyek').val(formatCurrency(data.nilai_proyek || 0));
-    $('#info_tanggal_kontrak').val(data.start_kontrak || '-');
-    $('#info_akhir_kontrak').val(data.finish_kontrak || '-');
+    $('#info_no_kontrak').val(data.no_kontrak || '-');
 }
 
 /**
@@ -90,8 +86,8 @@ function loadBiayaProyekData(idRab) {
     $('#hppSection').slideDown();
 
     // Show loading in tables
-    showTableLoading('pendapatanTableBody');
-    showTableLoading('hppTableBody');
+    showTableLoading('pendapatanTableBody', 4);
+    showTableLoading('hppTableBody', 8);
 
     $.ajax({
         url: window.routes.getData,
@@ -99,17 +95,16 @@ function loadBiayaProyekData(idRab) {
         data: { id_rab: idRab },
         success: function (response) {
             if (response.success) {
-                // Update month header and label
+                // Update month header for HPP
                 if (response.data.current_month) {
                     $('#bulanIniHeader').text('Bulan Ini (' + response.data.current_month + ')');
-                    $('#bulanIniLabel').text('Periode: ' + response.data.current_month);
                 }
 
-                // Render Pendapatan table
-                renderBiayaTable('pendapatan', response.data.pendapatan);
+                // Render Pendapatan table (4-col list format)
+                renderPendapatanTable(response.data.pendapatan);
 
-                // Render HPP table
-                renderBiayaTable('hpp', response.data.hpp);
+                // Render HPP table (8-col Rencana/Aktual format)
+                renderHPPTable(response.data.hpp);
             } else {
                 showTableError('pendapatanTableBody', response.message || 'Gagal memuat data');
                 showTableError('hppTableBody', response.message || 'Gagal memuat data');
@@ -124,13 +119,58 @@ function loadBiayaProyekData(idRab) {
 }
 
 /**
- * Render Biaya table (Pendapatan or HPP)
+ * Render Pendapatan table (4-column list: No, Keterangan/NoBA, Bulan, Nilai)
  */
-function renderBiayaTable(type, data) {
-    const tbodyId = type + 'TableBody';
-    const tfootId = type + 'TableFoot';
-    const $tbody = $('#' + tbodyId);
-    const $tfoot = $('#' + tfootId);
+function renderPendapatanTable(data) {
+    const $tbody = $('#pendapatanTableBody');
+    const $tfoot = $('#pendapatanTableFoot');
+
+    $tbody.empty();
+    $tfoot.empty();
+
+    if (!data || !data.items || data.items.length === 0) {
+        $tbody.html(`
+            <tr>
+                <td colspan="4" class="text-center py-4 text-muted">
+                    <i class="bx bx-info-circle" style="font-size: 24px;"></i>
+                    <p class="mb-0 mt-2">Tidak ada data pendapatan</p>
+                </td>
+            </tr>
+        `);
+        return;
+    }
+
+    // Render data rows
+    data.items.forEach(function (item) {
+        const row = `
+            <tr>
+                <td class="text-center">${item.no}</td>
+                <td>${escapeHtml(item.keterangan)}</td>
+                <td class="text-center">${escapeHtml(item.bulan)}</td>
+                <td class="currency-value">${formatCurrency(item.total)}</td>
+            </tr>
+        `;
+        $tbody.append(row);
+    });
+
+    // Grand Total row
+    if (data.grand_total !== undefined) {
+        const footRow = `
+            <tr>
+                <td colspan="3" class="text-center">Grand Total</td>
+                <td class="currency-value">${formatCurrency(data.grand_total)}</td>
+            </tr>
+        `;
+        $tfoot.append(footRow);
+    }
+}
+
+/**
+ * Render HPP table (8-column Rencana vs Aktual format)
+ */
+function renderHPPTable(data) {
+    const $tbody = $('#hppTableBody');
+    const $tfoot = $('#hppTableFoot');
 
     $tbody.empty();
     $tfoot.empty();
@@ -140,7 +180,7 @@ function renderBiayaTable(type, data) {
             <tr>
                 <td colspan="8" class="text-center py-4 text-muted">
                     <i class="bx bx-info-circle" style="font-size: 24px;"></i>
-                    <p class="mb-0 mt-2">Tidak ada data</p>
+                    <p class="mb-0 mt-2">Tidak ada data HPP</p>
                 </td>
             </tr>
         `);
@@ -184,10 +224,11 @@ function renderBiayaTable(type, data) {
 /**
  * Show loading state in table
  */
-function showTableLoading(tbodyId) {
+function showTableLoading(tbodyId, colspan) {
+    colspan = colspan || 8;
     $('#' + tbodyId).html(`
         <tr>
-            <td colspan="8" class="text-center py-4">
+            <td colspan="${colspan}" class="text-center py-4">
                 <i class="bx bx-loader-alt bx-spin" style="font-size: 24px;"></i>
                 <p class="mb-0 mt-2">Loading...</p>
             </td>
@@ -198,10 +239,11 @@ function showTableLoading(tbodyId) {
 /**
  * Show error state in table
  */
-function showTableError(tbodyId, message) {
+function showTableError(tbodyId, message, colspan) {
+    colspan = colspan || 8;
     $('#' + tbodyId).html(`
         <tr>
-            <td colspan="8" class="text-center py-4 text-danger">
+            <td colspan="${colspan}" class="text-center py-4 text-danger">
                 <i class="bx bx-error-circle" style="font-size: 24px;"></i>
                 <p class="mb-0 mt-2">${escapeHtml(message)}</p>
             </td>

@@ -45,7 +45,6 @@
                 <div class="form-row-custom">
                     <label>Jenis Report</label>
                     <div class="d-flex align-items-center">
-                        {{-- Tetap pakai onchange karena merubah struktur dropdown status & header tabel --}}
                         <input type="radio" name="jenis_report" value="berita_acara" id="ba" {{ request('jenis_report') != 'issue_project' ? 'checked' : '' }} onchange="this.form.submit()"> 
                         <label for="ba" class="ms-1 me-4" style="width:auto;">Berita Acara</label>
                         
@@ -60,7 +59,6 @@
 
                 <div class="form-row-custom">
                     <label>Status</label>
-                    {{-- onchange DIHAPUS agar harus klik Proses --}}
                     <select name="status" class="form-select form-select-sm" style="width: 220px;">
                         <option value="All" {{ request('status') == 'All' ? 'selected' : '' }}>All</option>
                         @if(request('jenis_report') == 'issue_project')
@@ -115,6 +113,8 @@
                         <tr>
                             <th width="50">No</th>
                             <th width="130">Tanggal</th>
+                            <th>cost center</th>
+                            <th>Nama Proyek</th> {{-- Tambahan kolom --}}
                             <th>Issue / Kendala</th>
                             <th>Mitigasi Issue</th>
                             <th width="100">Status</th>
@@ -135,6 +135,8 @@
                             <td class="text-center">{{ $key + 1 }}</td>
                             @if(request('jenis_report') == 'issue_project')
                                 <td class="text-center">{{ date('d/m/Y', strtotime($item->tanggal)) }}</td>
+                                <td>{{ $item->cost_center ?? '-'  }}</td>
+                                <td>{{ $item->namaproject }}</td> {{-- Tambahan data nama proyek --}}
                                 <td>{{ $item->issue }}</td>
                                 <td>{{ $item->mitigasi }}</td>
                                 <td class="text-center">{{ $item->status == 'O' ? 'Open' : 'Close' }}</td>
@@ -147,7 +149,8 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">Data tidak ditemukan. Silakan isi filter dan klik Proses.</td>
+                            {{-- Colspan disesuaikan menjadi 6 untuk issue_project atau 5 untuk BA --}}
+                            <td colspan="{{ request('jenis_report') == 'issue_project' ? 6 : 5 }}" class="text-center py-5 text-muted">Data tidak ditemukan. Silakan isi filter dan klik Proses.</td>
                         </tr>
                     @endforelse
                 </tbody>

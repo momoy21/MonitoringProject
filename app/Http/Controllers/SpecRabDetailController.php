@@ -29,9 +29,9 @@ class SpecRabDetailController extends Controller
             });
         }
 
-        // Ordering
-        $details = $query->orderBy('id_spec', 'asc')
-                         ->orderBy('cost_element', 'asc')
+        // Ordering - now just plain ordering
+        $details = $query->orderBy('updated_at', 'desc')
+                         ->orderBy('created_at', 'desc')
                          ->paginate($request->get('per_page', 10));
 
         if ($request->ajax()) {
@@ -59,7 +59,7 @@ class SpecRabDetailController extends Controller
     {
         $validated = $request->validate([
             'id_spec' => 'required|string|max:10|exists:spec_rab,id_spec',
-            'cost_element' => 'required|string|max:10',
+            'cost_element' => 'required|string|max:10|unique:spec_rab_detail,cost_element',
             'description_ce' => 'nullable|string',
             'status' => 'nullable|in:A,N',
         ], [
@@ -67,17 +67,9 @@ class SpecRabDetailController extends Controller
             'id_spec.exists' => 'ID Spec tidak valid.',
             'cost_element.required' => 'Cost Element harus diisi.',
             'cost_element.max' => 'Cost Element maksimal 10 karakter.',
+            'cost_element.unique' => 'GAGAL: Cost Element sudah dipakai pada spesifikasi lain.',
             'status.in' => 'Status harus berupa Aktif atau Non Aktif.',
         ]);
-
-        // Check for duplicate composite key
-        $existing = SpecRabDetail::findByCompositeKey($validated['id_spec'], $validated['cost_element']);
-        if ($existing) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Kombinasi ID Spec dan Cost Element sudah terdaftar.'
-            ], 422);
-        }
 
         try {
             DB::beginTransaction();
@@ -102,7 +94,8 @@ class SpecRabDetailController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menambahkan data.'
+                'message' => 'Terjadi kesalahan saat menambahkan data.',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -110,12 +103,9 @@ class SpecRabDetailController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id_spec, string $cost_element)
+    public function show(string $cost_element)
     {
-        $detail = SpecRabDetail::with('spesifikasiRab')
-                               ->where('id_spec', $id_spec)
-                               ->where('cost_element', $cost_element)
-                               ->first();
+        $detail = SpecRabDetail::with('spesifikasiRab')->find($cost_element);
 
         if (!$detail) {
             return response()->json([
@@ -132,13 +122,11 @@ class SpecRabDetailController extends Controller
 
     /**
      * Update the specified resource in storage.
-     * Note: id_spec dan cost_element tidak boleh diubah
+     * Note: cost_element tidak boleh diubah (karena PK), tapi id_spec bisa diubah (pindah grup)
      */
-    public function update(Request $request, string $id_spec, string $cost_element)
+    public function update(Request $request, string $cost_element)
     {
-        $detail = SpecRabDetail::where('id_spec', $id_spec)
-                               ->where('cost_element', $cost_element)
-                               ->first();
+        $detail = SpecRabDetail::find($cost_element);
 
         if (!$detail) {
             return response()->json([
@@ -148,29 +136,26 @@ class SpecRabDetailController extends Controller
         }
 
         $validated = $request->validate([
+            'id_spec' => 'required|string|max:10|exists:spec_rab,id_spec',
             'description_ce' => 'nullable|string',
             'status' => 'nullable|in:A,N',
         ], [
+            'id_spec.required' => 'ID Spec harus dipilih.',
+            'id_spec.exists' => 'ID Spec tidak valid.',
             'status.in' => 'Status harus berupa Aktif atau Non Aktif.',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Gunakan query builder untuk update karena composite key
-            SpecRabDetail::where('id_spec', $id_spec)
-                         ->where('cost_element', $cost_element)
-                         ->update([
-                             'description_ce' => $validated['description_ce'] ?? $detail->description_ce,
-                             'status' => $validated['status'] ?? $detail->status,
-                             'updated_at' => now(),
-                         ]);
+            $detail->update([
+                'id_spec' => $validated['id_spec'],
+                'description_ce' => $validated['description_ce'] ?? $detail->description_ce,
+                'status' => $validated['status'] ?? $detail->status,
+            ]);
 
             // Refresh data
-            $detail = SpecRabDetail::with('spesifikasiRab')
-                                   ->where('id_spec', $id_spec)
-                                   ->where('cost_element', $cost_element)
-                                   ->first();
+            $detail->load('spesifikasiRab');
 
             DB::commit();
 
@@ -192,11 +177,9 @@ class SpecRabDetailController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id_spec, string $cost_element)
+    public function destroy(string $cost_element)
     {
-        $detail = SpecRabDetail::where('id_spec', $id_spec)
-                               ->where('cost_element', $cost_element)
-                               ->first();
+        $detail = SpecRabDetail::find($cost_element);
 
         if (!$detail) {
             return response()->json([
@@ -208,10 +191,7 @@ class SpecRabDetailController extends Controller
         try {
             DB::beginTransaction();
 
-            // Delete menggunakan query builder karena composite key
-            SpecRabDetail::where('id_spec', $id_spec)
-                         ->where('cost_element', $cost_element)
-                         ->delete();
+            $detail->delete();
 
             DB::commit();
 

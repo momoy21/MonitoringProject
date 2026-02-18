@@ -48,6 +48,14 @@
             </a>
         </li>
 
+        <!-- jenis proyek -->
+        <li class="menu-item {{ request()->routeIs('jenisproyek.*') ? 'active' : '' }}">
+            <a href="{{ route('jenisproyek.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-task"></i>
+                <div>Jenis Proyek</div>
+            </a>
+        </li>
+
         <!-- Kondisi Proyek -->
         <li class="menu-item {{ request()->routeIs('kondisiproyek.*') ? 'active' : '' }}">
             <a href="{{ route('kondisiproyek.index') }}" class="menu-link">
@@ -86,10 +94,7 @@
                 <i class="menu-icon tf-icons bx bx-id-card"></i>
                 <div>Master Karyawan</div>
             </a>
-        </li>
-
-        
-        
+        </li>           
         @endrole
 
         @role('Project Manager')
@@ -166,6 +171,20 @@
             </a>
         </li>
 
+        <!-- Rencana Lembur -->
+        <li class="menu-item {{ request()->routeIs('rencanelembur.*') ? 'active' : '' }}">
+            <a href="{{ route('rencanelembur.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-time-five"></i>
+                <div>Input Rencana Lembur</div>
+            </a>
+        </li>
+
+        <li class="menu-item {{ request()->routeIs('penugasan.*') ? 'active' : '' }}">
+            <a href="{{ route('penugasan.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-spreadsheet"></i>
+                <div>Input Pengajuan Penugasan</div>
+            </a>
+        </li>
 
     @role('Super Admin')
     <li class="menu-header small text-uppercase">
