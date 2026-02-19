@@ -274,4 +274,53 @@ class SAPImportController extends Controller
             'status_message' => $testResult['message']
         ]);
     }
+
+    /**
+     * Re-map PLSAP data ke Aktual Biaya
+     */
+    public function remapToAktualBiaya(Request $request)
+    {
+        try {
+            $force = $request->boolean('force', false);
+            $dryRun = $request->boolean('dry_run', false);
+
+            $aktualBiayaService = app(\App\Services\AktualBiayaService::class);
+
+            // Jika force, hapus existing mappings terlebih dahulu
+            if ($force && !$dryRun) {
+                $deleted = \App\Models\AktualBiaya::whereNotNull('plsap_id')->delete();
+                Log::info("SAP Remap: Deleted {$deleted} existing aktual_biaya records");
+            }
+
+            // Jalankan mapping
+            $result = $aktualBiayaService->processMapping(null, $force);
+
+            // Hitung statistik terbaru
+            $totalMapped = \App\Models\AktualBiaya::whereNotNull('plsap_id')->count();
+            $totalUnmapped = Plsap::whereNotIn('id', \App\Models\AktualBiaya::pluck('plsap_id'))->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => sprintf(
+                    'Mapping selesai: %d berhasil, %d dilewati, %d tidak ada mapping',
+                    $result['total_mapped'],
+                    $result['total_skipped'],
+                    $result['total_unmapped']
+                ),
+                'result' => $result,
+                'stats' => [
+                    'total_mapped' => $totalMapped,
+                    'total_unmapped' => $totalUnmapped,
+                ],
+                'unmapped_cost_elements' => array_slice($result['unmapped_cost_elements'] ?? [], 0, 10),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('SAP Remap Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melakukan remap: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
