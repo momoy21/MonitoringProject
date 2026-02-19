@@ -164,7 +164,10 @@
                         <!-- Cost Element -->
                         <div class="mb-3">
                             <label for="cost_element" class="form-label">Cost Element/COA <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="cost_element" name="cost_element" maxlength="10" required placeholder="Masukkan cost element">
+                            <div class="input-group">
+                                <span class="input-group-text">000</span>
+                                <input type="text" class="form-control" id="cost_element" name="cost_element" maxlength="7" required placeholder="Masukkan cost element">
+                            </div>
                             <div class="invalid-feedback" id="cost_element-error"></div>
                         </div>
 

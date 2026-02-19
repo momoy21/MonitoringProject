@@ -387,7 +387,9 @@ class SpecRabDetailManager {
                 if (response.success) {
                     const data = response.data;
                     $('#id_spec').val(data.id_spec);
-                    $('#cost_element').val(data.cost_element);
+                    // Strip '000' prefix for display in input
+                    const displayCE = data.cost_element && data.cost_element.startsWith('000') ? data.cost_element.substring(3) : data.cost_element;
+                    $('#cost_element').val(displayCE);
                     $('#description_ce').val(data.description_ce || '');
                     $('#status').val(data.status || 'A');
                     // Close any open modal first so only this one opens
@@ -510,9 +512,10 @@ class SpecRabDetailManager {
         this.clearAllErrors();
 
         const mode = $('#formMode').val();
+        const rawCostElement = $('#cost_element').val();
         const formData = {
             id_spec: $('#id_spec').val(),
-            cost_element: $('#cost_element').val(),
+            cost_element: '000' + rawCostElement,
             description_ce: $('#description_ce').val(),
             status: $('#status').val()
         };
