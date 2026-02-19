@@ -34,8 +34,8 @@ class KuotaLemburController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('cost_center', 'LIKE', "%{$search}%")
-                  ->orWhere('namaproject', 'LIKE', "%{$search}%")
-                  ->orWhere('dokumen_io', 'LIKE', "%{$search}%");
+                    ->orWhere('namaproject', 'LIKE', "%{$search}%")
+                    ->orWhere('dokumen_io', 'LIKE', "%{$search}%");
             });
         }
 
@@ -86,14 +86,20 @@ class KuotaLemburController extends Controller
                 );
 
             if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('kuota_lembur.nik', 'LIKE', "%{$search}%")
-                      ->orWhere('karyawan.nama', 'LIKE', "%{$search}%");
-                });
+                $words = explode(' ', $search);
+                foreach ($words as $word) {
+                    $word = trim($word);
+                    if ($word === '') continue;
+                    $upper = strtoupper($word);
+                    $query->where(function ($q) use ($upper) {
+                        $q->whereRaw("UPPER(kuota_lembur.nik) LIKE ?", ['%' . $upper . '%'])
+                            ->orWhereRaw("UPPER(karyawan.nama) LIKE ?", ['%' . $upper . '%'])
+                            ->orWhereRaw("UPPER(CAST(kuota_lembur.bulan AS CHAR)) LIKE ?", ['%' . $upper . '%']);
+                    });
+                }
             }
 
-            $data = $query->orderBy('kuota_lembur.nik')
-                ->orderBy('kuota_lembur.bulan')
+            $data = $query->orderBy('kuota_lembur.created_at', 'desc')
                 ->paginate($perPage);
 
             return response()->json([
@@ -149,9 +155,9 @@ class KuotaLemburController extends Controller
             'nik' => 'required|string|max:9',
             'periode_awal' => 'required|date',
             'periode_akhir' => 'required|date',
-            'jml_wd' => 'nullable|integer|min:0',
-            'jml_we' => 'nullable|integer|min:0',
-            'jml_hn' => 'nullable|integer|min:0',
+            'jml_wd' => 'nullable|numeric|min:0',
+            'jml_we' => 'nullable|numeric|min:0',
+            'jml_hn' => 'nullable|numeric|min:0',
         ], [
             'cost_center.required' => 'Cost Center wajib diisi',
             'nik.required' => 'NIK wajib diisi',
@@ -213,14 +219,17 @@ class KuotaLemburController extends Controller
     /**
      * Update kuota lembur (only periode and jml fields)
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         $validated = $request->validate([
             'periode_awal' => 'required|date',
             'periode_akhir' => 'required|date',
-            'jml_wd' => 'nullable|integer|min:0',
-            'jml_we' => 'nullable|integer|min:0',
-            'jml_hn' => 'nullable|integer|min:0',
+            'jml_wd' => 'nullable|numeric|min:0',
+            'jml_we' => 'nullable|numeric|min:0',
+            'jml_hn' => 'nullable|numeric|min:0',
+            'cost_center' => 'required|string',
+            'nik' => 'required|string',
+            'bulan' => 'required|integer',
         ]);
 
         // Custom validations
@@ -234,7 +243,11 @@ class KuotaLemburController extends Controller
         try {
             DB::beginTransaction();
 
-            $kuota = KuotaLembur::findOrFail($id);
+            $kuota = KuotaLembur::where('cost_center', $validated['cost_center'])
+                ->where('nik', $validated['nik'])
+                ->where('bulan', $validated['bulan'])
+                ->firstOrFail();
+
             $kuota->update([
                 'periode_awal' => $validated['periode_awal'],
                 'periode_akhir' => $validated['periode_akhir'],
@@ -263,10 +276,20 @@ class KuotaLemburController extends Controller
     /**
      * Delete kuota lembur
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
+        $validated = $request->validate([
+            'cost_center' => 'required|string',
+            'nik' => 'required|string',
+            'bulan' => 'required|integer',
+        ]);
+
         try {
-            $kuota = KuotaLembur::findOrFail($id);
+            $kuota = KuotaLembur::where('cost_center', $validated['cost_center'])
+                ->where('nik', $validated['nik'])
+                ->where('bulan', $validated['bulan'])
+                ->firstOrFail();
+
             $kuota->delete();
 
             return response()->json([
@@ -299,7 +322,7 @@ class KuotaLemburController extends Controller
             $file = $request->file('file');
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
             $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray(null, true, true, true);
+            $rows = $sheet->toArray(null, true, false, true);
 
             $imported = 0;
             $errors = [];
@@ -315,50 +338,61 @@ class KuotaLemburController extends Controller
                 $bulan = intval($row['C'] ?? 0);
                 $periodeAwalRaw = trim($row['D'] ?? '');
                 $periodeAkhirRaw = trim($row['E'] ?? '');
-                $jmlWD = intval($row['F'] ?? 0);
-                $jmlWE = intval($row['G'] ?? 0);
-                $jmlHN = intval($row['H'] ?? 0);
+                $jmlWD = floatval($row['F'] ?? 0);
+                $jmlWE = floatval($row['G'] ?? 0);
+                $jmlHN = floatval($row['H'] ?? 0);
 
                 // Skip empty rows
                 if (empty($costCenter) && empty($nik)) continue;
 
                 // Validate required fields
-                if (empty($costCenter) || empty($nik) || empty($periodeAwalRaw) || empty($periodeAkhirRaw)) {
-                    $errors[] = "Baris {$index}: Data wajib belum lengkap";
+                if (empty($costCenter)) {
+                    $errors[] = "Baris {$index}: Cost Center wajib diisi";
+                    continue;
+                }
+                if (empty($nik)) {
+                    $errors[] = "Baris {$index}: NIK wajib diisi";
+                    continue;
+                }
+                if (empty($periodeAwalRaw)) {
+                    $errors[] = "Baris {$index}: Periode Awal wajib diisi";
+                    continue;
+                }
+                if (empty($periodeAkhirRaw)) {
+                    $errors[] = "Baris {$index}: Periode Akhir wajib diisi";
                     continue;
                 }
 
-                // Parse dates (support dd/mm/yyyy format)
-                try {
-                    // Check if it's a numeric date (Excel serial number)
-                    if (is_numeric($periodeAwalRaw)) {
-                        $periodeAwal = Carbon::instance(
-                            \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($periodeAwalRaw)
-                        );
-                    } else {
-                        $periodeAwal = Carbon::createFromFormat('d/m/Y', $periodeAwalRaw);
-                    }
+                // Parse dates
+                $periodeAwal = null;
+                $periodeAkhir = null;
 
-                    if (is_numeric($periodeAkhirRaw)) {
-                        $periodeAkhir = Carbon::instance(
-                            \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($periodeAkhirRaw)
-                        );
-                    } else {
-                        $periodeAkhir = Carbon::createFromFormat('d/m/Y', $periodeAkhirRaw);
-                    }
+                try {
+                    $periodeAwal = $this->parseExcelDate($periodeAwalRaw);
                 } catch (\Exception $e) {
-                    $errors[] = "Baris {$index}: Format tanggal tidak valid";
+                    $errors[] = "Baris {$index}: Periode Awal tidak valid ('{$periodeAwalRaw}'), gunakan format dd/mm/yyyy";
+                    continue;
+                }
+
+                try {
+                    $periodeAkhir = $this->parseExcelDate($periodeAkhirRaw);
+                } catch (\Exception $e) {
+                    $errors[] = "Baris {$index}: Periode Akhir tidak valid ('{$periodeAkhirRaw}'), gunakan format dd/mm/yyyy";
                     continue;
                 }
 
                 if ($periodeAwal->gt($periodeAkhir)) {
-                    $errors[] = "Baris {$index}: Periode tidak valid";
+                    $errors[] = "Baris {$index}: Periode Awal ({$periodeAwal->format('d/m/Y')}) lebih besar dari Periode Akhir ({$periodeAkhir->format('d/m/Y')})";
                     continue;
                 }
 
                 // Get dokumen_io from project
                 $project = DataProyek::where('cost_center', $costCenter)->first();
-                $dokIo = $project->dokumen_io ?? null;
+                if (!$project || empty($project->dokumen_io)) {
+                    $errors[] = "Baris {$index}: Cost Center '{$costCenter}' tidak ditemukan di data proyek";
+                    continue;
+                }
+                $dokIo = $project->dokumen_io;
 
                 // Auto-calculate bulan if not provided
                 if ($bulan <= 0) {
@@ -369,6 +403,8 @@ class KuotaLemburController extends Controller
                 }
 
                 // Upsert: update if exists, create if not
+                // Set created_at to now so newly uploaded data appears at the top
+                $now = Carbon::now();
                 KuotaLembur::updateOrCreate(
                     [
                         'cost_center' => $costCenter,
@@ -383,6 +419,8 @@ class KuotaLemburController extends Controller
                         'jml_we' => $jmlWE,
                         'jml_hn' => $jmlHN,
                         'status' => null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ]
                 );
 
@@ -391,6 +429,17 @@ class KuotaLemburController extends Controller
 
             DB::commit();
 
+            // Determine response based on results
+            if ($imported === 0 && count($errors) > 0) {
+                // ALL rows failed
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data yang berhasil diimpor. ' . count($errors) . ' baris gagal.',
+                    'imported' => 0,
+                    'errors' => $errors,
+                ], 422);
+            }
+
             $message = "{$imported} data berhasil diimpor.";
             if (count($errors) > 0) {
                 $message .= " " . count($errors) . " baris gagal.";
@@ -398,6 +447,7 @@ class KuotaLemburController extends Controller
 
             return response()->json([
                 'success' => true,
+                'has_errors' => count($errors) > 0,
                 'message' => $message,
                 'imported' => $imported,
                 'errors' => $errors,
@@ -407,7 +457,7 @@ class KuotaLemburController extends Controller
             Log::error('Error uploading kuota lembur: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengimpor data: ' . $e->getMessage()
+                'message' => 'Gagal mengimpor data. Pastikan format file sesuai template.'
             ], 500);
         }
     }
@@ -507,7 +557,7 @@ class KuotaLemburController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('nik', 'LIKE', "%{$search}%")
-                  ->orWhere('nama', 'LIKE', "%{$search}%");
+                    ->orWhere('nama', 'LIKE', "%{$search}%");
             });
         }
 
@@ -525,5 +575,45 @@ class KuotaLemburController extends Controller
         });
 
         return response()->json($results);
+    }
+
+    /**
+     * Parse an Excel date value (serial number or string) into a Carbon instance.
+     * Throws \Exception if the value cannot be parsed.
+     */
+    private function parseExcelDate($value): Carbon
+    {
+        if ($value === null || $value === '') {
+            throw new \Exception('Date value is empty');
+        }
+
+        // Excel serial number (most reliable when formatData=false)
+        if (is_numeric($value) && (float)$value > 100) {
+            return Carbon::instance(
+                \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$value)
+            );
+        }
+
+        $value = trim((string)$value);
+
+        // Try common date formats
+        $formats = ['d/m/Y', 'Y-m-d', 'd-m-Y', 'm/d/Y'];
+        foreach ($formats as $format) {
+            try {
+                $date = Carbon::createFromFormat($format, $value);
+                if ($date && $date->format($format) === $value) {
+                    return $date->startOfDay();
+                }
+            } catch (\Exception $e) {
+                continue;
+            }
+        }
+
+        // Last resort: let Carbon try to parse it
+        try {
+            return Carbon::parse($value)->startOfDay();
+        } catch (\Exception $e) {
+            throw new \Exception("Cannot parse date: {$value}");
+        }
     }
 }
