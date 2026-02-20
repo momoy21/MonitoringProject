@@ -51,8 +51,13 @@ class SAPImportController extends Controller
         $totalPendapatan = abs(Plsap::where('amount_local', '<', 0)->sum('amount_local')); // Negatif = Pendapatan
         
         // Mapping statistics - Aktual Biaya
-        $totalMapped = \App\Models\AktualBiaya::count();
-        $totalUnmapped = Plsap::whereNotIn('id', \App\Models\AktualBiaya::pluck('plsap_id'))->count();
+        // total_mapped = jumlah record PLSAP yang sudah dipetakan ke aktual_biaya
+        $mappedPlsapIds = \App\Models\AktualBiaya::whereNotNull('plsap_id')
+                            ->distinct('plsap_id')
+                            ->pluck('plsap_id');
+        $totalMappedPlsap = Plsap::whereIn('id', $mappedPlsapIds)->count();
+        $totalUnmapped = Plsap::whereNotIn('id', $mappedPlsapIds)->count();
+        $totalAktualBiayaRecords = \App\Models\AktualBiaya::count(); // Total actual records di aktual_biaya
         
         $stats = [
             'total_records' => Plsap::count(),
@@ -63,9 +68,10 @@ class SAPImportController extends Controller
             'unique_projects' => Plsap::distinct('cc_projek')->count('cc_projek'),
             'unique_files' => Plsap::distinct('source_file')->count('source_file'),
             'last_import' => Plsap::max('imported_at'),
-            // Mapping stats
-            'total_mapped' => $totalMapped,
+            // Mapping stats - sekarang menghitung berdasarkan PLSAP, bukan aktual_biaya
+            'total_mapped' => $totalMappedPlsap,
             'total_unmapped' => $totalUnmapped,
+            'total_aktual_biaya' => $totalAktualBiayaRecords, // Info tambahan
         ];
 
         if ($request->ajax()) {
