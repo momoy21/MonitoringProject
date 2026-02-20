@@ -168,6 +168,7 @@ class SAPImportController extends Controller
 
     /**
      * Hapus data berdasarkan source file
+     * Menghapus dari: aktual_biaya, plsap, dan sap_import_history
      */
     public function deleteBySource(Request $request)
     {
@@ -177,18 +178,33 @@ class SAPImportController extends Controller
 
         try {
             $sourceFile = $request->source_file;
-            $count = Plsap::where('source_file', $sourceFile)->count();
+            
+            // Ambil ID plsap yang akan dihapus
+            $plsapIds = Plsap::where('source_file', $sourceFile)->pluck('id')->toArray();
+            $count = count($plsapIds);
 
+            // 1. Hapus aktual_biaya yang terkait terlebih dahulu
+            $deletedAktualBiaya = 0;
+            if (!empty($plsapIds)) {
+                $deletedAktualBiaya = \App\Models\AktualBiaya::whereIn('plsap_id', $plsapIds)->delete();
+            }
+
+            // 2. Hapus dari plsap
             Plsap::where('source_file', $sourceFile)->delete();
 
-            // Hapus dari history juga
+            // 3. Hapus dari history juga
             try {
                 DB::table('sap_import_history')->where('filename', $sourceFile)->delete();
             } catch (\Exception $e) {}
 
+            Log::info("SAP Delete by Source: {$sourceFile}", [
+                'plsap_deleted' => $count,
+                'aktual_biaya_deleted' => $deletedAktualBiaya
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil menghapus {$count} record dari {$sourceFile}"
+                'message' => "Berhasil menghapus {$count} record SAP dan {$deletedAktualBiaya} record aktual biaya dari {$sourceFile}"
             ]);
         } catch (\Exception $e) {
             return response()->json([
