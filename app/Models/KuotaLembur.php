@@ -34,9 +34,9 @@ class KuotaLembur extends Model
         'periode_awal' => 'date',
         'periode_akhir' => 'date',
         'bulan' => 'integer',
-        'jml_wd' => 'integer',
-        'jml_we' => 'integer',
-        'jml_hn' => 'integer',
+        'jml_wd' => 'float',
+        'jml_we' => 'float',
+        'jml_hn' => 'float',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
