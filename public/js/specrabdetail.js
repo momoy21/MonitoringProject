@@ -29,7 +29,9 @@ class SpecRabDetailManager {
             show: '/specrabdetail',   // /{cost_element}
             update: '/specrabdetail', // /{cost_element}
             destroy: '/specrabdetail', // /{cost_element}
-            activeSpecs: '/api/specrabdetail/active-specs'
+
+            activeSpecs: '/api/specrabdetail/active-specs',
+            check: '/specrabdetail/check' // /{cost_element}
         };
 
         // Loaded specs for dropdown
@@ -103,6 +105,22 @@ class SpecRabDetailManager {
                 this.currentPage = 1;
                 this.loadData();
             }, 500);
+        });
+
+
+        // Check Cost Element uniqueness
+        $('#cost_element').on('input', (e) => {
+            const val = $(e.target).val();
+            // Only check if mode is ADD
+            if ($('#formMode').val() === 'add' && val.length > 0) {
+                clearTimeout(this.checkTimeout);
+                this.checkTimeout = setTimeout(() => {
+                    this.checkCostElement(val);
+                }, 500);
+            } else {
+                this.clearFieldError('cost_element');
+                $('#submitBtn').prop('disabled', false);
+            }
         });
 
         // Per page change
@@ -404,6 +422,28 @@ class SpecRabDetailManager {
         });
     }
 
+    checkCostElement(cost_element) {
+        // Prepend '000' as per logic
+        const fullCostElement = '000' + cost_element;
+
+        $.ajax({
+            url: `${this.urls.check}/${fullCostElement}`,
+            type: 'GET',
+            success: (response) => {
+                if (response.exists) {
+                    this.showFieldError('cost_element', 'Cost Element sudah terdaftar!');
+                    $('#submitBtn').prop('disabled', true);
+                } else {
+                    this.clearFieldError('cost_element');
+                    $('#submitBtn').prop('disabled', false);
+                }
+            },
+            error: (xhr) => {
+                console.error('Error checking cost element:', xhr);
+            }
+        });
+    }
+
     viewSpecRabDetail(cost_element) {
         $.ajax({
             url: `${this.urls.show}/${cost_element}`,
@@ -666,17 +706,17 @@ class SpecRabDetailManager {
 
     showFieldError(fieldName, message) {
         $(`#${fieldName}`).addClass('is-invalid');
-        $(`#${fieldName}-error`).text(message);
+        $(`#${fieldName}-error`).text(message).addClass('d-block');
     }
 
     clearFieldError(fieldName) {
         $(`#${fieldName}`).removeClass('is-invalid');
-        $(`#${fieldName}-error`).text('');
+        $(`#${fieldName}-error`).text('').removeClass('d-block');
     }
 
     clearAllErrors() {
         $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').text('');
+        $('.invalid-feedback').text('').removeClass('d-block');
     }
 }
 
