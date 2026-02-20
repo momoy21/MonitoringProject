@@ -103,15 +103,16 @@
                     <div class="d-flex align-items-center gap-3 gap-md-4">
                         <div class="text-center">
                             <h5 class="mb-0 text-success" id="statMapped">{{ number_format($stats['total_mapped'] ?? 0) }}</h5>
-                            <small class="text-muted">Berhasil</small>
+                            <small class="text-muted">Ter-mapping</small>
                         </div>
                         <div class="text-center">
                             <h5 class="mb-0 {{ ($stats['total_unmapped'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="statUnmapped">{{ number_format($stats['total_unmapped'] ?? 0) }}</h5>
                             <small class="text-muted">Belum</small>
                         </div>
                         @php
-                            $mappingPercent = ($stats['total_records'] > 0) 
-                                ? round(($stats['total_mapped'] ?? 0) / $stats['total_records'] * 100, 1)
+                            $totalForPercent = ($stats['total_mapped'] ?? 0) + ($stats['total_unmapped'] ?? 0);
+                            $mappingPercent = ($totalForPercent > 0) 
+                                ? min(100, round(($stats['total_mapped'] ?? 0) / $totalForPercent * 100, 1))
                                 : 0;
                         @endphp
                         <div class="text-center">

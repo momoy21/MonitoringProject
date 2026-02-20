@@ -63,31 +63,37 @@
     <div class="mt-3" id="searchBarSection" style="display: none;">
         <div class="input-group" style="max-width: 400px;">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
-            <input type="text" id="searchInput" class="form-control" placeholder="Cari NIK atau Nama..." autocomplete="off">
+            <input type="text" id="searchInput" class="form-control" placeholder="Ketik NIK atau Nama untuk mencari..." autocomplete="off">
+            <button type="button" class="btn btn-outline-secondary" id="btnClearSearch" style="display: none;" title="Hapus pencarian">
+                <i class="bx bx-x"></i>
+            </button>
         </div>
     </div>
 
     <!-- Table Section -->
     <div class="card mt-3">
         <div class="table-responsive" style="overflow: visible;">
-            <table class="table table-striped table-hover mb-0">
-                <thead>
+            <table class="table table-bordered table-striped table-hover mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th class="fw-bold text-muted small">NIK</th>
-                        <th class="fw-bold text-muted small">Nama Karyawan</th>
-                        <th class="fw-bold text-muted small">Bulan Ke</th>
-                        <th class="fw-bold text-muted small">Periode Awal</th>
-                        <th class="fw-bold text-muted small">Periode Akhir</th>
-                        <th class="fw-bold text-muted small text-center">Jumlah Weekday</th>
-                        <th class="fw-bold text-muted small text-center">Jumlah Weekend</th>
-                        <th class="fw-bold text-muted small text-center">Jumlah Hari Libur Nasional</th>
-                        <th class="fw-bold text-muted small text-center">Status</th>
-                        <th class="fw-bold text-muted small text-end px-4">Aksi</th>
+                        <th rowspan="2" class="text-center align-middle fw-bold text-muted small" style="width: 50px;">No</th>
+                        <th rowspan="2" class="text-center align-middle fw-bold text-muted small">NIK</th>
+                        <th rowspan="2" class="text-center align-middle fw-bold text-muted small">Nama</th>
+                        <th colspan="2" class="text-center fw-bold text-muted small">Periode</th>
+                        <th colspan="2" class="text-center fw-bold text-muted small">Jumlah Lembur</th>
+                        <th rowspan="2" class="text-center align-middle fw-bold text-muted small">Libur Nasional/Kalender</th>
+                        <th rowspan="2" class="text-center align-middle fw-bold text-muted small" style="width: 100px;">Aksi</th>
+                    </tr>
+                    <tr>
+                        <th class="text-center fw-bold text-muted small">Awal</th>
+                        <th class="text-center fw-bold text-muted small">Akhir</th>
+                        <th class="text-center fw-bold text-muted small">WeekDay</th>
+                        <th class="text-center fw-bold text-muted small">WeekEnd</th>
                     </tr>
                 </thead>
                 <tbody id="kuotaLemburTableBody">
                     <tr>
-                        <td colspan="10" class="text-center py-4">
+                        <td colspan="9" class="text-center py-4">
                             <div class="d-flex flex-column align-items-center">
                                 <i class="bx bx-search-alt-2 mb-2" style="font-size: 48px; color: #ccc;"></i>
                                 <p class="mb-0 text-muted">Pilih Cost Centre untuk melihat data</p>
@@ -148,11 +154,11 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="form_namaproject" class="form-label">Nama Proyek</label>
                                 <input type="text" class="form-control" id="form_namaproject" readonly>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-5">
                                 <label for="form_nik" class="form-label">NIK <span class="text-danger">*</span></label>
                                 <select id="form_nik" class="form-select" style="width: 100%;">
                                     <option value="">-- Pilih NIK --</option>
@@ -178,15 +184,18 @@
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="form_jml_wd" class="form-label">Jumlah Week Day</label>
-                                <input type="number" class="form-control" id="form_jml_wd" min="0" value="0">
+                                <input type="number" class="form-control" id="form_jml_wd" min="0" step="0.01" value="0">
+                                <small class="text-muted">Boleh diisi desimal yang dipisah dengan titik.</small>
                             </div>
                             <div class="col-md-4">
                                 <label for="form_jml_we" class="form-label">Jumlah Week End</label>
-                                <input type="number" class="form-control" id="form_jml_we" min="0" value="0">
+                                <input type="number" class="form-control" id="form_jml_we" min="0" step="0.01" value="0">
+                                <small class="text-muted">Boleh diisi desimal yang dipisah dengan titik.</small>
                             </div>
                             <div class="col-md-4">
                                 <label for="form_jml_hn" class="form-label">Jumlah Hari Libur Nasional</label>
-                                <input type="number" class="form-control" id="form_jml_hn" min="0" value="0">
+                                <input type="number" class="form-control" id="form_jml_hn" min="0" step="0.01" value="0">
+                                <small class="text-muted">Boleh diisi desimal yang dipisah dengan titik.</small>
                             </div>
                         </div>
                     </form>
@@ -262,6 +271,41 @@
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
     .swal-on-top { z-index: 99999 !important; }
+    .modal { z-index: 1055; }
+    .modal-backdrop { z-index: 1050; }
+
+    /* Penyesuaian Table Header Bertingkat */
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6 !important;
+        vertical-align: middle;
+        padding: 8px 4px;
+    }
+    .table td {
+        vertical-align: middle;
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    /* Search highlight */
+    .search-highlight { background-color: #fff3cd; font-weight: bold; border-radius: 2px; padding: 0 1px; }
+    #searchInput:focus { border-color: #86b7fe; box-shadow: 0 0 0 .2rem rgba(13,110,253,.15); }
+
+    /* Hover effect */
+    .table-hover tbody tr:hover {
+        background-color: #f0f4ff !important;
+        cursor: pointer;
+    }
+
+    /* Hilangkan Panah Input Number */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
 </style>
 @endpush
 
@@ -273,8 +317,8 @@
         getData: "{{ route('rencanelembur.getData') }}",
         getNextBulan: "{{ route('rencanelembur.getNextBulan') }}",
         store: "{{ route('rencanelembur.store') }}",
-        update: "{{ url('rencanelembur/update') }}",
-        destroy: "{{ url('rencanelembur/destroy') }}",
+        update: "{{ route('rencanelembur.update') }}",
+        destroy: "{{ route('rencanelembur.destroy') }}",
         upload: "{{ route('rencanelembur.upload') }}",
         downloadTemplate: "{{ route('rencanelembur.downloadTemplate') }}",
         getKaryawan: "{{ route('rencanelembur.getKaryawan') }}",

@@ -27,6 +27,7 @@ let deleteTargetId = null;
 $(document).ready(function () {
     initCostCenterSelect();
     initNikSelect();
+    initSearchSelect();
     bindEvents();
 });
 
@@ -73,7 +74,7 @@ function initCostCenterSelect() {
             currentDokIo = '';
             $('#info_namaproject').val('');
             $('#searchBarSection').hide();
-            $('#searchInput').val('');
+            $('#searchInput').val(null).trigger('change');
             currentSearch = '';
             showEmptyState();
         }
@@ -108,8 +109,9 @@ function initNikSelect() {
         minimumInputLength: 0
     });
 
-    // When NIK changes, auto-calculate bulan
+    // When NIK changes, auto-calculate bulan (skip during edit mode)
     $('#form_nik').on('change', function () {
+        if ($('#form_mode').val() === 'edit') return;
         const nik = $(this).val();
         if (nik && currentCostCenter) {
             $.get(window.routes.getNextBulan, {
@@ -125,6 +127,52 @@ function initNikSelect() {
 }
 
 /**
+ * Initialize live search input with debounce
+ */
+let searchDebounceTimer = null;
+function initSearchSelect() {
+    const $input = $('#searchInput');
+    const $clearBtn = $('#btnClearSearch');
+    const $hint = $('#searchHint');
+
+    // Debounced input handler (300ms)
+    $input.on('input', function () {
+        const val = $(this).val().trim();
+        $clearBtn.toggle(val.length > 0);
+        $hint.toggle(val.length > 0);
+
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(function () {
+            currentSearch = val;
+            currentPage = 1;
+            loadData();
+        }, 300);
+    });
+
+    // Enter key triggers immediately
+    $input.on('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchDebounceTimer);
+            currentSearch = $(this).val().trim();
+            currentPage = 1;
+            loadData();
+        }
+    });
+
+    // Clear button
+    $clearBtn.on('click', function () {
+        $input.val('').focus();
+        $clearBtn.hide();
+        $hint.hide();
+        clearTimeout(searchDebounceTimer);
+        currentSearch = '';
+        currentPage = 1;
+        loadData();
+    });
+}
+
+/**
  * Bind all event handlers
  */
 function bindEvents() {
@@ -136,15 +184,7 @@ function bindEvents() {
     });
 
     // Search
-    let searchTimer;
-    $('#searchInput').on('input', function () {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(function () {
-            currentSearch = $('#searchInput').val();
-            currentPage = 1;
-            loadData();
-        }, 400);
-    });
+    // Handled by Select2 change event
 
     // Tambah button
     $('#btnTambah').on('click', function () {
@@ -233,7 +273,7 @@ function renderTable(data) {
     if (!data || data.length === 0) {
         $tbody.html(`
             <tr>
-                <td colspan="10" class="text-center py-4">
+                <td colspan="9" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                         <i class="bx bx-search-alt-2 mb-2" style="font-size: 48px; color: #ccc;"></i>
                         <p class="mb-0 text-muted">Tidak ada data kuota lembur</p>
@@ -244,48 +284,53 @@ function renderTable(data) {
         return;
     }
 
-    data.forEach(function (item) {
+    // Calculate starting row number based on pagination
+    const startNo = ((currentPage - 1) * currentPerPage) + 1;
+
+    data.forEach(function (item, index) {
         const periodeAwal = item.periode_awal ? formatDate(item.periode_awal) : '-';
         const periodeAkhir = item.periode_akhir ? formatDate(item.periode_akhir) : '-';
-        const statusBadge = item.status === 'F'
-            ? '<span class="badge bg-success px-3">Sudah Terkirim</span>'
-            : '<span class="badge bg-warning px-3">Belum Terkirim</span>';
+
+        // Parse decimals properly
+        const jmlWd = parseFloat(item.jml_wd) || 0;
+        const jmlWe = parseFloat(item.jml_we) || 0;
+        const jmlHn = parseFloat(item.jml_hn) || 0;
 
         const row = `
-            <tr class="editable-row" ondblclick="editKuotaLembur(${item.id})" title="Double-click untuk edit" style="cursor: pointer;"
-                data-id="${item.id}"
+            <tr class="editable-row" ondblclick="editKuotaLembur('${item.cost_center}-${item.nik}-${item.bulan}')" title="Double-click untuk edit"
+                data-id="${item.cost_center}-${item.nik}-${item.bulan}"
+                data-cost-center="${item.cost_center}"
                 data-nik="${escapeAttr(item.nik)}"
                 data-nama="${escapeAttr(item.nama_karyawan || '')}"
                 data-bulan="${item.bulan}"
                 data-periode-awal="${item.periode_awal || ''}"
                 data-periode-akhir="${item.periode_akhir || ''}"
-                data-jml-wd="${item.jml_wd}"
-                data-jml-we="${item.jml_we}"
-                data-jml-hn="${item.jml_hn}"
+                data-jml-wd="${jmlWd}"
+                data-jml-we="${jmlWe}"
+                data-jml-hn="${jmlHn}"
                 data-status="${item.status}">
-                <td class="fw-semibold text-primary">${escapeHtml(item.nik)}</td>
-                <td>${escapeHtml(item.nama_karyawan || '-')}</td>
-                <td class="text-center">${item.bulan}</td>
-                <td>${periodeAwal}</td>
-                <td>${periodeAkhir}</td>
-                <td class="text-center">${item.jml_wd ?? 0}</td>
-                <td class="text-center">${item.jml_we ?? 0}</td>
-                <td class="text-center">${item.jml_hn ?? 0}</td>
-                <td class="text-center">${statusBadge}</td>
-                <td class="text-end px-4">
+                <td class="text-center">${startNo + index}</td>
+                <td class="fw-semibold text-primary">${highlightMatch(escapeHtml(item.nik))}</td>
+                <td>${highlightMatch(escapeHtml(item.nama_karyawan || '-'))}</td>
+                <td class="text-center">${periodeAwal}</td>
+                <td class="text-center">${periodeAkhir}</td>
+                <td class="text-center">${formatDecimal(jmlWd)}</td>
+                <td class="text-center">${formatDecimal(jmlWe)}</td>
+                <td class="text-center">${formatDecimal(jmlHn)}</td>
+                <td class="text-center">
                     <div class="dropdown position-static">
                         <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="bx bx-dots-vertical-rounded"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                             <li>
-                                <a class="dropdown-item py-2" href="javascript:void(0);" onclick="editKuotaLembur(${item.id})">
+                                <a class="dropdown-item py-2" href="javascript:void(0);" onclick="editKuotaLembur('${item.cost_center}-${item.nik}-${item.bulan}')">
                                     <i class="bx bx-edit me-2 text-warning"></i> Edit
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item py-2 text-danger" href="javascript:void(0);" onclick="deleteKuotaLembur(${item.id})">
+                                <a class="dropdown-item py-2 text-danger" href="javascript:void(0);" onclick="deleteKuotaLembur('${item.cost_center}-${item.nik}-${item.bulan}')">
                                     <i class="bx bx-trash me-2"></i> Hapus
                                 </a>
                             </li>
@@ -379,11 +424,18 @@ function openAddModal() {
  * Open Edit modal
  */
 function editKuotaLembur(id) {
+    const parts = id.split('-');
+    if (parts.length !== 3) return;
+
+    const costCenter = parts[0];
+    const nik = parts[1];
+    const bulan = parseInt(parts[2]);
+
     const $row = $(`tr[data-id="${id}"]`);
     if (!$row.length) return;
 
     $('#form_mode').val('edit');
-    $('#form_id').val(id);
+    $('#form_id').val(id); // Keep for compatibility, but we'll use parts
     $('#modalTitle').text('Edit Kuota Lembur');
 
     // Set Cost Center info (readonly)
@@ -392,7 +444,6 @@ function editKuotaLembur(id) {
     $('#form_namaproject').val(currentNamaProject);
 
     // Set NIK (disabled for edit)
-    const nik = $row.data('nik');
     const nama = $row.data('nama');
     const nikOption = new Option(`${nik} - ${nama}`, nik, true, true);
     $('#form_nik').empty().append(nikOption).trigger('change');
@@ -422,9 +473,9 @@ function saveData() {
     const nik = $('#form_nik').val();
     const periodeAwal = $('#form_periode_awal').val();
     const periodeAkhir = $('#form_periode_akhir').val();
-    const jmlWD = parseInt($('#form_jml_wd').val()) || 0;
-    const jmlWE = parseInt($('#form_jml_we').val()) || 0;
-    const jmlHN = parseInt($('#form_jml_hn').val()) || 0;
+    const jmlWD = parseFloat($('#form_jml_wd').val()) || 0;
+    const jmlWE = parseFloat($('#form_jml_we').val()) || 0;
+    const jmlHN = parseFloat($('#form_jml_hn').val()) || 0;
 
     // Validation
     if (!costCenter || !nik || !periodeAwal || !periodeAkhir) {
@@ -461,8 +512,13 @@ function saveData() {
 
     let url, method;
     if (mode === 'edit') {
-        url = window.routes.update + '/' + $('#form_id').val();
-        method = 'PUT';
+        const id = $('#form_id').val();
+        const parts = id.split('-');
+        data.cost_center = parts[0];
+        data.nik = parts[1];
+        data.bulan = parseInt(parts[2]);
+        url = window.routes.update;
+        method = 'POST';
         data._method = 'PUT';
     } else {
         url = window.routes.store;
@@ -477,6 +533,7 @@ function saveData() {
             if (response.success) {
                 $('#kuotaLemburModal').modal('hide');
                 Swal.fire('Berhasil', response.message || 'Data tersimpan di database tabel kuotalembur', 'success');
+                currentPage = 1; // Reset ke halaman 1 agar data baru terlihat di atas
                 loadData();
             } else {
                 Swal.fire('Gagal', response.message || 'Gagal menyimpan data', 'error');
@@ -506,17 +563,24 @@ function deleteKuotaLembur(id) {
 function doDelete() {
     if (!deleteTargetId) return;
 
+    const parts = deleteTargetId.split('-');
+    if (parts.length !== 3) return;
+
     $.ajax({
-        url: window.routes.destroy + '/' + deleteTargetId,
+        url: window.routes.destroy,
         method: 'POST',
         data: {
             _token: window.csrfToken,
-            _method: 'DELETE'
+            _method: 'DELETE',
+            cost_center: parts[0],
+            nik: parts[1],
+            bulan: parseInt(parts[2])
         },
         success: function (response) {
             $('#deleteConfirmModal').modal('hide');
             if (response.success) {
                 Swal.fire('Berhasil', response.message || 'Data berhasil dihapus', 'success');
+                currentPage = 1;
                 loadData();
             } else {
                 Swal.fire('Gagal', response.message || 'Gagal menghapus data', 'error');
@@ -557,11 +621,22 @@ function doUpload() {
         success: function (response) {
             $('#uploadModal').modal('hide');
             if (response.success) {
-                let msg = response.message;
-                if (response.errors && response.errors.length > 0) {
-                    msg += '\n\nDetail error:\n' + response.errors.join('\n');
+                if (response.has_errors && response.errors && response.errors.length > 0) {
+                    // Partial success — some rows failed
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sebagian Data Gagal',
+                        html: '<p>' + escapeHtml(response.message) + '</p>' +
+                              '<div style="text-align:left;max-height:200px;overflow-y:auto;font-size:13px;background:#fff3cd;padding:10px;border-radius:4px;margin-top:8px;">' +
+                              response.errors.map(function(e){ return '<div style="margin-bottom:4px;">&#x26A0; ' + escapeHtml(e) + '</div>'; }).join('') +
+                              '</div>',
+                        customClass: { container: 'swal-on-top' }
+                    });
+                } else {
+                    // All rows imported successfully
+                    Swal.fire('Berhasil', response.message, 'success');
                 }
-                Swal.fire('Berhasil', msg, 'success');
+                currentPage = 1;
                 loadData();
             } else {
                 Swal.fire('Gagal', response.message || 'Gagal mengimpor data', 'error');
@@ -569,8 +644,22 @@ function doUpload() {
         },
         error: function (xhr) {
             $('#uploadModal').modal('hide');
-            const msg = xhr.responseJSON?.message || 'Terjadi kesalahan saat mengimpor data';
-            Swal.fire('Gagal', msg, 'error');
+            const data = xhr.responseJSON;
+            if (data && data.errors && data.errors.length > 0) {
+                // All rows failed — show detailed errors
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Upload Gagal',
+                    html: '<p>' + escapeHtml(data.message || 'Semua data gagal diimpor') + '</p>' +
+                          '<div style="text-align:left;max-height:200px;overflow-y:auto;font-size:13px;background:#f8d7da;padding:10px;border-radius:4px;margin-top:8px;">' +
+                          data.errors.map(function(e){ return '<div style="margin-bottom:4px;">&#x2716; ' + escapeHtml(e) + '</div>'; }).join('') +
+                          '</div>',
+                    customClass: { container: 'swal-on-top' }
+                });
+            } else {
+                const msg = data?.message || 'Terjadi kesalahan saat mengimpor data';
+                Swal.fire('Gagal', msg, 'error');
+            }
         },
         complete: function () {
             $('#uploadSpinner').addClass('d-none');
@@ -585,7 +674,7 @@ function doUpload() {
 function showLoadingState() {
     $('#kuotaLemburTableBody').html(`
         <tr>
-            <td colspan="10" class="text-center py-4">
+            <td colspan="9" class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
@@ -601,7 +690,7 @@ function showLoadingState() {
 function showEmptyState() {
     $('#kuotaLemburTableBody').html(`
         <tr>
-            <td colspan="10" class="text-center py-4">
+            <td colspan="9" class="text-center py-4">
                 <div class="d-flex flex-column align-items-center">
                     <i class="bx bx-search-alt-2 mb-2" style="font-size: 48px; color: #ccc;"></i>
                     <p class="mb-0 text-muted">Pilih Cost Centre untuk melihat data</p>
@@ -618,7 +707,7 @@ function showEmptyState() {
 function showErrorState(message) {
     $('#kuotaLemburTableBody').html(`
         <tr>
-            <td colspan="10" class="text-center py-4 text-danger">
+            <td colspan="9" class="text-center py-4 text-danger">
                 <i class="bx bx-error-circle" style="font-size: 24px;"></i>
                 <p class="mb-0 mt-2">${escapeHtml(message)}</p>
             </td>
@@ -655,4 +744,32 @@ function escapeHtml(text) {
 function escapeAttr(text) {
     if (!text) return '';
     return String(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Highlight matching text based on current search term (wildcard, per word).
+ */
+function highlightMatch(text) {
+    if (!currentSearch || !text) return text;
+    const term = currentSearch.trim();
+    if (!term) return text;
+    const words = term.split(/\s+/);
+    let result = text;
+    words.forEach(function (word) {
+        if (!word) return;
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp('(' + escaped + ')', 'gi');
+        result = result.replace(regex, '<span class="search-highlight">$1</span>');
+    });
+    return result;
+}
+
+/**
+ * Format decimal value: show decimals only when needed (e.g. 5 → "5", 5.1 → "5.1")
+ */
+function formatDecimal(val) {
+    const num = parseFloat(val);
+    if (isNaN(num)) return '0';
+    if (num % 1 === 0) return num.toString();
+    return num.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 }
