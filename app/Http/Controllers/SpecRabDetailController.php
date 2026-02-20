@@ -231,4 +231,12 @@ class SpecRabDetailController extends Controller
             ], 500);
         }
     }
+    /**
+     * Check if cost element exists
+     */
+    public function checkCostElement($cost_element)
+    {
+        $exists = SpecRabDetail::where('cost_element', $cost_element)->exists();
+        return response()->json(['exists' => $exists]);
+    }
 }

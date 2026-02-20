@@ -2,6 +2,18 @@
     @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        .select2-results__option {
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            font-size: 0.85rem; /* Optional: make it slightly smaller if it's too big */
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 31px; /* Match form-select-sm usually */
+        }
+    </style>
     @endpush
 
     <div class="card shadow-sm border-0" style="max-width: 900px; margin:auto">
@@ -32,8 +44,8 @@
                                 <select name="Costcenter" id="select-costcenter" class="form-select form-select-sm select2" required>
                                     <option value="">Pilih Cost Center</option>
                                     @foreach($proyek as $p)
-                                        <option value="{{ $p->cost_center }}" data-nama="{{ $p->Namaproject }}">
-                                            {{ $p->cost_center }} - {{ $p->Namaproject }}
+                                        <option value="{{ $p->cost_center }}" data-nama="{{ $p->namaproject }}">
+                                            {{ $p->cost_center }} - {{ $p->namaproject }} - {{ $p->nilai_proyek_formatted }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -129,8 +141,17 @@
             // Initialize Select2
             $('#select-costcenter').select2({
                 theme: 'bootstrap-5',
-                placeholder: 'Pilih Cost Center',
-                width: '100%'
+                placeholder: 'Pilih Cost Center (Ketik untuk mencari)',
+                width: '100%',
+                minimumInputLength: 1, // Require typing at least 1 character
+                language: {
+                    inputTooShort: function() {
+                        return "Ketik minimal 1 karakter untuk mencari...";
+                    },
+                    noResults: function() {
+                        return "Data tidak ditemukan";
+                    }
+                }
             });
 
             $('#select-nik').select2({
