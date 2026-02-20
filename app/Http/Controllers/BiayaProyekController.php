@@ -153,15 +153,22 @@ class BiayaProyekController extends Controller
     /**
      * getRencanaSDBulan - Cumulative rencana up to month
      * JOIN detail_rab → header_rab → data_proyek WHERE cost_center AND bulan <= bulan
+     * Note: dr.bulan is VARCHAR 'M Y' (e.g. 'Jul 2025'). STR_TO_DATE fails on MySQL 8.0,
+     * so we use FIELD() to convert month name to number for proper chronological comparison.
      */
     private function getRencanaSDBulan($costCenter, $idSpec, $bulan)
     {
+        $targetDate = Carbon::parse($bulan)->format('Y-m-01');
+
         return (float) DB::table('detail_rab as dr')
             ->join('header_rab as hr', 'hr.id_rab', '=', 'dr.id_rab')
             ->join('data_proyek as dp', 'dp.id_project', '=', 'hr.id_project')
             ->where('dp.cost_center', $costCenter)
             ->where('dr.id_spec', $idSpec)
-            ->whereRaw("STR_TO_DATE(dr.bulan, '%b %Y') <= STR_TO_DATE(?, '%b %Y')", [Carbon::parse($bulan)->format('M Y')])
+            ->whereRaw(
+                "CONCAT(RIGHT(dr.bulan, 4), '-', LPAD(FIELD(LEFT(dr.bulan, 3), 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'), 2, '0'), '-01') <= ?",
+                [$targetDate]
+            )
             ->sum('dr.nilai');
     }
 

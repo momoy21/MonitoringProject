@@ -525,31 +525,88 @@ function saveData() {
         method = 'POST';
     }
 
+    doSaveAjax(url, data, false);
+}
+
+/**
+ * Execute save AJAX request (supports duplicate replace retry)
+ */
+function doSaveAjax(url, data, isReplace) {
+    if (isReplace) {
+        data.replace = 1;
+    }
+
     $.ajax({
         url: url,
-        method: 'POST', // Always POST, use _method for PUT
+        method: 'POST',
         data: data,
         success: function (response) {
             if (response.success) {
                 $('#kuotaLemburModal').modal('hide');
                 Swal.fire('Berhasil', response.message || 'Data tersimpan di database tabel kuotalembur', 'success');
-                currentPage = 1; // Reset ke halaman 1 agar data baru terlihat di atas
+                currentPage = 1;
                 loadData();
             } else {
                 Swal.fire('Gagal', response.message || 'Gagal menyimpan data', 'error');
             }
         },
         error: function (xhr) {
+            if (xhr.status === 409 && xhr.responseJSON?.duplicate) {
+                // Duplicate detected — show confirmation popup
+                resetSimpanButton();
+                const ex = xhr.responseJSON.existing;
+                const periodeAwalFormatted = ex.periode_awal ? formatDate(ex.periode_awal) : '-';
+                const periodeAkhirFormatted = ex.periode_akhir ? formatDate(ex.periode_akhir) : '-';
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Duplikat Ditemukan',
+                    html: '<div style="text-align:left;font-size:13px;">' +
+                        '<p>Data untuk <b>NIK ' + escapeHtml(ex.nik) + ' - ' + escapeHtml(ex.nama) + '</b> ' +
+                        'dengan <b>Periode Awal ' + periodeAwalFormatted + '</b> sudah ada ' +
+                        '(Bulan Ke-' + ex.bulan + ').</p>' +
+                        '<div style="background:#fff3cd;padding:10px;border-radius:6px;margin:8px 0;">' +
+                        '<b>Data Lama:</b><br>' +
+                        'Periode: ' + periodeAwalFormatted + ' s/d ' + periodeAkhirFormatted + '<br>' +
+                        'WeekDay: ' + formatDecimal(ex.jml_wd) + ' | WeekEnd: ' + formatDecimal(ex.jml_we) + ' | Libur: ' + formatDecimal(ex.jml_hn) +
+                        '</div>' +
+                        '<p>Apakah Anda ingin <b>mengganti</b> data lama dengan data baru?</p>' +
+                        '</div>',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Ganti',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#d33',
+                    customClass: { container: 'swal-on-top' }
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        // Re-send with replace flag
+                        showSimpanLoading();
+                        doSaveAjax(url, data, true);
+                    }
+                });
+                return;
+            }
             const msg = xhr.responseJSON?.message || 'Terjadi kesalahan saat menyimpan data';
             Swal.fire('Gagal', msg, 'error');
         },
         complete: function () {
-            $('#simpanSpinner').addClass('d-none');
-            $('#simpanIcon').removeClass('d-none');
-            $('#simpanText').text('Simpan');
-            $('#btnSimpan').prop('disabled', false);
+            resetSimpanButton();
         }
     });
+}
+
+function showSimpanLoading() {
+    $('#simpanSpinner').removeClass('d-none');
+    $('#simpanIcon').addClass('d-none');
+    $('#simpanText').text('Menyimpan...');
+    $('#btnSimpan').prop('disabled', true);
+}
+
+function resetSimpanButton() {
+    $('#simpanSpinner').addClass('d-none');
+    $('#simpanIcon').removeClass('d-none');
+    $('#simpanText').text('Simpan');
+    $('#btnSimpan').prop('disabled', false);
 }
 
 /**
@@ -595,7 +652,7 @@ function doDelete() {
 }
 
 /**
- * Upload Excel file
+ * Upload Excel file (2-phase: check duplicates first, then import)
  */
 function doUpload() {
     const fileInput = document.getElementById('uploadFile');
@@ -604,13 +661,26 @@ function doUpload() {
         return;
     }
 
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-    formData.append('_token', window.csrfToken);
-
     // Show loading
     $('#uploadSpinner').removeClass('d-none');
     $('#btnDoUpload').prop('disabled', true);
+
+    // Phase 1 — upload file normally (server will detect duplicates)
+    sendUpload(fileInput.files[0], false);
+}
+
+/**
+ * Send upload request to server
+ * @param {File} file - The Excel file
+ * @param {boolean} confirmReplace - Whether to confirm replacing duplicates
+ */
+function sendUpload(file, confirmReplace) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('_token', window.csrfToken);
+    if (confirmReplace) {
+        formData.append('confirm_replace', '1');
+    }
 
     $.ajax({
         url: window.routes.upload,
@@ -620,9 +690,9 @@ function doUpload() {
         contentType: false,
         success: function (response) {
             $('#uploadModal').modal('hide');
+            resetUploadButton();
             if (response.success) {
                 if (response.has_errors && response.errors && response.errors.length > 0) {
-                    // Partial success — some rows failed
                     Swal.fire({
                         icon: 'warning',
                         title: 'Sebagian Data Gagal',
@@ -633,7 +703,6 @@ function doUpload() {
                         customClass: { container: 'swal-on-top' }
                     });
                 } else {
-                    // All rows imported successfully
                     Swal.fire('Berhasil', response.message, 'success');
                 }
                 currentPage = 1;
@@ -643,10 +712,18 @@ function doUpload() {
             }
         },
         error: function (xhr) {
-            $('#uploadModal').modal('hide');
+            resetUploadButton();
             const data = xhr.responseJSON;
+
+            // Duplicate detected — show preview & ask for confirmation
+            if (xhr.status === 409 && data && data.has_duplicates) {
+                $('#uploadModal').modal('hide');
+                showDuplicatePreview(data, file);
+                return;
+            }
+
+            $('#uploadModal').modal('hide');
             if (data && data.errors && data.errors.length > 0) {
-                // All rows failed — show detailed errors
                 Swal.fire({
                     icon: 'error',
                     title: 'Upload Gagal',
@@ -662,10 +739,67 @@ function doUpload() {
             }
         },
         complete: function () {
-            $('#uploadSpinner').addClass('d-none');
-            $('#btnDoUpload').prop('disabled', false);
+            resetUploadButton();
         }
     });
+}
+
+/**
+ * Show duplicate preview popup for upload
+ */
+function showDuplicatePreview(data, file) {
+    let dupHtml = '<div style="text-align:left;font-size:13px;">';
+    dupHtml += '<p>Ditemukan <b>' + data.duplicate_count + ' data duplikat</b> yang akan diganti:</p>';
+    dupHtml += '<div style="max-height:250px;overflow-y:auto;background:#fff3cd;padding:10px;border-radius:6px;margin-bottom:10px;">';
+
+    data.duplicates.forEach(function (dup, i) {
+        const prefix = i === 0 ? '\u250C' : (i === data.duplicates.length - 1 ? '\u2514' : '\u251C');
+        dupHtml += '<div style="margin-bottom:6px;padding-bottom:6px;' + (i < data.duplicates.length - 1 ? 'border-bottom:1px solid #e0d5a8;' : '') + '">';
+        dupHtml += '<b>' + prefix + ' Baris ' + dup.row + '</b>: NIK ' + escapeHtml(dup.nik) + ' - ' + escapeHtml(dup.nama) + '<br>';
+        dupHtml += '&nbsp;&nbsp;&nbsp;Periode Awal: ' + escapeHtml(dup.periode_awal) + '<br>';
+        dupHtml += '&nbsp;&nbsp;&nbsp;<span style="color:#888;">Data lama: Akhir ' + escapeHtml(dup.existing_periode_akhir) +
+                   ' | WD: ' + formatDecimal(dup.existing_jml_wd) +
+                   ' | WE: ' + formatDecimal(dup.existing_jml_we) +
+                   ' | HN: ' + formatDecimal(dup.existing_jml_hn) + '</span>';
+        dupHtml += '</div>';
+    });
+
+    dupHtml += '</div>';
+    dupHtml += '<p><b>' + data.new_rows + '</b> baris baru, <b>' + data.duplicate_count + '</b> baris duplikat akan diganti.</p>';
+
+    if (data.errors && data.errors.length > 0) {
+        dupHtml += '<div style="max-height:100px;overflow-y:auto;background:#f8d7da;padding:8px;border-radius:4px;margin-bottom:8px;font-size:12px;">';
+        data.errors.forEach(function (e) {
+            dupHtml += '<div>&#x2716; ' + escapeHtml(e) + '</div>';
+        });
+        dupHtml += '</div>';
+    }
+
+    dupHtml += '</div>';
+
+    Swal.fire({
+        icon: 'warning',
+        title: 'Data Duplikat Ditemukan',
+        html: dupHtml,
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Ganti & Import',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#d33',
+        width: '600px',
+        customClass: { container: 'swal-on-top' }
+    }).then(function (result) {
+        if (result.isConfirmed) {
+            // Phase 2 — re-upload with confirm_replace flag
+            $('#uploadSpinner').removeClass('d-none');
+            $('#btnDoUpload').prop('disabled', true);
+            sendUpload(file, true);
+        }
+    });
+}
+
+function resetUploadButton() {
+    $('#uploadSpinner').addClass('d-none');
+    $('#btnDoUpload').prop('disabled', false);
 }
 
 /**

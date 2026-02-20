@@ -145,7 +145,7 @@ class KuotaLemburController extends Controller
     }
 
     /**
-     * Store new kuota lembur
+     * Store new kuota lembur (with duplicate detection & replace support)
      */
     public function store(Request $request)
     {
@@ -158,12 +158,15 @@ class KuotaLemburController extends Controller
             'jml_wd' => 'nullable|numeric|min:0',
             'jml_we' => 'nullable|numeric|min:0',
             'jml_hn' => 'nullable|numeric|min:0',
+            'replace' => 'nullable|boolean',
         ], [
             'cost_center.required' => 'Cost Center wajib diisi',
             'nik.required' => 'NIK wajib diisi',
             'periode_awal.required' => 'Periode Awal wajib diisi',
             'periode_akhir.required' => 'Periode Akhir wajib diisi',
         ]);
+
+        $replace = $request->boolean('replace', false);
 
         // Custom validations
         if (Carbon::parse($validated['periode_awal'])->gt(Carbon::parse($validated['periode_akhir']))) {
@@ -180,7 +183,54 @@ class KuotaLemburController extends Controller
             $project = DataProyek::where('cost_center', $validated['cost_center'])->first();
             $dokIo = $project->dokumen_io ?? null;
 
-            // Calculate bulan sequence
+            // Check for existing record with same cost_center + nik + periode_awal
+            $existing = KuotaLembur::where('cost_center', $validated['cost_center'])
+                ->where('nik', $validated['nik'])
+                ->whereDate('periode_awal', $validated['periode_awal'])
+                ->first();
+
+            if ($existing) {
+                if (!$replace) {
+                    // Duplicate found, ask user to confirm replace
+                    DB::rollBack();
+                    $nama = Karyawan::where('nik', $validated['nik'])->value('nama') ?? '-';
+                    return response()->json([
+                        'success' => false,
+                        'duplicate' => true,
+                        'message' => 'Data duplikat ditemukan',
+                        'existing' => [
+                            'bulan' => $existing->bulan,
+                            'nik' => $existing->nik,
+                            'nama' => $nama,
+                            'periode_awal' => $existing->periode_awal ? $existing->periode_awal->format('Y-m-d') : null,
+                            'periode_akhir' => $existing->periode_akhir ? $existing->periode_akhir->format('Y-m-d') : null,
+                            'jml_wd' => $existing->jml_wd,
+                            'jml_we' => $existing->jml_we,
+                            'jml_hn' => $existing->jml_hn,
+                        ],
+                    ], 409);
+                }
+
+                // Replace: update existing record
+                $existing->update([
+                    'periode_awal' => $validated['periode_awal'],
+                    'periode_akhir' => $validated['periode_akhir'],
+                    'jml_wd' => $validated['jml_wd'] ?? 0,
+                    'jml_we' => $validated['jml_we'] ?? 0,
+                    'jml_hn' => $validated['jml_hn'] ?? 0,
+                    'status' => null,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data kuota lembur berhasil diganti (replace)',
+                    'data' => $existing,
+                ]);
+            }
+
+            // No duplicate — create new record with auto-incremented bulan
             $maxBulan = KuotaLembur::where('cost_center', $validated['cost_center'])
                 ->where('nik', $validated['nik'])
                 ->max('bulan');
@@ -306,7 +356,11 @@ class KuotaLemburController extends Controller
     }
 
     /**
-     * Upload Excel file and import data
+     * Upload Excel file and import data (2-phase: check duplicates first, then import)
+     *
+     * Phase 1 (default / check_only=true): Parse file, detect duplicates, return preview.
+     *         If NO duplicates → import immediately and return success.
+     * Phase 2 (confirm_replace=true): Import all rows, replacing duplicates.
      */
     public function upload(Request $request)
     {
@@ -318,20 +372,21 @@ class KuotaLemburController extends Controller
             'file.max' => 'Ukuran file maksimal 5MB',
         ]);
 
+        $confirmReplace = $request->boolean('confirm_replace', false);
+
         try {
             $file = $request->file('file');
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray(null, true, false, true);
 
-            $imported = 0;
+            // --- First pass: parse & validate all rows ---
+            $parsedRows = [];
             $errors = [];
-
-            DB::beginTransaction();
+            $duplicates = [];
 
             foreach ($rows as $index => $row) {
-                // Skip header row
-                if ($index === 1) continue;
+                if ($index === 1) continue; // skip header
 
                 $costCenter = trim($row['A'] ?? '');
                 $nik = trim($row['B'] ?? '');
@@ -342,10 +397,8 @@ class KuotaLemburController extends Controller
                 $jmlWE = floatval($row['G'] ?? 0);
                 $jmlHN = floatval($row['H'] ?? 0);
 
-                // Skip empty rows
                 if (empty($costCenter) && empty($nik)) continue;
 
-                // Validate required fields
                 if (empty($costCenter)) {
                     $errors[] = "Baris {$index}: Cost Center wajib diisi";
                     continue;
@@ -364,16 +417,12 @@ class KuotaLemburController extends Controller
                 }
 
                 // Parse dates
-                $periodeAwal = null;
-                $periodeAkhir = null;
-
                 try {
                     $periodeAwal = $this->parseExcelDate($periodeAwalRaw);
                 } catch (\Exception $e) {
                     $errors[] = "Baris {$index}: Periode Awal tidak valid ('{$periodeAwalRaw}'), gunakan format dd/mm/yyyy";
                     continue;
                 }
-
                 try {
                     $periodeAkhir = $this->parseExcelDate($periodeAkhirRaw);
                 } catch (\Exception $e) {
@@ -386,7 +435,6 @@ class KuotaLemburController extends Controller
                     continue;
                 }
 
-                // Get dokumen_io from project
                 $project = DataProyek::where('cost_center', $costCenter)->first();
                 if (!$project || empty($project->dokumen_io)) {
                     $errors[] = "Baris {$index}: Cost Center '{$costCenter}' tidak ditemukan di data proyek";
@@ -394,44 +442,116 @@ class KuotaLemburController extends Controller
                 }
                 $dokIo = $project->dokumen_io;
 
-                // Auto-calculate bulan if not provided
-                if ($bulan <= 0) {
-                    $maxBulan = KuotaLembur::where('cost_center', $costCenter)
-                        ->where('nik', $nik)
-                        ->max('bulan');
-                    $bulan = ($maxBulan ?? 0) + 1;
+                // Check for duplicate: same cost_center + nik + periode_awal
+                $existing = KuotaLembur::where('cost_center', $costCenter)
+                    ->where('nik', $nik)
+                    ->whereDate('periode_awal', $periodeAwal->format('Y-m-d'))
+                    ->first();
+
+                if ($existing) {
+                    $nama = Karyawan::where('nik', $nik)->value('nama') ?? '-';
+                    $duplicates[] = [
+                        'row' => $index,
+                        'nik' => $nik,
+                        'nama' => $nama,
+                        'periode_awal' => $periodeAwal->format('d/m/Y'),
+                        'existing_bulan' => $existing->bulan,
+                        'existing_periode_akhir' => $existing->periode_akhir ? $existing->periode_akhir->format('d/m/Y') : '-',
+                        'existing_jml_wd' => $existing->jml_wd,
+                        'existing_jml_we' => $existing->jml_we,
+                        'existing_jml_hn' => $existing->jml_hn,
+                    ];
                 }
 
-                // Upsert: update if exists, create if not
-                // Set created_at to now so newly uploaded data appears at the top
+                $parsedRows[] = [
+                    'index' => $index,
+                    'cost_center' => $costCenter,
+                    'nik' => $nik,
+                    'bulan' => $bulan,
+                    'periode_awal' => $periodeAwal,
+                    'periode_akhir' => $periodeAkhir,
+                    'jml_wd' => $jmlWD,
+                    'jml_we' => $jmlWE,
+                    'jml_hn' => $jmlHN,
+                    'dok_io' => $dokIo,
+                    'has_existing' => $existing ? true : false,
+                    'existing_bulan' => $existing ? $existing->bulan : null,
+                ];
+            }
+
+            // If duplicates found and user has NOT confirmed replace → return preview
+            if (count($duplicates) > 0 && !$confirmReplace) {
+                return response()->json([
+                    'success' => false,
+                    'has_duplicates' => true,
+                    'duplicates' => $duplicates,
+                    'total_rows' => count($parsedRows),
+                    'new_rows' => count($parsedRows) - count($duplicates),
+                    'duplicate_count' => count($duplicates),
+                    'errors' => $errors,
+                    'message' => 'Ditemukan ' . count($duplicates) . ' data duplikat. Konfirmasi untuk mengganti.',
+                ], 409);
+            }
+
+            // --- Second pass: import data ---
+            DB::beginTransaction();
+            $imported = 0;
+
+            foreach ($parsedRows as $parsed) {
                 $now = Carbon::now();
-                KuotaLembur::updateOrCreate(
-                    [
-                        'cost_center' => $costCenter,
-                        'nik' => $nik,
-                        'bulan' => $bulan,
-                    ],
-                    [
-                        'dok_io' => $dokIo,
-                        'periode_awal' => $periodeAwal->format('Y-m-d'),
-                        'periode_akhir' => $periodeAkhir->format('Y-m-d'),
-                        'jml_wd' => $jmlWD,
-                        'jml_we' => $jmlWE,
-                        'jml_hn' => $jmlHN,
-                        'status' => null,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ]
-                );
+
+                if ($parsed['has_existing']) {
+                    // Duplicate row → update existing record (use existing bulan)
+                    KuotaLembur::where('cost_center', $parsed['cost_center'])
+                        ->where('nik', $parsed['nik'])
+                        ->where('bulan', $parsed['existing_bulan'])
+                        ->update([
+                            'dok_io' => $parsed['dok_io'],
+                            'periode_awal' => $parsed['periode_awal']->format('Y-m-d'),
+                            'periode_akhir' => $parsed['periode_akhir']->format('Y-m-d'),
+                            'jml_wd' => $parsed['jml_wd'],
+                            'jml_we' => $parsed['jml_we'],
+                            'jml_hn' => $parsed['jml_hn'],
+                            'status' => null,
+                            'updated_at' => $now,
+                        ]);
+                } else {
+                    // New row — auto-calculate bulan if not provided
+                    $bulan = $parsed['bulan'];
+                    if ($bulan <= 0) {
+                        $maxBulan = KuotaLembur::where('cost_center', $parsed['cost_center'])
+                            ->where('nik', $parsed['nik'])
+                            ->max('bulan');
+                        $bulan = ($maxBulan ?? 0) + 1;
+                    }
+
+                    KuotaLembur::updateOrCreate(
+                        [
+                            'cost_center' => $parsed['cost_center'],
+                            'nik' => $parsed['nik'],
+                            'bulan' => $bulan,
+                        ],
+                        [
+                            'dok_io' => $parsed['dok_io'],
+                            'periode_awal' => $parsed['periode_awal']->format('Y-m-d'),
+                            'periode_akhir' => $parsed['periode_akhir']->format('Y-m-d'),
+                            'jml_wd' => $parsed['jml_wd'],
+                            'jml_we' => $parsed['jml_we'],
+                            'jml_hn' => $parsed['jml_hn'],
+                            'status' => null,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ]
+                    );
+                }
 
                 $imported++;
             }
 
             DB::commit();
 
-            // Determine response based on results
+            // Determine response
             if ($imported === 0 && count($errors) > 0) {
-                // ALL rows failed
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada data yang berhasil diimpor. ' . count($errors) . ' baris gagal.',
@@ -440,7 +560,11 @@ class KuotaLemburController extends Controller
                 ], 422);
             }
 
+            $replacedCount = count($duplicates);
             $message = "{$imported} data berhasil diimpor.";
+            if ($replacedCount > 0) {
+                $message .= " ({$replacedCount} data diganti/replace).";
+            }
             if (count($errors) > 0) {
                 $message .= " " . count($errors) . " baris gagal.";
             }
@@ -448,8 +572,10 @@ class KuotaLemburController extends Controller
             return response()->json([
                 'success' => true,
                 'has_errors' => count($errors) > 0,
+                'has_duplicates' => false,
                 'message' => $message,
                 'imported' => $imported,
+                'replaced' => $replacedCount,
                 'errors' => $errors,
             ]);
         } catch (\Exception $e) {
