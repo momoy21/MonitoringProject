@@ -164,6 +164,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/ftp/test', [SAPImportController::class, 'testFtpConnection'])->name('ftp.test');
             Route::get('/ftp/files', [SAPImportController::class, 'listFtpFiles'])->name('ftp.files');
             Route::get('/ftp/info', [SAPImportController::class, 'getFtpInfo'])->name('ftp.info');
+
+            // Remap ke Aktual Biaya
+            Route::post('/remap', [SAPImportController::class, 'remapToAktualBiaya'])->name('remap');
         });
 
         // ---------------------------------------------------------------

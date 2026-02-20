@@ -146,7 +146,10 @@ class AktualBiayaService
         $details = SpecRabDetail::with('spesifikasiRab')->get();
         
         foreach ($details as $detail) {
-            $mapping[$detail->cost_element] = [
+            // Normalize cost_element ke 10 digit (handle jika spec_rab_detail menyimpan 7 digit)
+            $costElement = $this->normalizeCostElement($detail->cost_element);
+            
+            $mapping[$costElement] = [
                 'id_spec' => $detail->id_spec,
                 'kategori' => $detail->spesifikasiRab?->kategori ?? 'HPP', // Default HPP jika tidak ada
             ];
@@ -155,6 +158,20 @@ class AktualBiayaService
         $this->logMapping('INFO', 'Loaded ' . count($mapping) . ' cost element mappings');
 
         return $mapping;
+    }
+
+    /**
+     * Normalize cost element ke format 10 digit dengan leading zeros
+     */
+    protected function normalizeCostElement(string $costElement): string
+    {
+        // Jika sudah 10 digit, kembalikan langsung
+        if (strlen($costElement) === 10) {
+            return $costElement;
+        }
+        
+        // Hilangkan leading zeros, lalu pad ke 10 digit
+        return str_pad(ltrim($costElement, '0'), 10, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -170,15 +187,8 @@ class AktualBiayaService
             ];
         }
 
-        // Cek apakah cost_element ada di mapping
-        // Normalize: pad cost_element ke 10 digit (sesuai format di database)
-        // CSV bisa menyimpan tanpa leading zeros (5101148), tapi DB pakai 10 digit (0005101148)
-        $costElement = str_pad(ltrim($plsap->cost_element, '0'), 10, '0', STR_PAD_LEFT);
-        
-        // Jika cost_element asli sudah 10 digit, gunakan yang asli
-        if (strlen($plsap->cost_element) === 10) {
-            $costElement = $plsap->cost_element;
-        }
+        // Normalize cost_element ke 10 digit (handle 7 digit dan 10 digit)
+        $costElement = $this->normalizeCostElement($plsap->cost_element);
         
         if (!isset($costElementMapping[$costElement])) {
             return [
