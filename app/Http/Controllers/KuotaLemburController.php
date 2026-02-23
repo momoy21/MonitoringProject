@@ -13,9 +13,6 @@ use Carbon\Carbon;
 
 class KuotaLemburController extends Controller
 {
-    /**
-     * Display main page
-     */
     public function index(Request $request)
     {
         return view('rencanelembur.index');
@@ -457,7 +454,7 @@ class KuotaLemburController extends Controller
             $duplicates = [];
 
             foreach ($rows as $index => $row) {
-                if ($index === 1) continue; // skip header
+                if ($index === 1) continue; 
 
                 $costCenter = trim($row['A'] ?? '');
                 $nik = trim($row['B'] ?? '');
