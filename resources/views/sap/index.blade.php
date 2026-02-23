@@ -100,30 +100,40 @@
                             <small class="text-muted">Status sinkronisasi data SAP ke tabel Aktual Biaya</small>
                         </div>
                     </div>
-                    <div class="d-flex align-items-center gap-4">
+                    <div class="d-flex align-items-center gap-3 gap-md-4">
                         <div class="text-center">
-                            <h5 class="mb-0 text-success">{{ number_format($stats['total_mapped'] ?? 0) }}</h5>
-                            <small class="text-muted">Berhasil Mapping</small>
+                            <h5 class="mb-0 text-success" id="statMapped">{{ number_format($stats['total_mapped'] ?? 0) }}</h5>
+                            <small class="text-muted">Ter-mapping</small>
                         </div>
                         <div class="text-center">
-                            <h5 class="mb-0 {{ ($stats['total_unmapped'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}">{{ number_format($stats['total_unmapped'] ?? 0) }}</h5>
-                            <small class="text-muted">Belum Mapping</small>
+                            <h5 class="mb-0 {{ ($stats['total_unmapped'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="statUnmapped">{{ number_format($stats['total_unmapped'] ?? 0) }}</h5>
+                            <small class="text-muted">Belum</small>
                         </div>
                         @php
-                            $mappingPercent = ($stats['total_records'] > 0) 
-                                ? round(($stats['total_mapped'] ?? 0) / $stats['total_records'] * 100, 1)
+                            $totalForPercent = ($stats['total_mapped'] ?? 0) + ($stats['total_unmapped'] ?? 0);
+                            $mappingPercent = ($totalForPercent > 0) 
+                                ? min(100, round(($stats['total_mapped'] ?? 0) / $totalForPercent * 100, 1))
                                 : 0;
                         @endphp
                         <div class="text-center">
-                            <h5 class="mb-0 {{ $mappingPercent >= 90 ? 'text-success' : ($mappingPercent >= 50 ? 'text-warning' : 'text-danger') }}">{{ $mappingPercent }}%</h5>
+                            <h5 class="mb-0 {{ $mappingPercent >= 90 ? 'text-success' : ($mappingPercent >= 50 ? 'text-warning' : 'text-danger') }}" id="statPercent">{{ $mappingPercent }}%</h5>
                             <small class="text-muted">Coverage</small>
                         </div>
+                        <div class="vr d-none d-md-block"></div>
+                        <button type="button" class="btn btn-info btn-sm" id="btnRemap" {{ ($stats['total_unmapped'] ?? 0) == 0 ? 'disabled' : '' }}>
+                            <i class="bx bx-sync me-1"></i> Re-Map
+                        </button>
                     </div>
                 </div>
                 @if($mappingPercent < 100 && ($stats['total_unmapped'] ?? 0) > 0)
                 <div class="progress mt-3" style="height: 6px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $mappingPercent }}%"></div>
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ 100 - $mappingPercent }}%"></div>
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $mappingPercent }}%" id="progressMapped"></div>
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ 100 - $mappingPercent }}%" id="progressUnmapped"></div>
+                </div>
+                @else
+                <div class="progress mt-3" style="height: 6px;" id="mappingProgressBar" style="display: none;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%" id="progressMapped"></div>
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="progressUnmapped"></div>
                 </div>
                 @endif
             </div>
@@ -926,6 +936,83 @@
                 showAlert('Koneksi FTP gagal: ' + (response.message || 'Unknown error'), 'danger');
             }).always(function() {
                 btn.prop('disabled', false).html(originalText);
+            });
+        });
+
+        // ================================================================
+        // RE-MAP TO AKTUAL BIAYA
+        // ================================================================
+        
+        $('#btnRemap').on('click', function() {
+            const btn = $(this);
+            const originalText = btn.html();
+            
+            if (!confirm('Mapping ulang data SAP ke Aktual Biaya?\n\nData yang sudah ada tidak akan terduplikasi.')) {
+                return;
+            }
+
+            btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin me-1"></i> Memproses...');
+
+            $.ajax({
+                url: '{{ route("sap.remap") }}',
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    if (response.success) {
+                        // Update stats on page
+                        if (response.stats) {
+                            $('#statMapped').text(Number(response.stats.total_mapped).toLocaleString('id-ID'));
+                            $('#statUnmapped').text(Number(response.stats.total_unmapped).toLocaleString('id-ID'));
+                            
+                            // Update color for unmapped
+                            const unmappedEl = $('#statUnmapped');
+                            if (response.stats.total_unmapped > 0) {
+                                unmappedEl.removeClass('text-muted').addClass('text-warning');
+                            } else {
+                                unmappedEl.removeClass('text-warning').addClass('text-muted');
+                            }
+                            
+                            // Calculate new percentage
+                            const totalRecords = {{ $stats['total_records'] }};
+                            const newPercent = totalRecords > 0 
+                                ? Math.round(response.stats.total_mapped / totalRecords * 1000) / 10 
+                                : 0;
+                            $('#statPercent').text(newPercent + '%');
+                            
+                            // Update progress bar
+                            $('#progressMapped').css('width', newPercent + '%');
+                            $('#progressUnmapped').css('width', (100 - newPercent) + '%');
+                            
+                            // Disable button if no more unmapped
+                            if (response.stats.total_unmapped === 0) {
+                                btn.prop('disabled', true);
+                            }
+                        }
+
+                        let alertMsg = response.message;
+                        
+                        // Show unmapped cost elements if any
+                        if (response.unmapped_cost_elements && response.unmapped_cost_elements.length > 0) {
+                            alertMsg += '<br><small class="text-muted">Cost elements tanpa mapping: ' + 
+                                response.unmapped_cost_elements.slice(0, 5).join(', ');
+                            if (response.unmapped_cost_elements.length > 5) {
+                                alertMsg += ' ... dan ' + (response.unmapped_cost_elements.length - 5) + ' lainnya';
+                            }
+                            alertMsg += '</small>';
+                        }
+
+                        showAlert(alertMsg, 'success');
+                    } else {
+                        showAlert('Gagal: ' + response.message, 'danger');
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON || {};
+                    showAlert('Gagal: ' + (response.message || 'Unknown error'), 'danger');
+                },
+                complete: function() {
+                    btn.prop('disabled', false).html(originalText);
+                }
             });
         });
 

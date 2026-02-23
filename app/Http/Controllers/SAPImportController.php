@@ -51,8 +51,13 @@ class SAPImportController extends Controller
         $totalPendapatan = abs(Plsap::where('amount_local', '<', 0)->sum('amount_local')); // Negatif = Pendapatan
         
         // Mapping statistics - Aktual Biaya
-        $totalMapped = \App\Models\AktualBiaya::count();
-        $totalUnmapped = Plsap::whereNotIn('id', \App\Models\AktualBiaya::pluck('plsap_id'))->count();
+        // total_mapped = jumlah record PLSAP yang sudah dipetakan ke aktual_biaya
+        $mappedPlsapIds = \App\Models\AktualBiaya::whereNotNull('plsap_id')
+                            ->distinct('plsap_id')
+                            ->pluck('plsap_id');
+        $totalMappedPlsap = Plsap::whereIn('id', $mappedPlsapIds)->count();
+        $totalUnmapped = Plsap::whereNotIn('id', $mappedPlsapIds)->count();
+        $totalAktualBiayaRecords = \App\Models\AktualBiaya::count(); // Total actual records di aktual_biaya
         
         $stats = [
             'total_records' => Plsap::count(),
@@ -63,9 +68,10 @@ class SAPImportController extends Controller
             'unique_projects' => Plsap::distinct('cc_projek')->count('cc_projek'),
             'unique_files' => Plsap::distinct('source_file')->count('source_file'),
             'last_import' => Plsap::max('imported_at'),
-            // Mapping stats
-            'total_mapped' => $totalMapped,
+            // Mapping stats - sekarang menghitung berdasarkan PLSAP, bukan aktual_biaya
+            'total_mapped' => $totalMappedPlsap,
             'total_unmapped' => $totalUnmapped,
+            'total_aktual_biaya' => $totalAktualBiayaRecords, // Info tambahan
         ];
 
         if ($request->ajax()) {
@@ -168,6 +174,7 @@ class SAPImportController extends Controller
 
     /**
      * Hapus data berdasarkan source file
+     * Menghapus dari: aktual_biaya, plsap, dan sap_import_history
      */
     public function deleteBySource(Request $request)
     {
@@ -177,18 +184,33 @@ class SAPImportController extends Controller
 
         try {
             $sourceFile = $request->source_file;
-            $count = Plsap::where('source_file', $sourceFile)->count();
+            
+            // Ambil ID plsap yang akan dihapus
+            $plsapIds = Plsap::where('source_file', $sourceFile)->pluck('id')->toArray();
+            $count = count($plsapIds);
 
+            // 1. Hapus aktual_biaya yang terkait terlebih dahulu
+            $deletedAktualBiaya = 0;
+            if (!empty($plsapIds)) {
+                $deletedAktualBiaya = \App\Models\AktualBiaya::whereIn('plsap_id', $plsapIds)->delete();
+            }
+
+            // 2. Hapus dari plsap
             Plsap::where('source_file', $sourceFile)->delete();
 
-            // Hapus dari history juga
+            // 3. Hapus dari history juga
             try {
                 DB::table('sap_import_history')->where('filename', $sourceFile)->delete();
             } catch (\Exception $e) {}
 
+            Log::info("SAP Delete by Source: {$sourceFile}", [
+                'plsap_deleted' => $count,
+                'aktual_biaya_deleted' => $deletedAktualBiaya
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil menghapus {$count} record dari {$sourceFile}"
+                'message' => "Berhasil menghapus {$count} record SAP dan {$deletedAktualBiaya} record aktual biaya dari {$sourceFile}"
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -273,5 +295,54 @@ class SAPImportController extends Controller
             'status' => $testResult['success'] ? 'connected' : 'disconnected',
             'status_message' => $testResult['message']
         ]);
+    }
+
+    /**
+     * Re-map PLSAP data ke Aktual Biaya
+     */
+    public function remapToAktualBiaya(Request $request)
+    {
+        try {
+            $force = $request->boolean('force', false);
+            $dryRun = $request->boolean('dry_run', false);
+
+            $aktualBiayaService = app(\App\Services\AktualBiayaService::class);
+
+            // Jika force, hapus existing mappings terlebih dahulu
+            if ($force && !$dryRun) {
+                $deleted = \App\Models\AktualBiaya::whereNotNull('plsap_id')->delete();
+                Log::info("SAP Remap: Deleted {$deleted} existing aktual_biaya records");
+            }
+
+            // Jalankan mapping
+            $result = $aktualBiayaService->processMapping(null, $force);
+
+            // Hitung statistik terbaru
+            $totalMapped = \App\Models\AktualBiaya::whereNotNull('plsap_id')->count();
+            $totalUnmapped = Plsap::whereNotIn('id', \App\Models\AktualBiaya::pluck('plsap_id'))->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => sprintf(
+                    'Mapping selesai: %d berhasil, %d dilewati, %d tidak ada mapping',
+                    $result['total_mapped'],
+                    $result['total_skipped'],
+                    $result['total_unmapped']
+                ),
+                'result' => $result,
+                'stats' => [
+                    'total_mapped' => $totalMapped,
+                    'total_unmapped' => $totalUnmapped,
+                ],
+                'unmapped_cost_elements' => array_slice($result['unmapped_cost_elements'] ?? [], 0, 10),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('SAP Remap Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melakukan remap: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

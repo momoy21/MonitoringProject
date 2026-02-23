@@ -107,11 +107,11 @@
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3">
                             <label for="periodeAwal" class="form-label">Periode Awal <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="periodeAwal" name="periode_awal" required>
+                            <input type="text" class="form-control date-picker" id="periodeAwal" name="periode_awal" placeholder="dd/mm/yyyy" autocomplete="off" required>
                         </div>
                         <div class="col-md-3">
                             <label for="periodeAkhir" class="form-label">Periode Akhir <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="periodeAkhir" name="periode_akhir" required>
+                            <input type="text" class="form-control date-picker" id="periodeAkhir" name="periode_akhir" placeholder="dd/mm/yyyy" autocomplete="off" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">&nbsp;</label>
@@ -244,7 +244,12 @@
         </div>
     </div>
 
+    @push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    @endpush
+
     @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const filterForm = document.getElementById('filterForm');
@@ -262,6 +267,25 @@
             let currentPeriodeAwal = null;
             let currentPeriodeAkhir = null;
             let currentData = [];
+
+            // Initialize Flatpickr date pickers with dd/mm/yyyy format
+            const fpConfig = {
+                dateFormat: 'd/m/Y',
+                allowInput: true,
+            };
+            
+            const fpAwal = flatpickr('#periodeAwal', fpConfig);
+            const fpAkhir = flatpickr('#periodeAkhir', fpConfig);
+
+            // Helper: Convert dd/mm/yyyy to yyyy-mm-dd for backend
+            function toISODate(dateStr) {
+                if (!dateStr) return null;
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                return dateStr;
+            }
 
             // Show alert
             function showAlert(type, message) {
@@ -297,13 +321,17 @@
             filterForm.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                const periodeAwal = document.getElementById('periodeAwal').value;
-                const periodeAkhir = document.getElementById('periodeAkhir').value;
+                const periodeAwalDisplay = document.getElementById('periodeAwal').value;
+                const periodeAkhirDisplay = document.getElementById('periodeAkhir').value;
 
-                if (!periodeAwal || !periodeAkhir) {
+                if (!periodeAwalDisplay || !periodeAkhirDisplay) {
                     showAlert('warning', 'Periode Awal dan Periode Akhir harus diisi!');
                     return;
                 }
+
+                // Convert to ISO format for comparison and backend
+                const periodeAwal = toISODate(periodeAwalDisplay);
+                const periodeAkhir = toISODate(periodeAkhirDisplay);
 
                 if (periodeAwal > periodeAkhir) {
                     showAlert('danger', 'Periode Akhir harus sama atau setelah Periode Awal!');
