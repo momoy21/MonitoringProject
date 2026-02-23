@@ -8,6 +8,7 @@ use App\Models\Karyawan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class KuotaLemburController extends Controller
@@ -18,6 +19,52 @@ class KuotaLemburController extends Controller
     public function index(Request $request)
     {
         return view('rencanelembur.index');
+    }
+
+    /**
+     * Pre-load initial page data (cost centers + karyawan) in one call
+     */
+    public function getInitialData(Request $request)
+    {
+        $costCenters = Cache::remember('kuota_lembur_cost_centers', 300, function () {
+            return DataProyek::select('cost_center', 'namaproject', 'dokumen_io')
+                ->whereNotNull('cost_center')
+                ->where('cost_center', '!=', '')
+                ->orderBy('cost_center')
+                ->distinct()
+                ->get()
+                ->map(function ($item) {
+                    $costCenter = $item->cost_center ?? '-';
+                    $namaProject = $item->namaproject ?? '-';
+                    $dokumenIO = $item->dokumen_io ?? '-';
+                    return [
+                        'id' => $costCenter,
+                        'text' => "{$costCenter} - {$namaProject} - {$dokumenIO}",
+                        'cost_center' => $costCenter,
+                        'namaproject' => $namaProject,
+                        'dokumen_io' => $dokumenIO,
+                    ];
+                });
+        });
+
+        $karyawan = Cache::remember('kuota_lembur_karyawan', 300, function () {
+            return Karyawan::active()
+                ->orderBy('nama')
+                ->get(['nik', 'nama'])
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->nik,
+                        'text' => "{$item->nik} - {$item->nama}",
+                        'nik' => $item->nik,
+                        'nama' => $item->nama,
+                    ];
+                });
+        });
+
+        return response()->json([
+            'cost_centers' => $costCenters,
+            'karyawan' => $karyawan,
+        ]);
     }
 
     /**
@@ -81,7 +128,15 @@ class KuotaLemburController extends Controller
             $query = KuotaLembur::where('kuota_lembur.cost_center', $costCenter)
                 ->join('karyawan', 'kuota_lembur.nik', '=', 'karyawan.nik')
                 ->select(
-                    'kuota_lembur.*',
+                    'kuota_lembur.cost_center',
+                    'kuota_lembur.nik',
+                    'kuota_lembur.bulan',
+                    'kuota_lembur.periode_awal',
+                    'kuota_lembur.periode_akhir',
+                    'kuota_lembur.jml_wd',
+                    'kuota_lembur.jml_we',
+                    'kuota_lembur.jml_hn',
+                    'kuota_lembur.status',
                     'karyawan.nama as nama_karyawan'
                 );
 
@@ -93,8 +148,7 @@ class KuotaLemburController extends Controller
                     $upper = strtoupper($word);
                     $query->where(function ($q) use ($upper) {
                         $q->whereRaw("UPPER(kuota_lembur.nik) LIKE ?", ['%' . $upper . '%'])
-                            ->orWhereRaw("UPPER(karyawan.nama) LIKE ?", ['%' . $upper . '%'])
-                            ->orWhereRaw("UPPER(CAST(kuota_lembur.bulan AS CHAR)) LIKE ?", ['%' . $upper . '%']);
+                            ->orWhereRaw("UPPER(karyawan.nama) LIKE ?", ['%' . $upper . '%']);
                     });
                 }
             }
@@ -176,12 +230,29 @@ class KuotaLemburController extends Controller
             ], 422);
         }
 
+        // Validate NIK exists in karyawan table
+        $karyawan = Karyawan::where('nik', $validated['nik'])->first();
+        if (!$karyawan) {
+            return response()->json([
+                'success' => false,
+                'message' => "NIK '{$validated['nik']}' tidak ditemukan di data karyawan"
+            ], 422);
+        }
+
+        // Validate cost_center exists in data_proyek
+        $project = DataProyek::where('cost_center', $validated['cost_center'])->first();
+        if (!$project || empty($project->dokumen_io)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cost Center '{$validated['cost_center']}' tidak ditemukan di data proyek"
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
             // Get dokumen_io from data_proyek
-            $project = DataProyek::where('cost_center', $validated['cost_center'])->first();
-            $dokIo = $project->dokumen_io ?? null;
+            $dokIo = $project->dokumen_io;
 
             // Check for existing record with same cost_center + nik + periode_awal
             $existing = KuotaLembur::where('cost_center', $validated['cost_center'])
@@ -442,6 +513,13 @@ class KuotaLemburController extends Controller
                 }
                 $dokIo = $project->dokumen_io;
 
+                // Validate NIK exists in karyawan table
+                $karyawanExists = Karyawan::where('nik', $nik)->exists();
+                if (!$karyawanExists) {
+                    $errors[] = "Baris {$index}: NIK '{$nik}' tidak ditemukan di data karyawan";
+                    continue;
+                }
+
                 // Check for duplicate: same cost_center + nik + periode_awal
                 $existing = KuotaLembur::where('cost_center', $costCenter)
                     ->where('nik', $nik)
@@ -452,6 +530,7 @@ class KuotaLemburController extends Controller
                     $nama = Karyawan::where('nik', $nik)->value('nama') ?? '-';
                     $duplicates[] = [
                         'row' => $index,
+                        'cost_center' => $costCenter,
                         'nik' => $nik,
                         'nama' => $nama,
                         'periode_awal' => $periodeAwal->format('d/m/Y'),
@@ -672,7 +751,7 @@ class KuotaLemburController extends Controller
     }
 
     /**
-     * Get active karyawan for NIK dropdown
+     * Get active karyawan for NIK dropdown (kept for backward compat, prefer getInitialData)
      */
     public function getKaryawanDropdown(Request $request)
     {
@@ -701,6 +780,16 @@ class KuotaLemburController extends Controller
         });
 
         return response()->json($results);
+    }
+
+    /**
+     * Flush cached data (call after import or when proyek/karyawan data changes)
+     */
+    public function flushCache()
+    {
+        Cache::forget('kuota_lembur_cost_centers');
+        Cache::forget('kuota_lembur_karyawan');
+        return response()->json(['success' => true]);
     }
 
     /**

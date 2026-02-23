@@ -313,6 +313,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     window.routes = {
+        getInitialData: "{{ route('rencanelembur.getInitialData') }}",
         getCostCenter: "{{ route('rencanelembur.getCostCenter') }}",
         getData: "{{ route('rencanelembur.getData') }}",
         getNextBulan: "{{ route('rencanelembur.getNextBulan') }}",

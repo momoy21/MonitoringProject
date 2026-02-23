@@ -450,6 +450,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ---------------------------------------------------------------
         Route::prefix('rencanelembur')->name('rencanelembur.')->group(function () {
             Route::get('/', [KuotaLemburController::class, 'index'])->name('index');
+            Route::get('/initial-data', [KuotaLemburController::class, 'getInitialData'])->name('getInitialData');
             Route::get('/cost-center', [KuotaLemburController::class, 'getCostCenterDropdown'])->name('getCostCenter');
             Route::get('/data', [KuotaLemburController::class, 'getData'])->name('getData');
             Route::get('/next-bulan', [KuotaLemburController::class, 'getNextBulan'])->name('getNextBulan');

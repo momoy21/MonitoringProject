@@ -46,7 +46,7 @@ function initCostCenterSelect() {
                     })
                 };
             },
-            cache: true
+            cache: false
         },
         minimumInputLength: 0
     });
@@ -96,8 +96,11 @@ function loadBiayaProyekData(idRab) {
         success: function (response) {
             if (response.success) {
                 // Update month header for HPP
+                if (response.data.periode_awal) {
+                    $('#bulanAwalHeader').text('Bulan Ini (' + response.data.periode_awal + ')');
+                }
                 if (response.data.current_month) {
-                    $('#bulanIniHeader').text('Bulan Ini (' + response.data.current_month + ')');
+                    $('#sdBulanIniHeader').text('S.D. Bulan Ini (' + response.data.current_month + ')');
                 }
 
                 // Render Pendapatan table (4-col list format)

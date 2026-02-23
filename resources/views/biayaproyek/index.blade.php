@@ -99,8 +99,8 @@
                     <tr>
                         <th rowspan="2" class="text-center align-middle fw-bold" style="width: 50px;">No</th>
                         <th rowspan="2" class="text-center align-middle fw-bold">Keterangan</th>
-                        <th colspan="2" class="text-center fw-bold">Bulan Ini</th>
-                        <th colspan="2" class="text-center fw-bold">S.D. Bulan Ini</th>
+                        <th colspan="2" class="text-center fw-bold" id="bulanAwalHeader">Periode Awal</th>
+                        <th colspan="2" class="text-center fw-bold" id="sdBulanIniHeader">S.D. Periode Saat Ini</th>
                         <th colspan="2" class="text-center fw-bold">Total</th>
                     </tr>
                     <tr>
