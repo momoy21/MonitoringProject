@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SpesifikasiRAB extends Model
 {
+    use HasFactory;
     protected $table = 'spec_rab';
     protected $primaryKey = 'id_spec';
     public $incrementing = false;
