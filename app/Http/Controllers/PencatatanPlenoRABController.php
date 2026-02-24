@@ -162,6 +162,13 @@ class PencatatanPlenoRABController extends Controller
         try {
             $rabProyek = RABProyek::where('nopengajuan', $nopengajuan)->firstOrFail();
 
+            // Clean numeric format before validation (remove thousand separators)
+            if ($request->has('nilai_proyek') && $request->nilai_proyek) {
+                $request->merge([
+                    'nilai_proyek' => str_replace(['.', ','], ['', '.'], $request->nilai_proyek)
+                ]);
+            }
+
             // Validation
             $validated = $request->validate([
                 // Informasi Proyek

@@ -32,3 +32,24 @@ Schedule::command('sap:auto-import')
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('SAP Auto Import scheduled task failed');
     });
+
+/*
+|--------------------------------------------------------------------------
+| Kontrak Expiry Check
+|--------------------------------------------------------------------------
+|
+| Cek status kontrak proyek setiap hari pukul 07:00 pagi
+| Mengirim notifikasi untuk kontrak yang sudah/akan habis
+|
+*/
+
+Schedule::command('kontrak:check-expiry')
+    ->dailyAt('07:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/kontrak-expiry-check.log'))
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('Kontrak Expiry Check scheduled task completed successfully');
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('Kontrak Expiry Check scheduled task failed');
+    });

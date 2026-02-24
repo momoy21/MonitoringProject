@@ -111,7 +111,7 @@
     <x-slot name="breadcrumbs">
         @php
         $breadcrumbs = [
-            ['name' => 'Pengajuan RAB', 'url' => route('pengajuanrab.index')],
+            ['name' => 'Pengajuan RAB', 'url' => route('pengajuanrab.index', array_filter($referrerParams ?? []))],
             ['name' => 'Edit Pengajuan RAB']
         ];
         @endphp
@@ -127,7 +127,7 @@
                 <p class="mb-0">Perbarui data pengajuan Rencana Anggaran Biaya</p>
             </div>
             <div class="col-md-6 text-end">
-                <a href="{{ route('pengajuanrab.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('pengajuanrab.index', array_filter($referrerParams ?? [])) }}" class="btn btn-outline-secondary">
                     <i class="bx bx-arrow-back me-1"></i> Kembali
                 </a>
             </div>
@@ -143,6 +143,17 @@
             <form id="pengajuanRabForm" method="POST" action="{{ route('pengajuanrab.update', $pengajuanrab->nopengajuan) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+
+                <!-- Hidden fields for preserving referrer params -->
+                @if(!empty($referrerParams['page']))
+                    <input type="hidden" name="ref_page" value="{{ $referrerParams['page'] }}">
+                @endif
+                @if(!empty($referrerParams['per_page']))
+                    <input type="hidden" name="ref_per_page" value="{{ $referrerParams['per_page'] }}">
+                @endif
+                @if(!empty($referrerParams['search']))
+                    <input type="hidden" name="ref_search" value="{{ $referrerParams['search'] }}">
+                @endif
 
                 <!-- Informasi Pengajuan (Read Only) -->
                 <div class="form-section">
@@ -544,7 +555,7 @@
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-end gap-3 mt-4">
-                    <a href="{{ route('pengajuanrab.index') }}" class="btn btn-outline-secondary">
+                    <a href="{{ route('pengajuanrab.index', array_filter($referrerParams ?? [])) }}" class="btn btn-outline-secondary">
                         <i class="bx bx-x me-1"></i> Batal
                     </a>
                     <button type="submit" class="btn btn-primary" id="submitBtn">

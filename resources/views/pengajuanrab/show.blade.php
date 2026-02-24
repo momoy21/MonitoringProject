@@ -29,17 +29,27 @@
         }
         .file-card i {
             font-size: 36px;
+            flex-shrink: 0;
         }
         .file-card .file-info {
             flex-grow: 1;
+            min-width: 0;
+            overflow: hidden;
         }
         .file-card .file-name {
             font-weight: 600;
             margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
         .file-card .file-type {
             font-size: 12px;
             color: #a1a5b7;
+        }
+        .file-card .btn {
+            flex-shrink: 0;
         }
     </style>
     @endpush
@@ -214,7 +224,7 @@
                             <div class="file-card">
                                 <i class="bx bx-spreadsheet text-success"></i>
                                 <div class="file-info">
-                                    <div class="file-name">{{ basename($pengajuanrab->rab_upload) }}</div>
+                                    <div class="file-name" title="{{ basename($pengajuanrab->rab_upload) }}">{{ basename($pengajuanrab->rab_upload) }}</div>
                                     <div class="file-type">Dokumen RAB (Excel)</div>
                                 </div>
                                 <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'rab']) }}" class="btn btn-primary">
@@ -238,7 +248,7 @@
                             <div class="file-card">
                                 <i class="bx bxs-file-pdf text-danger"></i>
                                 <div class="file-info">
-                                    <div class="file-name">{{ basename($pengajuanrab->file_upload) }}</div>
+                                    <div class="file-name" title="{{ basename($pengajuanrab->file_upload) }}">{{ basename($pengajuanrab->file_upload) }}</div>
                                     <div class="file-type">Dokumen JO/PO/SPK/Kontrak (PDF)</div>
                                 </div>
                                 <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'kontrak']) }}" class="btn btn-primary">
@@ -262,7 +272,7 @@
                             <div class="file-card">
                                 <i class="bx bxs-file-pdf text-danger"></i>
                                 <div class="file-info">
-                                    <div class="file-name">{{ basename($pengajuanrab->peta_risk_upload) }}</div>
+                                    <div class="file-name" title="{{ basename($pengajuanrab->peta_risk_upload) }}">{{ basename($pengajuanrab->peta_risk_upload) }}</div>
                                     <div class="file-type">Dokumen Peta Risiko (PDF)</div>
                                 </div>
                                 <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'peta_risiko']) }}" class="btn btn-primary">
@@ -286,7 +296,7 @@
                             <div class="file-card">
                                 <i class="bx bxs-file-pdf text-danger"></i>
                                 <div class="file-info">
-                                    <div class="file-name">{{ basename($pengajuanrab->hasil_upload) }}</div>
+                                    <div class="file-name" title="{{ basename($pengajuanrab->hasil_upload) }}">{{ basename($pengajuanrab->hasil_upload) }}</div>
                                     <div class="file-type">Dokumen Hasil Pleno (PDF)</div>
                                 </div>
                                 <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'hasil']) }}" class="btn btn-primary">

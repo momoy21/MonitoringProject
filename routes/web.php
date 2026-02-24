@@ -30,6 +30,7 @@ use App\Http\Controllers\PenugasanController;
 use App\Http\Controllers\BiayaProyekController;
 use App\Http\Controllers\KuotaLemburController;
 use App\Http\Controllers\LemburInterfaceController;
+use App\Http\Controllers\KontrakNotificationController;
 
 
 /*
@@ -131,6 +132,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/change-password', [ProfileController::class, 'showChangePasswordForm'])->name('profile.change-password');
     Route::put('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+
+    // ===================================================================
+    // NOTIFICATION ROUTES - Kontrak Expiry Notifications
+    // ===================================================================
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [KontrakNotificationController::class, 'index'])->name('index');
+        Route::get('/get', [KontrakNotificationController::class, 'getNotifications'])->name('get');
+        Route::get('/count', [KontrakNotificationController::class, 'getUnreadCount'])->name('count');
+        Route::post('/{id}/read', [KontrakNotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all', [KontrakNotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::get('/{id}/redirect', [KontrakNotificationController::class, 'redirectToProject'])->name('redirect');
+    });
 
     // ===================================================================
     // SUPER ADMIN ONLY ROUTES

@@ -35,6 +35,7 @@ class DataProyek extends Model
         'penanggung_jawab',
         'nilai_proyek',
         'status',
+        'kontrak_status',
         'keterangan',
         'dokumen_path'
     ];

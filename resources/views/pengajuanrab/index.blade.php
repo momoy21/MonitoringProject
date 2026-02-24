@@ -71,7 +71,15 @@
                 </thead>
                 <tbody id="pengajuanRabTableBody">
                     @forelse($pengajuanRab as $index => $item)
-                    <tr class="editable-row" ondblclick="window.location.href='{{ route('pengajuanrab.edit', $item->nopengajuan) }}'" title="Double-click untuk edit" style="cursor: pointer;">
+                    @php
+                        $editParams = array_filter([
+                            'page' => request('page'),
+                            'per_page' => request('per_page'),
+                            'search' => request('search'),
+                        ]);
+                        $editUrl = route('pengajuanrab.edit', array_merge(['pengajuanrab' => $item->nopengajuan], $editParams));
+                    @endphp
+                    <tr class="editable-row" ondblclick="window.location.href='{{ $editUrl }}'" title="Double-click untuk edit" style="cursor: pointer;">
                         <td class="text-center">{{ $pengajuanRab->firstItem() + $index }}</td>
                         <td>{{ $item->tgl_input_formatted }}</td>
                         <td>
@@ -266,8 +274,16 @@
                 const truncatedNama = namaProject.length > 35 ? namaProject.substring(0, 35) + '...' : namaProject;
                 const tglFormatted = formatDate(item.tgl_input);
 
+                // Build edit URL with current params
+                const editParams = new URLSearchParams();
+                if (currentPage > 1) editParams.set('page', currentPage);
+                if (perPage != 10) editParams.set('per_page', perPage);
+                if (currentSearch) editParams.set('search', currentSearch);
+                const editQuery = editParams.toString() ? '?' + editParams.toString() : '';
+                const editUrl = `/pengajuanrab/${item.nopengajuan}/edit${editQuery}`;
+
                 tbody.append(`
-                    <tr class="editable-row" ondblclick="window.location.href='/pengajuanrab/${item.nopengajuan}/edit'" title="Double-click untuk edit" style="cursor: pointer;">
+                    <tr class="editable-row" ondblclick="window.location.href='${editUrl}'" title="Double-click untuk edit" style="cursor: pointer;">
                         <td class="text-center">${startIndex + index}</td>
                         <td>${tglFormatted}</td>
                         <td><span class="fw-bold text-primary">${item.nopengajuan}</span></td>

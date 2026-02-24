@@ -261,7 +261,7 @@ class PengajuanRABController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(RABProyek $pengajuanrab)
+    public function edit(RABProyek $pengajuanrab, Request $request)
     {
         try {
             $pengajuanrab->load(['konsumen', 'bidangJasa', 'masterDivisi']);
@@ -270,12 +270,20 @@ class PengajuanRABController extends Controller
             $divisi = MasterDivisi::active()->orderBy('nama_divisi')->get();
             $jenisProyek = JenisProyek::orderBy('kode_jenis')->get();
 
+            // Preserve referrer params for back navigation
+            $referrerParams = [
+                'page' => $request->get('page'),
+                'per_page' => $request->get('per_page'),
+                'search' => $request->get('search'),
+            ];
+
             return view('pengajuanrab.edit', compact(
                 'pengajuanrab',
                 'konsumen',
                 'bidangJasa',
                 'divisi',
-                'jenisProyek'
+                'jenisProyek',
+                'referrerParams'
             ));
         } catch (\Exception $e) {
             return redirect()->route('pengajuanrab.index')
@@ -410,7 +418,14 @@ class PengajuanRABController extends Controller
                 ]);
             }
 
-            return redirect()->route('pengajuanrab.index')
+            // Build redirect with preserved params
+            $redirectParams = array_filter([
+                'page' => $request->get('ref_page'),
+                'per_page' => $request->get('ref_per_page'),
+                'search' => $request->get('ref_search'),
+            ]);
+
+            return redirect()->route('pengajuanrab.index', $redirectParams)
                            ->with('success', 'Data pengajuan RAB berhasil diperbarui.');
 
         } catch (\Exception $e) {

@@ -242,12 +242,58 @@
                 perPage: {{ request('per_page', 10) }},
                 currentSearch: '{{ request('search') }}'
             });
+
+            // === HIGHLIGHT ROW FROM NOTIFICATION ===
+            @if(request('highlight'))
+                const highlightId = '{{ request('highlight') }}';
+                highlightProjectRow(highlightId);
+            @endif
         });
+
+        // Function untuk highlight row dari notifikasi
+        function highlightProjectRow(idProject) {
+            // Find the row that contains this project ID
+            const rows = document.querySelectorAll('#dataProyekTable tbody tr');
+            
+            rows.forEach(function(row) {
+                const costCenterCell = row.querySelector('.costcenter-id');
+                const detailLink = row.querySelector('a[href*="' + idProject + '"]');
+                
+                // Check if this row matches the project
+                if (detailLink || (row.innerHTML && row.innerHTML.includes(idProject))) {
+                    // Scroll to the row
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Add highlight animation
+                    row.classList.add('row-highlight-notification');
+                    
+                    // Remove highlight after 5 seconds
+                    setTimeout(function() {
+                        row.classList.remove('row-highlight-notification');
+                    }, 5000);
+                }
+            });
+        }
 
         // Function untuk edit data proyek (double click)
         function editDataProyek(idProject) {
             window.location.href = '/dataproyek/' + idProject + '/edit';
         }
         </script>
+        
+        <style>
+            /* Highlight animation for notification redirect */
+            @keyframes highlightPulse {
+                0% { background-color: #fff3cd; }
+                50% { background-color: #ffc107; }
+                100% { background-color: #fff3cd; }
+            }
+            
+            .row-highlight-notification {
+                animation: highlightPulse 1s ease-in-out 3;
+                background-color: #fff3cd !important;
+                box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+            }
+        </style>
     @endpush
 </x-layout>
