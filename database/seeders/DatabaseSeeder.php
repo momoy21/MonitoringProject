@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ProvincesCitiesSeeder::class,
             SpesifikasiRABSeeder::class,
             SummaryRabSeeder::class,
+            AktualBiayaSeeder::class,
         ]);
 
         // Reset cached roles and permissions
