@@ -99,11 +99,9 @@ class BiayaProyekController extends Controller
         if (!$idRab) return response()->json(['success' => false, 'message' => 'ID RAB harus diisi'], 400);
 
         try {
-            // 1. Ambil Header RAB
             $headerRab = HeaderRAB::where('id_rab', $idRab)->first();
             if (!$headerRab) return response()->json(['success' => false, 'message' => 'RAB not found'], 404);
 
-            // 2. Ambil Cost Center dari History Proyek yang sesuai dengan Header RAB
             $historyProyek = DB::table('history_proyek')
                 ->where('id_project', $headerRab->id_project)
                 ->where('norut', $headerRab->norut)
@@ -115,12 +113,14 @@ class BiayaProyekController extends Controller
             $idProject  = $headerRab->id_project;
 
             $bulanInput = $request->get('bulan', Carbon::now()->format('Y-m-d'));
+            $periodeAwal = $headerRab->periode_rab;
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'pendapatan' => $this->getPendapatanData($costCenter, $idProject),
-                    'hpp' => $this->getHPPData($costCenter, $bulanInput),
+                    'pendapatan' => $this->getPendapatanData($costCenter, $idProject, $headerRab->norut),
+                    'hpp' => $this->getHPPData($costCenter, $bulanInput, $periodeAwal),
+                    'periode_awal' => $periodeAwal ? Carbon::parse($periodeAwal)->format('M Y') : '-',
                     'current_month' => Carbon::parse($bulanInput)->format('M Y')
                 ]
             ]);
@@ -135,10 +135,6 @@ class BiayaProyekController extends Controller
     // detail_rab → header_rab → data_proyek (on id_project)
     // =========================================================================
 
-    /**
-     * getRencanaBulan - Rencana for a specific month
-     * JOIN detail_rab → header_rab → data_proyek WHERE cost_center AND bulan = bulan
-     */
     private function getRencanaBulan($costCenter, $idSpec, $bulan)
     {
         return (float) DB::table('detail_rab as dr')
@@ -150,39 +146,23 @@ class BiayaProyekController extends Controller
             ->sum('dr.nilai');
     }
 
-    /**
-     * getRencanaSDBulan - Cumulative rencana up to month
-     * JOIN detail_rab → header_rab → data_proyek WHERE cost_center AND bulan <= bulan
-     */
-    private function getRencanaSDBulan($costCenter, $idSpec, $bulan)
+    private function getRencanaSDBulan($costCenter, $idSpec, $periodeAwal, $bulan)
     {
+        $startDate = Carbon::parse($periodeAwal)->format('Y-m-01');
+        $targetDate = Carbon::parse($bulan)->format('Y-m-01');
+
+        $dateExpr = "CONCAT(RIGHT(dr.bulan, 4), '-', LPAD(FIELD(LEFT(dr.bulan, 3), 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'), 2, '0'), '-01')";
+
         return (float) DB::table('detail_rab as dr')
             ->join('header_rab as hr', 'hr.id_rab', '=', 'dr.id_rab')
             ->join('data_proyek as dp', 'dp.id_project', '=', 'hr.id_project')
             ->where('dp.cost_center', $costCenter)
             ->where('dr.id_spec', $idSpec)
-            ->whereRaw("STR_TO_DATE(dr.bulan, '%b %Y') <= STR_TO_DATE(?, '%b %Y')", [Carbon::parse($bulan)->format('M Y')])
+            ->whereRaw("{$dateExpr} >= ?", [$startDate])
+            ->whereRaw("{$dateExpr} <= ?", [$targetDate])
             ->sum('dr.nilai');
     }
 
-    /**
-     * getRencanaTotal - Total rencana (all months)
-     * JOIN detail_rab → header_rab → data_proyek WHERE cost_center
-     */
-    private function getRencanaTotal($costCenter, $idSpec)
-    {
-        return (float) DB::table('detail_rab as dr')
-            ->join('header_rab as hr', 'hr.id_rab', '=', 'dr.id_rab')
-            ->join('data_proyek as dp', 'dp.id_project', '=', 'hr.id_project')
-            ->where('dp.cost_center', $costCenter)
-            ->where('dr.id_spec', $idSpec)
-            ->sum('dr.nilai');
-    }
-
-    /**
-     * getAktualBulan - Actual HPP for specific month
-     * WHERE cc_projek = cost_center AND kategori = 'HPP' AND bulan = bulan
-     */
     private function getAktualBulan($costCenter, $idSpec, $bulan)
     {
         if (!$costCenter) return 0;
@@ -195,26 +175,29 @@ class BiayaProyekController extends Controller
             ->sum('nilai');
     }
 
-    /**
-     * getAktualSDBulan - Cumulative actual up to month
-     * WHERE cc_projek = cost_center AND kategori = 'BIAYA' AND bulan <= bulan
-     */
-    private function getAktualSDBulan($costCenter, $idSpec, $bulan)
+    private function getAktualSDBulan($costCenter, $idSpec, $periodeAwal, $bulan)
     {
         if (!$costCenter) return 0;
 
         return (float) DB::table('aktual_biaya')
             ->where('cc_projek', $costCenter)
             ->where('id_spec', $idSpec)
-            ->where('kategori', 'BIAYA')
+            ->where('kategori', 'HPP')
+            ->where('bulan', '>=', Carbon::parse($periodeAwal)->startOfMonth()->format('Y-m-d'))
             ->where('bulan', '<=', Carbon::parse($bulan)->endOfMonth()->format('Y-m-d'))
             ->sum('nilai');
     }
 
-    /**
-     * getAktualTotal - Total actual (all months)
-     * WHERE cc_projek = cost_center AND kategori = 'BIAYA'
-     */
+    private function getRencanaTotal($costCenter, $idSpec)
+    {
+        return (float) DB::table('detail_rab as dr')
+            ->join('header_rab as hr', 'hr.id_rab', '=', 'dr.id_rab')
+            ->join('data_proyek as dp', 'dp.id_project', '=', 'hr.id_project')
+            ->where('dp.cost_center', $costCenter)
+            ->where('dr.id_spec', $idSpec)
+            ->sum('dr.nilai');
+    }
+
     private function getAktualTotal($costCenter, $idSpec)
     {
         if (!$costCenter) return 0;
@@ -222,7 +205,7 @@ class BiayaProyekController extends Controller
         return (float) DB::table('aktual_biaya')
             ->where('cc_projek', $costCenter)
             ->where('id_spec', $idSpec)
-            ->where('kategori', 'BIAYA')
+            ->where('kategori', 'HPP')
             ->sum('nilai');
     }
 
@@ -230,42 +213,41 @@ class BiayaProyekController extends Controller
     // Data Assembly
     // =========================================================================
 
-    /**
-     * Pendapatan data - 4 column list from pendapatan_proyek records
-     * JOIN berita_acara_project for desc (keterangan) and periode (bulan)
-     * Keterangan: ba.desc, Bulan: ba.periode_mulai + ba.periode_akhir, Total: nilai_pendapatan
-     */
-    private function getPendapatanData($costCenter, $idProject)
+    private function getPendapatanData($costCenter, $idProject, $norut)
     {
-        $query = DB::table('pendapatan_proyek as pp')
-            ->join('history_proyek as hp', 'hp.id_project', '=', 'pp.id_project')
-            ->leftJoin('berita_acara_project as ba', function ($join) {
-                $join->on('ba.norut', '=', 'pp.norut')
-                    ->on('ba.id_project', '=', 'pp.id_project')
-                    ->on('ba.no_ba', '=', 'pp.no_ba');
+        $query = DB::table('berita_acara_project as ba')
+            ->join('history_proyek as hp', function ($join) {
+                $join->on('hp.id_project', '=', 'ba.id_project')
+                    ->on('hp.norut', '=', 'ba.norut');
+            })
+            ->leftJoin('pendapatan_proyek as pp', function ($join) {
+                $join->on('pp.norut', '=', 'ba.norut')
+                    ->on('pp.id_project', '=', 'ba.id_project')
+                    ->on('pp.no_ba', '=', 'ba.no_ba');
             })
             ->where('hp.cost_center', $costCenter)
-            ->where('pp.id_project', $idProject)
-            ->distinct()
+            ->where('ba.id_project', $idProject)
+            ->where('ba.norut', $norut)
             ->select(
+                'ba.no_ba',
                 'ba.desc as ba_desc',
-                'ba.periode_mulai as ba_periode_mulai',
-                'ba.periode_akhir as ba_periode_akhir',
-                'pp.nilai_pendapatan'
+                DB::raw('MIN(pp.periode_mulai) as pp_periode_mulai'),
+                DB::raw('MAX(pp.periode_akhir) as pp_periode_akhir'),
+                DB::raw('COALESCE(SUM(pp.nilai_pendapatan), 0) as total_pendapatan')
             )
-            ->orderBy('ba.periode_mulai', 'asc')
+            ->groupBy('ba.no_ba', 'ba.desc')
+            ->orderBy('ba.no_ba', 'asc')
             ->get();
 
         $list = [];
         $grandTotal = 0;
 
         foreach ($query as $index => $row) {
-            // Format rentang bulan dari berita_acara_project (Contoh: Mar 2026 - Jul 2026)
-            $mulai = $row->ba_periode_mulai ? Carbon::parse($row->ba_periode_mulai)->translatedFormat('M Y') : '-';
-            $akhir = $row->ba_periode_akhir ? Carbon::parse($row->ba_periode_akhir)->translatedFormat('M Y') : '-';
+            $mulai = $row->pp_periode_mulai ? Carbon::parse($row->pp_periode_mulai)->translatedFormat('M Y') : '-';
+            $akhir = $row->pp_periode_akhir ? Carbon::parse($row->pp_periode_akhir)->translatedFormat('M Y') : '-';
             $bulanStr = ($mulai === '-' && $akhir === '-') ? '-' : (($mulai === $akhir) ? $mulai : "$mulai - $akhir");
 
-            $nilai = (float) $row->nilai_pendapatan;
+            $nilai = (float) $row->total_pendapatan;
             $grandTotal += $nilai;
 
             $list[] = [
@@ -282,12 +264,7 @@ class BiayaProyekController extends Controller
         ];
     }
 
-    /**
-     * HPP data - 8 column Rencana/Aktual format
-     * Rencana: from detail_rab via cost_center JOIN to data_proyek
-     * Aktual: from aktual_biaya with kategori filters per BPS pseudocode
-     */
-    private function getHPPData($costCenter, $bulanInput)
+    private function getHPPData($costCenter, $bulanInput, $periodeAwal)
     {
         $specs = SpesifikasiRAB::where('kategori', 'HPP')->where('status', 'A')
             ->orderBy('norutspec')->orderBy('id_spec')->get();
@@ -295,16 +272,21 @@ class BiayaProyekController extends Controller
         $result = [];
 
         foreach ($specs as $index => $spec) {
+            $rencanaBulanIni = $this->getRencanaBulan($costCenter, $spec->id_spec, $bulanInput);
+            $aktualBulanIni  = $this->getAktualBulan($costCenter, $spec->id_spec, $bulanInput);
+            $rencanaSDBulan  = $this->getRencanaSDBulan($costCenter, $spec->id_spec, $periodeAwal, $bulanInput);
+            $aktualSDBulan   = $this->getAktualSDBulan($costCenter, $spec->id_spec, $periodeAwal, $bulanInput);
+
             $result[] = [
                 'no' => $index + 1,
                 'keterangan' => $spec->spec_rab,
                 'bulan_ini' => [
-                    'rencana' => $this->getRencanaBulan($costCenter, $spec->id_spec, $bulanInput),
-                    'aktual'  => $this->getAktualBulan($costCenter, $spec->id_spec, $bulanInput),
+                    'rencana' => $rencanaBulanIni,
+                    'aktual'  => $aktualBulanIni,
                 ],
                 'sd_bulan_ini' => [
-                    'rencana' => $this->getRencanaSDBulan($costCenter, $spec->id_spec, $bulanInput),
-                    'aktual'  => $this->getAktualSDBulan($costCenter, $spec->id_spec, $bulanInput),
+                    'rencana' => $rencanaSDBulan,
+                    'aktual'  => $aktualSDBulan,
                 ],
                 'total' => [
                     'rencana' => $this->getRencanaTotal($costCenter, $spec->id_spec),
@@ -316,9 +298,6 @@ class BiayaProyekController extends Controller
         return ['items' => $result, 'totals' => $this->calculateTotals($result)];
     }
 
-    /**
-     * Sum totals across all items
-     */
     private function calculateTotals($items)
     {
         return [

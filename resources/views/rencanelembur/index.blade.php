@@ -48,7 +48,7 @@
                 </div>
             </div>
         </div>
-        <!-- Nama Proyek (full width below Cost Centre) -->
+        <!-- Nama Proyek -->
         <div class="row mt-2 align-items-center">
             <div class="col-md-12">
                 <div class="d-flex align-items-center gap-2">
@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <!-- Search Bar (hidden until Cost Centre is selected) -->
+    <!-- Search Bar -->
     <div class="mt-3" id="searchBarSection" style="display: none;">
         <div class="input-group" style="max-width: 400px;">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
@@ -105,7 +105,7 @@
         </div>
     </div>
 
-    <!-- Pagination Controls (same as datapeluang) -->
+    <!-- Pagination Controls -->
     <div class="pagination-controls d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mt-3 gap-2" id="paginationControls" style="display: none !important;">
         <div class="pagination-info">
             <span class="text-muted medium">
@@ -313,6 +313,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     window.routes = {
+        getInitialData: "{{ route('rencanelembur.getInitialData') }}",
         getCostCenter: "{{ route('rencanelembur.getCostCenter') }}",
         getData: "{{ route('rencanelembur.getData') }}",
         getNextBulan: "{{ route('rencanelembur.getNextBulan') }}",
