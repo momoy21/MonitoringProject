@@ -97,19 +97,19 @@
                         </th>
                     </tr>
                     <tr>
-                        <th rowspan="2" class="text-center align-middle fw-bold" style="width: 50px;">No</th>
-                        <th rowspan="2" class="text-center align-middle fw-bold">Keterangan</th>
+                        <th rowspan="2" class="text-center align-middle fw-bold" style="width: 40px;">No</th>
+                        <th rowspan="2" class="text-center align-middle fw-bold" style="min-width: 200px;">Keterangan</th>
                         <th colspan="2" class="text-center fw-bold" id="bulanAwalHeader">Periode Awal</th>
                         <th colspan="2" class="text-center fw-bold" id="sdBulanIniHeader">S.D. Periode Saat Ini</th>
                         <th colspan="2" class="text-center fw-bold">Total</th>
                     </tr>
                     <tr>
-                        <th class="text-center fw-bold">Rencana</th>
-                        <th class="text-center fw-bold">Aktual</th>
-                        <th class="text-center fw-bold">Rencana</th>
-                        <th class="text-center fw-bold">Aktual</th>
-                        <th class="text-center fw-bold">Rencana</th>
-                        <th class="text-center fw-bold">Aktual</th>
+                        <th class="text-center fw-bold" style="width: 140px; white-space: nowrap;">Rencana</th>
+                        <th class="text-center fw-bold" style="width: 140px; white-space: nowrap;">Aktual</th>
+                        <th class="text-center fw-bold" style="width: 140px; white-space: nowrap;">Rencana</th>
+                        <th class="text-center fw-bold" style="width: 140px; white-space: nowrap;">Aktual</th>
+                        <th class="text-center fw-bold" style="width: 140px; white-space: nowrap;">Rencana</th>
+                        <th class="text-center fw-bold" style="width: 140px; white-space: nowrap;">Aktual</th>
                     </tr>
                 </thead>
                 <tbody id="hppTableBody">
@@ -125,6 +125,58 @@
                 <tfoot class="table-secondary fw-bold" id="hppTableFoot">
                 </tfoot>
             </table>
+        </div>
+    </div>
+
+    <!-- HPP Detail Modal -->
+    <div class="modal fade" id="hppDetailModal" tabindex="-1" aria-labelledby="hppDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="hppDetailModalLabel">
+                        <i class="bx bx-detail me-2"></i>Detail Transaksi HPP
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="p-3 border-bottom" style="background: #f8f9fa;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <small class="text-muted fw-semibold">Spesifikasi</small>
+                                <p class="fw-bold mb-0 text-primary" id="detailSpecName">-</p>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted fw-semibold">Tipe</small>
+                                <p class="fw-bold mb-0" id="detailType" style="color: #212529;">-</p>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted fw-semibold">Periode</small>
+                                <p class="fw-bold mb-0" id="detailScope" style="color: #212529;">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 60vh;">
+                        <table class="table table-striped table-hover mb-0" id="hppDetailTable">
+                            <thead class="table-primary" style="position: sticky; top: 0; z-index: 5;">
+                                <tr id="hppDetailTableHead">
+                                </tr>
+                            </thead>
+                            <tbody id="hppDetailTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">Loading...</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-secondary fw-bold" id="hppDetailTableFoot">
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bx bx-x me-1"></i>Tutup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -175,6 +227,55 @@
         color: #fff !important;
         box-shadow: none;
     }
+    /* Double-click cells: prevent text selection & add hover effect */
+    .hpp-detail-cell {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        transition: background-color 0.2s ease;
+        position: relative;
+    }
+    .hpp-detail-cell:hover {
+        background-color: rgba(0, 0, 0, 0.12) !important;
+        cursor: pointer;
+    }
+    .hpp-detail-cell:active {
+        background-color: rgba(0, 0, 0, 0.2) !important;
+    }
+    /* Flash animation on double-click */
+    @keyframes hppCellFlash {
+        0%   { background-color: rgba(0, 0, 0, 0.25); }
+        100% { background-color: transparent; }
+    }
+    .hpp-cell-flash {
+        animation: hppCellFlash 0.4s ease-out;
+    }
+    /* Drawer detail table column sizing */
+    #hppDetailTable th,
+    #hppDetailTable td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    #hppDetailTable td.detail-keterangan {
+        white-space: normal;
+        word-break: break-word;
+    }
+    #hppDetailTable .detail-no {
+        width: 35px;
+        text-align: center;
+    }
+    #hppDetailTable .detail-cc {
+        width: 100px;
+    }
+    #hppDetailTable .detail-keterangan {
+        min-width: 280px;
+    }
+    #hppDetailTable .detail-nilai {
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        width: 110px;
+    }
 </style>
 @endpush
 
@@ -183,7 +284,8 @@
 <script>
     window.routes = {
         getCostCenter: "{{ route('biayaproyek.getCostCenter') }}",
-        getData: "{{ route('biayaproyek.getData') }}"
+        getData: "{{ route('biayaproyek.getData') }}",
+        getHppDetail: "{{ route('biayaproyek.getHppDetail') }}"
     };
     window.csrfToken = "{{ csrf_token() }}";
 </script>

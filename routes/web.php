@@ -443,6 +443,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             // Get Biaya Proyek data (Pendapatan & HPP)
             Route::get('/data', [BiayaProyekController::class, 'getBiayaProyekData'])->name('getData');
+
+            // Get HPP Detail (double-click modal)
+            Route::get('/hpp-detail', [BiayaProyekController::class, 'getHPPDetail'])->name('getHppDetail');
         });
 
         // ---------------------------------------------------------------
