@@ -377,8 +377,8 @@
                                 <label for="keterangan" class="form-label">Keterangan <span class="text-danger">*</span></label>
                                 <select name="keterangan" id="keterangan" class="form-select @error('keterangan') is-invalid @enderror" required>
                                     <option value="">Pilih Keterangan</option>
-                                    <option value="1" {{ old('keterangan', '1') == '1' ? 'selected' : '' }}>Kontrak Induk</option>
-                                    <option value="2" {{ old('keterangan', '1') == '2' ? 'selected' : '' }}>Bukan Kontrak Induk</option>
+                                    <option value="1" {{ old('keterangan', '2') == '1' ? 'selected' : '' }}>Kontrak Induk</option>
+                                    <option value="2" {{ old('keterangan', '2') == '2' ? 'selected' : '' }}>Bukan Kontrak Induk</option>
                                 </select>
                                 @error('keterangan')
                                     <div class="invalid-feedback">{{ $message }}</div>

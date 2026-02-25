@@ -30,6 +30,7 @@ use App\Http\Controllers\PenugasanController;
 use App\Http\Controllers\BiayaProyekController;
 use App\Http\Controllers\KuotaLemburController;
 use App\Http\Controllers\LemburInterfaceController;
+use App\Http\Controllers\DashboardAnalisisController;
 
 
 /*
@@ -463,6 +464,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/destroy', [KuotaLemburController::class, 'destroy'])->name('destroy');
             Route::post('/upload', [KuotaLemburController::class, 'upload'])->name('upload');
             Route::get('/download-template', [KuotaLemburController::class, 'downloadTemplate'])->name('downloadTemplate');
+        });
+        // ---------------------------------------------------------------
+        // Dashboard Analisis Proyek (Deviasi Biaya & Margin Proyek)
+        // ---------------------------------------------------------------
+        Route::prefix('dashboard-analisis')->name('dashboardanalisis.')->group(function () {
+            Route::get('/', [DashboardAnalisisController::class, 'index'])->name('index');
+            Route::get('/deviasi-biaya', [DashboardAnalisisController::class, 'getDeviasiBiayaData'])->name('deviasi-biaya');
+            Route::get('/margin-proyek', [DashboardAnalisisController::class, 'getMarginProyekData'])->name('margin-proyek');
+            Route::get('/suggestions', [DashboardAnalisisController::class, 'getSuggestions'])->name('suggestions');
         });
     });
 });

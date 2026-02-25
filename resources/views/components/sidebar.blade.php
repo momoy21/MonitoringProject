@@ -219,5 +219,13 @@
                 <div>Laporan Hasil Pleno RAB</div>
             </a>
         </li>
+
+        <!-- Dashboard Analisis Biaya -->
+        <li class="menu-item {{ request()->routeIs('dashboardanalisis.*') ? 'active' : '' }}">
+            <a href="{{ route('dashboardanalisis.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-analyse"></i>
+                <div>Dashboard Analisis Biaya</div>
+            </a>
+        </li>
     </ul>
 </aside>
