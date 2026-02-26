@@ -9,6 +9,15 @@
     @endphp
 
     <style>
+        /* ── Row Blink Animation ── */
+        @keyframes rowBlink {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(59, 125, 221, 0.25); }
+        }
+        .row-highlight {
+            animation: rowBlink 0.5s ease-in-out 6;
+        }
+
         /* ── Header ── */
         .da-header {
             background: linear-gradient(135deg, #3b7ddd 0%, #5dade2 100%);
@@ -262,10 +271,6 @@
         <div class="chart-toolbar">
             <div class="section-title" id="chartTitle">Deviasi Biaya per Project</div>
             <div style="display:flex;gap:8px;align-items:center;">
-                <div class="search-wrapper">
-                    <input type="text" class="chart-search" id="chartSearch" placeholder="Search..." autocomplete="off">
-                    <div class="autocomplete-dropdown" id="acDropdown"></div>
-                </div>
                 <button class="btn btn-sm btn-outline-secondary" onclick="toggleChartOrientation()" title="Toggle orientation">
                     <i class="bx bx-rotate-right"></i>
                 </button>
@@ -278,6 +283,10 @@
             </div>
         </div>
         <div class="chart-legend" id="chartLegend"></div>
+        <div class="da-pagination">
+            <div id="chartPaginationInfo">-</div>
+            <div class="page-btns" id="chartPaginationBtns"></div>
+        </div>
     </div>
 
     {{-- ═══════════ DETAIL TABLE ═══════════ --}}
@@ -285,11 +294,14 @@
         <div class="table-toolbar">
             <div class="section-title">Detail Proyek</div>
             <div style="display:flex;gap:8px;align-items:center;">
+                <div class="search-wrapper">
+                    <input type="text" class="chart-search" id="chartSearch" placeholder="Search..." autocomplete="off">
+                    <div class="autocomplete-dropdown" id="acDropdown"></div>
+                </div>
                 <div class="btn-group">
                     <button class="btn btn-outline-secondary" onclick="exportCSV()" title="Export CSV"><i class="bx bx-download"></i></button>
                     <button class="btn btn-outline-secondary" onclick="window.print()" title="Print"><i class="bx bx-printer"></i></button>
                 </div>
-                <span class="badge bg-label-primary" id="menuLabel">≡ Menu</span>
             </div>
         </div>
         <div class="table-responsive">
@@ -306,7 +318,9 @@
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script>
+    Chart.register(ChartDataLabels);
     (function() {
         // ── State ──
         let currentDashboard = 'deviasi';
@@ -448,15 +462,34 @@
         // ── Format helpers ──
         function fmtCurrency(val) {
             if (val === null || val === undefined) return '-';
+            val = Number(val);
+            if (isNaN(val)) return '-';
             const abs = Math.abs(val);
             let formatted;
-            if (abs >= 1e9) formatted = (val / 1e9).toFixed(2) + 'B';
-            else if (abs >= 1e6) formatted = (val / 1e6).toFixed(2) + 'M';
+            if (abs >= 1e9) formatted = (val / 1e9).toFixed(2) + 'M';
+            else if (abs >= 1e6) formatted = (val / 1e6).toFixed(2) + 'JT';
             else if (abs >= 1e3) formatted = (val / 1e3).toFixed(1) + 'K';
             else formatted = val.toFixed(0);
             return formatted;
         }
-        function fmtPersen(val) { return (val ?? 0).toFixed(1) + '%'; }
+        function fmtCurrencyKPI(val) {
+            if (val === null || val === undefined) return '-';
+            val = Number(val);
+            if (isNaN(val)) return '-';
+            const abs = Math.abs(val);
+            if (abs >= 1e9) return (val / 1e9).toFixed(2);
+            if (abs >= 1e6) return (val / 1e6).toFixed(2);
+            if (abs >= 1e3) return (val / 1e3).toFixed(1);
+            return val.toFixed(0);
+        }
+        function fmtPersen(val) { return (Number(val) || 0).toFixed(1) + '%'; }
+        function fmtRibuan(val) {
+            if (val === null || val === undefined) return '-';
+            val = Number(val);
+            if (isNaN(val)) return '-';
+            var ribuan = Math.round(val / 1000);
+            return ribuan.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
 
         // ── Update Header ──
         function updateHeader() {
@@ -467,9 +500,9 @@
         // ── Render Deviasi Biaya ──
         function renderDeviasi(data) {
             // KPI
-            setKPI(1, 'bx-buildings', 'blue',  'Total Nilai Proyek',  fmtCurrency(data.kpi.total_nilai_proyek));
-            setKPI(2, 'bx-dollar-circle', 'green', 'Total Nilai Aktual',  fmtCurrency(data.kpi.total_aktual_biaya));
-            setKPI(3, 'bx-trending-up', 'orange', 'Total Deviasi', fmtCurrency(data.kpi.total_deviasi));
+            setKPI(1, 'bx-buildings', 'blue',  'Total Nilai Proyek (Miliar)',  fmtCurrencyKPI(data.kpi.total_nilai_proyek));
+            setKPI(2, 'bx-dollar-circle', 'green', 'Total Nilai Aktual (Miliar)',  fmtCurrencyKPI(data.kpi.total_aktual_biaya));
+            setKPI(3, 'bx-trending-up', 'orange', 'Total Deviasi (Miliar)', fmtCurrencyKPI(data.kpi.total_deviasi));
             setKPI(4, 'bx-error-alt', 'red', 'Project Overbudget', data.kpi.project_overbudget);
 
             // Chart
@@ -524,11 +557,24 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: { mode: 'index', axis: 'y', intersect: false },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: ctx => `Deviasi: ${fmtCurrency(ctx.raw)}`
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'center',
+                            align: 'center',
+                            color: '#fff',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: function(value) { return fmtCurrency(value); },
+                            display: function(ctx) {
+                                var data = ctx.dataset.data;
+                                var maxAbs = Math.max.apply(null, data.map(function(v){ return Math.abs(Number(v) || 0); }));
+                                return maxAbs > 0 && Math.abs(Number(ctx.dataset.data[ctx.dataIndex]) || 0) > maxAbs * 0.05;
                             }
                         }
                     },
@@ -538,6 +584,11 @@
                             grid: { color: '#f0f0f0' }
                         },
                         y: { grid: { display: false } }
+                    },
+                    onClick: function(event, elements) {
+                        if (elements.length > 0) {
+                            highlightTableRow(chart.labels[elements[0].index]);
+                        }
                     }
                 }
             });
@@ -572,11 +623,24 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: { mode: 'index', axis: 'y', intersect: false },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: ctx => `Deviasi: ${fmtPersen(ctx.raw)}`
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'center',
+                            align: 'center',
+                            color: '#fff',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: function(value) { return fmtPersen(value); },
+                            display: function(ctx) {
+                                var data = ctx.dataset.data;
+                                var maxAbs = Math.max.apply(null, data.map(function(v){ return Math.abs(Number(v) || 0); }));
+                                return maxAbs > 0 && Math.abs(Number(ctx.dataset.data[ctx.dataIndex]) || 0) > maxAbs * 0.05;
                             }
                         }
                     },
@@ -586,6 +650,11 @@
                             grid: { color: '#f0f0f0' }
                         },
                         y: { grid: { display: false } }
+                    },
+                    onClick: function(event, elements) {
+                        if (elements.length > 0) {
+                            highlightTableRow(chart.labels[elements[0].index]);
+                        }
                     }
                 }
             });
@@ -596,22 +665,66 @@
             `;
         }
 
+        // ── Highlight Table Row on Chart Click ──
+        function highlightTableRow(costCenter) {
+            var tableSection = document.querySelector('.table-section');
+            if (tableSection) {
+                tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            setTimeout(function() {
+                var rows = document.querySelectorAll('#tableBody tr[data-cc]');
+                rows.forEach(function(row) {
+                    row.classList.remove('row-highlight');
+                });
+                var target = document.querySelector('#tableBody tr[data-cc="' + costCenter + '"]');
+                if (target) {
+                    target.classList.add('row-highlight');
+                    setTimeout(function() {
+                        target.classList.remove('row-highlight');
+                    }, 3000);
+                }
+            }, 400);
+        }
+
+        // ── Highlight Chart Bar on Table Click ──
+        function highlightChartBar(costCenter) {
+            var chartSection = document.querySelector('.chart-section');
+            if (chartSection) {
+                chartSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            if (!mainChart) return;
+            var labels = mainChart.data.labels;
+            var idx = -1;
+            for (var i = 0; i < labels.length; i++) {
+                if (labels[i] === costCenter) { idx = i; break; }
+            }
+            if (idx === -1) return;
+            var ds = mainChart.data.datasets[0];
+            var origColor = ds.backgroundColor[idx];
+            ds.backgroundColor[idx] = '#ffc107';
+            mainChart.update();
+            setTimeout(function() {
+                ds.backgroundColor[idx] = origColor;
+                mainChart.update();
+            }, 3000);
+        }
+
         // ── Deviasi Table ──
         function renderDeviasiTable(table) {
             const cols = [
                 { key: 'cost_center', label: 'Cost Center' },
                 { key: 'namaproject', label: 'Nama Proyek' },
-                { key: 'nilai_proyek', label: 'Nilai Proyek' },
-                { key: 'total_aktual_biaya', label: 'Nilai Aktual' },
-                { key: 'deviasi_biaya', label: 'Deviasi Biaya' },
+                { key: 'nilai_proyek', label: 'Nilai Proyek (Ribuan)' },
+                { key: 'total_aktual_biaya', label: 'Nilai Aktual (Ribuan)' },
+                { key: 'deviasi_biaya', label: 'Deviasi Biaya (Ribuan)' },
                 { key: 'margin_persen', label: 'Margin (%)' },
             ];
             renderTable(cols, table, row => `
                 <td>${row.cost_center}</td>
                 <td>${row.namaproject || '-'}</td>
-                <td>${fmtCurrency(row.nilai_proyek)}</td>
-                <td>${fmtCurrency(row.total_aktual_biaya)}</td>
-                <td class="${row.deviasi_biaya >= 0 ? 'text-positive' : 'text-negative'}">${row.deviasi_biaya >= 0 ? '+' : ''}${fmtCurrency(row.deviasi_biaya)}</td>
+                <td>${fmtRibuan(row.nilai_proyek)}</td>
+                <td>${fmtRibuan(row.total_aktual_biaya)}</td>
+                <td class="${row.deviasi_biaya >= 0 ? 'text-positive' : 'text-negative'}">${row.deviasi_biaya >= 0 ? '+' : ''}${fmtRibuan(row.deviasi_biaya)}</td>
                 <td>${fmtPersen(row.margin_persen)}</td>
             `);
         }
@@ -667,7 +780,13 @@
             if (!tableData.data || tableData.data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${cols.length}" class="text-center py-3" style="color:#8592a3;">Tidak ada data</td></tr>`;
             } else {
-                tbody.innerHTML = tableData.data.map(row => `<tr>${rowRenderer(row)}</tr>`).join('');
+                tbody.innerHTML = tableData.data.map(row => `<tr data-cc="${row.cost_center}" style="cursor:pointer">${rowRenderer(row)}</tr>`).join('');
+                // Row click -> scroll to chart
+                tbody.querySelectorAll('tr[data-cc]').forEach(function(tr) {
+                    tr.addEventListener('click', function() {
+                        highlightChartBar(this.dataset.cc);
+                    });
+                });
             }
 
             // Pagination
@@ -676,11 +795,9 @@
 
         // ── Pagination ──
         function renderPagination(t) {
-            const info = document.getElementById('paginationInfo');
-            const btns = document.getElementById('paginationBtns');
             const start = (t.current_page - 1) * t.per_page + 1;
             const end = Math.min(t.current_page * t.per_page, t.total);
-            info.textContent = t.total > 0 ? `${start}-${end} of ${t.total} tutz/ion` : 'No data';
+            const infoText = t.total > 0 ? `${start}-${end} of ${t.total}` : 'No data';
 
             let html = `<button ${t.current_page <= 1 ? 'disabled' : ''} onclick="window._daGoPage(${t.current_page - 1})">‹ Previous</button>`;
             
@@ -720,7 +837,14 @@
             }
             
             html += `<button ${t.current_page >= t.last_page ? 'disabled' : ''} onclick="window._daGoPage(${t.current_page + 1})">Next ›</button>`;
-            btns.innerHTML = html;
+
+            // Update table pagination
+            document.getElementById('paginationInfo').textContent = infoText;
+            document.getElementById('paginationBtns').innerHTML = html;
+
+            // Update chart pagination (same data)
+            document.getElementById('chartPaginationInfo').textContent = infoText;
+            document.getElementById('chartPaginationBtns').innerHTML = html;
         }
 
         // ── Public API ──

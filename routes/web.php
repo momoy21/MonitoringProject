@@ -90,24 +90,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grouping route untuk Penugasan
     Route::prefix('penugasan')->name('penugasan.')->group(function () {
-
-        // Route Utama (Daftar Penugasan)
         Route::get('/', [PenugasanController::class, 'index'])->name('index');
-
-        // Route Tambah Data
-        Route::get('/create', [PenugasanController::class, 'create'])->name('create');
+        Route::get('/initial-data', [PenugasanController::class, 'getInitialData'])->name('getInitialData');
+        Route::get('/headers', [PenugasanController::class, 'getHeaders'])->name('getHeaders');
+        Route::post('/store-header', [PenugasanController::class, 'storeHeader'])->name('storeHeader');
+        Route::get('/cost-center', [PenugasanController::class, 'getCostCenterDropdown'])->name('getCostCenter');
+        Route::get('/data', [PenugasanController::class, 'getData'])->name('getData');
+        Route::get('/karyawan', [PenugasanController::class, 'getKaryawanDropdown'])->name('getKaryawan');
+        Route::get('/generate-id', [PenugasanController::class, 'generateId'])->name('generateId');
         Route::post('/store', [PenugasanController::class, 'store'])->name('store');
-
-        // Route Edit & Update
-        Route::get('/{id}/edit', [PenugasanController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
-
-        // Route Fitur Tambahan sesuai BPS
-        Route::get('/template', [PenugasanController::class, 'downloadTemplate'])->name('template');
+        Route::put('/update', [PenugasanController::class, 'update'])->name('update');
+        Route::delete('/destroy', [PenugasanController::class, 'destroy'])->name('destroy');
         Route::post('/upload', [PenugasanController::class, 'uploadExcel'])->name('upload');
-
-        // Route AJAX (Jika kamu ingin mengambil data via JavaScript/Fetch)
-        Route::get('/get-proyek/{costcenter}', [PenugasanController::class, 'getProyek'])->name('getProyek');
+        Route::get('/download-template', [PenugasanController::class, 'downloadTemplate'])->name('downloadTemplate');
     });
 
     // ===================================================================

@@ -8,10 +8,9 @@ class Penugasan extends Model
 {
     protected $table = 'penugasan';
 
-    // Gunakan IDPenugasan sebagai primary key
-    protected $primaryKey = 'IDPenugasan';
-    public $incrementing = false; // karena bukan auto increment
-    protected $keyType = 'string'; // ID string, bukan integer
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'IDPenugasan',
@@ -28,9 +27,17 @@ class Penugasan extends Model
         'Keterangan'
     ];
 
+    protected $casts = [
+        'Periodeawal'  => 'date',
+        'Periodeakhir' => 'date',
+        'Bobot'        => 'decimal:2',
+        'created_at'   => 'datetime',
+        'updated_at'   => 'datetime',
+    ];
+
     public function karyawan()
     {
-        return $this->belongsTo(Karyawan::class, 'NIK', 'NIK');
+        return $this->belongsTo(Karyawan::class, 'NIK', 'nik');
     }
 
     public function proyek()
