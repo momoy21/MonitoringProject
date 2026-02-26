@@ -483,6 +483,13 @@
             return val.toFixed(0);
         }
         function fmtPersen(val) { return (Number(val) || 0).toFixed(1) + '%'; }
+        function fmtRibuan(val) {
+            if (val === null || val === undefined) return '-';
+            val = Number(val);
+            if (isNaN(val)) return '-';
+            var ribuan = Math.round(val / 1000);
+            return ribuan.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
 
         // ── Update Header ──
         function updateHeader() {
@@ -707,17 +714,17 @@
             const cols = [
                 { key: 'cost_center', label: 'Cost Center' },
                 { key: 'namaproject', label: 'Nama Proyek' },
-                { key: 'nilai_proyek', label: 'Nilai Proyek' },
-                { key: 'total_aktual_biaya', label: 'Nilai Aktual' },
-                { key: 'deviasi_biaya', label: 'Deviasi Biaya' },
+                { key: 'nilai_proyek', label: 'Nilai Proyek (Ribuan)' },
+                { key: 'total_aktual_biaya', label: 'Nilai Aktual (Ribuan)' },
+                { key: 'deviasi_biaya', label: 'Deviasi Biaya (Ribuan)' },
                 { key: 'margin_persen', label: 'Margin (%)' },
             ];
             renderTable(cols, table, row => `
                 <td>${row.cost_center}</td>
                 <td>${row.namaproject || '-'}</td>
-                <td>${fmtCurrency(row.nilai_proyek)}</td>
-                <td>${fmtCurrency(row.total_aktual_biaya)}</td>
-                <td class="${row.deviasi_biaya >= 0 ? 'text-positive' : 'text-negative'}">${row.deviasi_biaya >= 0 ? '+' : ''}${fmtCurrency(row.deviasi_biaya)}</td>
+                <td>${fmtRibuan(row.nilai_proyek)}</td>
+                <td>${fmtRibuan(row.total_aktual_biaya)}</td>
+                <td class="${row.deviasi_biaya >= 0 ? 'text-positive' : 'text-negative'}">${row.deviasi_biaya >= 0 ? '+' : ''}${fmtRibuan(row.deviasi_biaya)}</td>
                 <td>${fmtPersen(row.margin_persen)}</td>
             `);
         }
