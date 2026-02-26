@@ -12,7 +12,7 @@ function swalFront(title, text, icon) {
 }
 
 /* ───────── Global state ───────── */
-let currentHeaderData = null;   
+let currentHeaderData = null;
 let currentPage = 1;
 let currentPerPage = 10;
 let currentSearch = '';
@@ -118,6 +118,7 @@ function onHeaderChange() {
         currentHeaderData = null;
         hideHeaderInfo();
         showEmptyState();
+        $('#paginationControls').hide();
     }
     $('#btnGenerateId').prop('disabled', false);
 }
@@ -128,7 +129,8 @@ function showHeaderInfo() {
     $('#info_costcenter').val(currentHeaderData.cost_center);
     $('#info_namaproject').val(currentHeaderData.namaproject);
     $('#headerInfoSection').show();
-    $('#searchBarSection').show();
+    $('#searchBarSection').removeClass('d-none').addClass('d-flex');
+    $('#tableSection').removeClass('d-none');
 }
 
 function hideHeaderInfo() {
@@ -136,7 +138,9 @@ function hideHeaderInfo() {
     $('#info_costcenter').val('');
     $('#info_namaproject').val('');
     $('#headerInfoSection').hide();
-    $('#searchBarSection').hide();
+    $('#searchBarSection').removeClass('d-flex').addClass('d-none');
+    $('#tableSection').addClass('d-none');
+    $('#paginationControls').hide();
 }
 
 /* ═══════════════════════════════════════════
@@ -464,6 +468,10 @@ function bindEvents() {
 
     // Upload
     $('#btnUpload').on('click', function () {
+        if (!currentHeaderData) {
+            Swal.fire('Peringatan', 'Pilih ID Penugasan terlebih dahulu', 'warning');
+            return;
+        }
         $('#uploadFile').val('');
         $('#uploadModal').modal('show');
     });
@@ -471,6 +479,10 @@ function bindEvents() {
 
     // Download template
     $('#btnDownloadTemplate, #btnDownloadTemplateModal').on('click', function () {
+        if (!currentHeaderData) {
+            Swal.fire('Peringatan', 'Pilih ID Penugasan terlebih dahulu', 'warning');
+            return;
+        }
         window.location.href = window.routes.downloadTemplate;
     });
 
@@ -569,7 +581,7 @@ function renderTable(data) {
             '<td class="text-center">' + formatDate(item.Periodeawal) + '</td>' +
             '<td class="text-center">' + formatDate(item.Periodeakhir) + '</td>' +
             '<td class="text-center">' + escapeHtml(item.Jabatan || '-') + '</td>' +
-            '<td class="text-center">' + (item.Bobot || 0) + '%</td>' +
+            '<td class="text-center">' + formatBobot(item.Bobot) + '</td>' +
             '<td class="text-center">' + statusBadge + '</td>' +
             '<td class="text-center">' +
             '<div class="dropdown position-static">' +
@@ -653,7 +665,7 @@ function openAddModal() {
     $('#form_jabatan').val('');
     $('#form_periode_awal').val('');
     $('#form_periode_akhir').val('');
-    $('#form_bobot').val(0);
+    $('#form_bobot').val('');
     $('#form_status').val('A');
 
     // Show Simpan button
@@ -748,11 +760,16 @@ function viewDetail(id) {
  * Enable/disable all form fields (for view mode toggle)
  */
 function setFormFieldsEnabled(enabled) {
-    var fields = ['#form_jabatan', '#form_periode_awal', '#form_periode_akhir', '#form_bobot', '#form_status'];
+    var fields = ['#form_periode_awal', '#form_periode_akhir', '#form_bobot', '#form_status'];
     fields.forEach(function (sel) {
         $(sel).prop('disabled', !enabled);
     });
-    // NIK is always disabled in edit and view; enabled only in add
+    $('#form_jabatan').prop('readonly', !enabled).prop('disabled', false);
+    if (!enabled) {
+        $('#form_jabatan').css('background-color', '#e9ecef');
+    } else {
+        $('#form_jabatan').css('background-color', '');
+    }
     $('#form_nik').prop('disabled', !enabled);
 }
 
@@ -766,7 +783,7 @@ function saveData() {
     var jabatan = $('#form_jabatan').val();
     var periodeAwal = $('#form_periode_awal').val();
     var periodeAkhir = $('#form_periode_akhir').val();
-    var bobot = parseInt($('#form_bobot').val()) || 0;
+    var bobot = parseFloat($('#form_bobot').val()) || 0;
     var status = $('#form_status').val();
 
     if (!costCenter || !nik || !jabatan || !periodeAwal || !periodeAkhir) {
@@ -777,8 +794,12 @@ function saveData() {
         swalFront('Peringatan', 'Periode tidak valid', 'warning');
         return;
     }
-    if (bobot < 0 || bobot > 100) {
-        swalFront('Peringatan', 'Bobot harus antara 0 - 100', 'warning');
+    if (bobot <= 0) {
+        swalFront('Peringatan', 'Bobot tidak boleh 0. Minimal 0.01', 'warning');
+        return;
+    }
+    if (bobot > 100) {
+        swalFront('Peringatan', 'Bobot tidak boleh lebih dari 100', 'warning');
         return;
     }
 
@@ -834,14 +855,14 @@ function saveData() {
                     icon: 'warning',
                     title: 'Data Duplikat Ditemukan',
                     html: '<div style="text-align:left;font-size:13px;">' +
-                        '<p>Sudah ada data penugasan dengan <b>Cost Centre</b>, <b>NIK</b>, dan <b>Periode Awal</b> yang sama:</p>' +
+                        '<p>Sudah ada data penugasan dengan <b>Cost Centre</b>, <b>NIK</b>, <b>Periode</b>, dan <b>Jabatan</b> yang sama:</p>' +
                         '<table style="width:100%;font-size:12px;border-collapse:collapse;">' +
                         '<tr style="border-bottom:1px solid #dee2e6;"><td style="padding:4px 8px;color:#6c757d;">NIK</td><td style="padding:4px 8px;font-weight:600;">' + escapeHtml(ex.nik) + ' - ' + escapeHtml(ex.nama) + '</td></tr>' +
-                        '<tr style="border-bottom:1px solid #dee2e6;"><td style="padding:4px 8px;color:#6c757d;">Jabatan Lama</td><td style="padding:4px 8px;">' + escapeHtml(ex.jabatan) + '</td></tr>' +
+                        '<tr style="border-bottom:1px solid #dee2e6;"><td style="padding:4px 8px;color:#6c757d;">Jabatan</td><td style="padding:4px 8px;">' + escapeHtml(ex.jabatan) + '</td></tr>' +
                         '<tr style="border-bottom:1px solid #dee2e6;"><td style="padding:4px 8px;color:#6c757d;">Periode</td><td style="padding:4px 8px;">' + formatDate(ex.periode_awal) + ' s/d ' + formatDate(ex.periode_akhir) + '</td></tr>' +
-                        '<tr><td style="padding:4px 8px;color:#6c757d;">Bobot</td><td style="padding:4px 8px;">' + (ex.bobot || 0) + '%</td></tr>' +
+                        '<tr><td style="padding:4px 8px;color:#6c757d;">Bobot Lama</td><td style="padding:4px 8px;">' + formatBobot(ex.bobot) + '</td></tr>' +
                         '</table>' +
-                        '<p class="mt-2 mb-0">Apakah Anda ingin <b>mengganti</b> data lama dengan data baru?</p></div>',
+                        '<p class="mt-2 mb-0">Apakah Anda ingin <b>mengganti bobot</b> data lama dengan data baru?</p></div>',
                     showCancelButton: true,
                     confirmButtonText: '<i class="bx bx-check"></i> Ya, Ganti',
                     cancelButtonText: '<i class="bx bx-x"></i> Batal',
@@ -873,6 +894,24 @@ function saveData() {
                             complete: resetSimpanButton
                         });
                     }
+                });
+                return;
+            }
+            // Handle overlap detection (422 + overlap flag)
+            if (xhr.status === 422 && respData && respData.overlap) {
+                var ov = respData.existing || {};
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Periode Bersinggungan',
+                    html: '<div style="text-align:left;font-size:13px;">' +
+                        '<p>Sudah ada data dengan <b>NIK</b>, <b>Cost Centre</b>, dan <b>Jabatan</b> yang sama pada periode yang bersinggungan:</p>' +
+                        '<table style="width:100%;font-size:12px;border-collapse:collapse;">' +
+                        '<tr style="border-bottom:1px solid #dee2e6;"><td style="padding:4px 8px;color:#6c757d;">Jabatan</td><td style="padding:4px 8px;font-weight:600;">' + escapeHtml(ov.jabatan) + '</td></tr>' +
+                        '<tr style="border-bottom:1px solid #dee2e6;"><td style="padding:4px 8px;color:#6c757d;">Periode</td><td style="padding:4px 8px;">' + formatDate(ov.periode_awal) + ' s/d ' + formatDate(ov.periode_akhir) + '</td></tr>' +
+                        '<tr><td style="padding:4px 8px;color:#6c757d;">Bobot</td><td style="padding:4px 8px;">' + formatBobot(ov.bobot) + '</td></tr>' +
+                        '</table>' +
+                        '<p class="mt-2 mb-0 text-muted">Gunakan periode yang tidak bersinggungan untuk jabatan ini.</p></div>',
+                    customClass: { container: 'swal-on-top' }
                 });
                 return;
             }
@@ -974,6 +1013,7 @@ function sendUpload(file, confirmReplace) {
     var formData = new FormData();
     formData.append('file', file);
     formData.append('_token', window.csrfToken);
+    formData.append('id_penugasan', currentHeaderData.IDPenugasan);
     if (confirmReplace) formData.append('confirm_replace', '1');
 
     $.ajax({
@@ -986,68 +1026,7 @@ function sendUpload(file, confirmReplace) {
             $('#uploadModal').modal('hide');
             resetUploadButton();
             if (response.success) {
-                // Merge any auto-created headers into Select2
-                if (response.created_headers && response.created_headers.length > 0) {
-                    response.created_headers.forEach(function (h) {
-                        cachedHeaders.unshift(h);
-                    });
-
-                    // Re-init Select2 with updated cache (same pattern as saveHeader)
-                    var $sel = $('#header_select');
-                    $sel.select2('destroy');
-                    $sel.empty().append('<option value=""></option>');
-                    $sel.select2({
-                        theme: 'bootstrap-5',
-                        placeholder: '-- Pilih ID Penugasan --',
-                        allowClear: true,
-                        data: cachedHeaders,
-                        minimumInputLength: 0,
-                    });
-
-                    // Auto-select the first created header if none selected
-                    if (!currentHeaderData) {
-                        var first = response.created_headers[0];
-                        $sel.val(first.id).trigger('change');
-                    } else {
-                        $sel.val(currentHeaderData.IDPenugasan).trigger('change');
-                    }
-
-                    // Show popup listing newly created headers
-                    var headerListHtml = '<div style="text-align:left;font-size:13px;">';
-                    headerListHtml += '<p style="margin-bottom:8px;">' + escapeHtml(response.message) + '</p>';
-                    headerListHtml += '<p>Header baru telah dibuat otomatis untuk Cost Centre yang belum memiliki ID Penugasan:</p>';
-                    headerListHtml += '<table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #dee2e6;border-radius:6px;">';
-                    headerListHtml += '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dee2e6;">';
-                    headerListHtml += '<th style="padding:8px 10px;text-align:left;">Cost Centre</th>';
-                    headerListHtml += '<th style="padding:8px 10px;text-align:left;">ID Penugasan</th>';
-                    headerListHtml += '<th style="padding:8px 10px;text-align:left;">No Surat</th>';
-                    headerListHtml += '</tr></thead><tbody>';
-                    response.created_headers.forEach(function (h, i) {
-                        var bg = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
-                        headerListHtml += '<tr style="background:' + bg + ';border-bottom:1px solid #dee2e6;">';
-                        headerListHtml += '<td style="padding:6px 10px;font-weight:600;">' + escapeHtml(h.cost_center) + '</td>';
-                        headerListHtml += '<td style="padding:6px 10px;color:#0d6efd;">' + escapeHtml(h.IDPenugasan) + '</td>';
-                        headerListHtml += '<td style="padding:6px 10px;">' + escapeHtml(h.NoSurat) + '</td>';
-                        headerListHtml += '</tr>';
-                    });
-                    headerListHtml += '</tbody></table>';
-                    if (response.has_errors && response.errors && response.errors.length > 0) {
-                        headerListHtml += '<div style="max-height:120px;overflow-y:auto;background:#fff3cd;padding:8px 12px;border-radius:4px;margin-top:10px;font-size:12px;">';
-                        response.errors.forEach(function (e) {
-                            headerListHtml += '<div style="margin-bottom:3px;">&#x26A0; ' + escapeHtml(e) + '</div>';
-                        });
-                        headerListHtml += '</div>';
-                    }
-                    headerListHtml += '</div>';
-
-                    Swal.fire({
-                        icon: 'info',
-                        title: response.created_headers.length + ' Header Baru Dibuat',
-                        html: headerListHtml,
-                        width: '560px',
-                        customClass: { container: 'swal-on-top' }
-                    });
-                } else if (response.has_errors && response.errors && response.errors.length > 0) {
+                if (response.has_errors && response.errors && response.errors.length > 0) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Sebagian Data Gagal',
@@ -1101,27 +1080,24 @@ function showDuplicatePreview(data, file) {
     dupHtml += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
     dupHtml += '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dee2e6;position:sticky;top:0;">';
     dupHtml += '<th style="padding:8px 10px;text-align:left;color:#6c757d;">NIK</th>';
-    dupHtml += '<th style="padding:8px 10px;text-align:left;color:#6c757d;">Cost Centre</th>';
-    dupHtml += '<th style="padding:8px 10px;text-align:center;color:#6c757d;">Periode Awal</th>';
-    dupHtml += '<th style="padding:8px 10px;text-align:center;color:#6c757d;">Data Lama</th>';
+    dupHtml += '<th style="padding:8px 10px;text-align:left;color:#6c757d;">Jabatan</th>';
+    dupHtml += '<th style="padding:8px 10px;text-align:center;color:#6c757d;">Periode</th>';
+    dupHtml += '<th style="padding:8px 10px;text-align:center;color:#6c757d;">Bobot Lama</th>';
     dupHtml += '</tr></thead><tbody>';
 
     data.duplicates.forEach(function (dup, i) {
         var bg = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
         dupHtml += '<tr style="background:' + bg + ';border-bottom:1px solid #dee2e6;">' +
             '<td style="padding:8px 10px;"><span style="font-weight:600;color:#0d6efd;">' + escapeHtml(dup.nik) + '</span><br><span style="color:#6c757d;font-size:11px;">' + escapeHtml(dup.nama) + '</span></td>' +
-            '<td style="padding:8px 10px;">' + escapeHtml(dup.cost_center || '-') + '</td>' +
-            '<td style="padding:8px 10px;text-align:center;">' + escapeHtml(dup.periode_awal) + '</td>' +
-            '<td style="padding:8px 10px;text-align:center;font-size:11px;color:#6c757d;">' +
-            'Akhir: ' + escapeHtml(dup.existing_periode_akhir) + '<br>' +
-            'Jabatan: ' + escapeHtml(dup.existing_jabatan) + ' | Bobot: ' + (dup.existing_bobot || 0) + '%' +
-            '</td></tr>';
+            '<td style="padding:8px 10px;">' + escapeHtml(dup.jabatan || '-') + '</td>' +
+            '<td style="padding:8px 10px;text-align:center;font-size:11px;">' + escapeHtml(dup.periode_awal) + '<br>s/d ' + escapeHtml(dup.periode_akhir) + '</td>' +
+            '<td style="padding:8px 10px;text-align:center;">' + formatBobot(dup.existing_bobot) + '</td></tr>';
     });
 
     dupHtml += '</tbody></table></div>';
     dupHtml += '<div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:10px 12px;margin-bottom:12px;">';
     dupHtml += '<span style="color:#198754;"><b>' + data.new_rows + '</b> data baru</span> &nbsp;|&nbsp; ';
-    dupHtml += '<span style="color:#dc3545;"><b>' + data.duplicate_count + '</b> data duplikat akan diganti</span></div>';
+    dupHtml += '<span style="color:#dc3545;"><b>' + data.duplicate_count + '</b> data duplikat (bobot akan diganti)</span></div>';
 
     if (data.errors && data.errors.length > 0) {
         dupHtml += '<div style="max-height:100px;overflow-y:auto;background:#f8d7da;border:1px solid #f5c2c7;padding:8px 12px;border-radius:6px;margin-bottom:10px;font-size:12px;">';
@@ -1215,4 +1191,19 @@ function highlightMatch(text) {
         result = result.replace(new RegExp('(' + escaped + ')', 'gi'), '<span class="search-highlight">$1</span>');
     });
     return result;
+}
+
+/**
+ * Format bobot value for display.
+ * - Whole numbers: "100%"
+ * - Decimals: "33.5%"
+ */
+function formatBobot(value) {
+    var num = parseFloat(value) || 0;
+    if (num % 1 === 0) {
+        return num + '%';
+    }
+    // Show up to 2 decimal places, trim trailing zeros
+    var formatted = num.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+    return formatted + '%';
 }

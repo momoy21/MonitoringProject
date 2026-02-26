@@ -174,14 +174,7 @@ class PenugasanController extends Controller
             ], 422);
         }
 
-        // Validate cost_center exists in HistoryProyek
         $project = HistoryProyek::where('cost_center', $validated['cost_center'])->first();
-        if (!$project) {
-            return response()->json([
-                'success' => false,
-                'message' => "Cost Center '{$validated['cost_center']}' tidak ditemukan di data proyek"
-            ], 422);
-        }
 
         try {
             $header = HeaderPenugasan::create([
@@ -381,7 +374,7 @@ class PenugasanController extends Controller
             'Jabatan'      => 'required|string|max:30',
             'Periodeawal'  => 'required|date',
             'Periodeakhir' => 'required|date',
-            'Bobot'        => 'required|integer|min:0|max:100',
+            'Bobot'        => 'required|numeric|min:0.01|max:100',
             'Status'       => 'required|in:A,N',
             'replace'      => 'nullable|boolean',
         ]);
@@ -413,20 +406,19 @@ class PenugasanController extends Controller
         }
 
         $project = HistoryProyek::where('cost_center', $validated['cost_center'])->first();
-        if (!$project) {
-            return response()->json([
-                'success' => false,
-                'message' => "Cost Center '{$validated['cost_center']}' tidak ditemukan di data proyek"
-            ], 422);
-        }
 
         try {
             DB::beginTransaction();
 
-            // Check duplicate: same cost_center + NIK + Periodeawal
+            $newStart = Carbon::parse($validated['Periodeawal']);
+            $newEnd   = Carbon::parse($validated['Periodeakhir']);
+
+            // 1. Exact duplicate: CC + NIK + Jabatan (ci) + Periodeawal + Periodeakhir
             $existing = Penugasan::where('cost_center', $validated['cost_center'])
                 ->where('NIK', $validated['NIK'])
                 ->whereDate('Periodeawal', $validated['Periodeawal'])
+                ->whereDate('Periodeakhir', $validated['Periodeakhir'])
+                ->whereRaw('LOWER(Jabatan) = ?', [strtolower($validated['Jabatan'])])
                 ->first();
 
             if ($existing) {
@@ -451,21 +443,42 @@ class PenugasanController extends Controller
                     ], 409);
                 }
 
-                // Replace existing record
+                // Replace — only Bobot and Status
                 $existing->update([
-                    'Jabatan'      => $validated['Jabatan'],
-                    'Periodeakhir' => $validated['Periodeakhir'],
-                    'Bobot'        => $validated['Bobot'],
-                    'Status'       => $validated['Status'],
+                    'Bobot'  => $validated['Bobot'],
+                    'Status' => $validated['Status'],
                 ]);
 
                 DB::commit();
-
                 return response()->json([
                     'success' => true,
                     'message' => 'Data penugasan berhasil diganti (replace)',
                     'data'    => $existing,
                 ]);
+            }
+
+            // 2. Overlap check: same CC + NIK + Jabatan (ci) → periods must not overlap
+            $overlap = Penugasan::where('cost_center', $validated['cost_center'])
+                ->where('NIK', $validated['NIK'])
+                ->whereRaw('LOWER(Jabatan) = ?', [strtolower($validated['Jabatan'])])
+                ->whereDate('Periodeawal', '<=', $newEnd)
+                ->whereDate('Periodeakhir', '>=', $newStart)
+                ->first();
+
+            if ($overlap) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'overlap' => true,
+                    'message' => 'Periode bersinggungan dengan data yang sudah ada',
+                    'existing' => [
+                        'jabatan'       => $overlap->Jabatan,
+                        'periode_awal'  => $overlap->Periodeawal ? $overlap->Periodeawal->format('Y-m-d') : null,
+                        'periode_akhir' => $overlap->Periodeakhir ? $overlap->Periodeakhir->format('Y-m-d') : null,
+                        'bobot'         => $overlap->Bobot,
+                        'status'        => $overlap->Status,
+                    ],
+                ], 422);
             }
 
             $norut = Penugasan::where('IDPenugasan', $validated['IDPenugasan'])->max('Norut');
@@ -514,7 +527,7 @@ class PenugasanController extends Controller
             'Jabatan'      => 'required|string|max:30',
             'Periodeawal'  => 'required|date',
             'Periodeakhir' => 'required|date',
-            'Bobot'        => 'required|integer|min:0|max:100',
+            'Bobot'        => 'required|numeric|min:0.01|max:100',
             'Status'       => 'required|in:A,N',
         ]);
 
@@ -529,6 +542,35 @@ class PenugasanController extends Controller
             DB::beginTransaction();
 
             $penugasan = Penugasan::findOrFail($validated['id']);
+
+            $newStart = Carbon::parse($validated['Periodeawal']);
+            $newEnd   = Carbon::parse($validated['Periodeakhir']);
+
+            // Overlap check: same CC + NIK + Jabatan (ci), exclude self
+            $overlap = Penugasan::where('cost_center', $penugasan->cost_center)
+                ->where('NIK', $penugasan->NIK)
+                ->whereRaw('LOWER(Jabatan) = ?', [strtolower($validated['Jabatan'])])
+                ->where('id', '!=', $penugasan->id)
+                ->whereDate('Periodeawal', '<=', $newEnd)
+                ->whereDate('Periodeakhir', '>=', $newStart)
+                ->first();
+
+            if ($overlap) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'overlap' => true,
+                    'message' => 'Periode bersinggungan dengan data yang sudah ada',
+                    'existing' => [
+                        'jabatan'       => $overlap->Jabatan,
+                        'periode_awal'  => $overlap->Periodeawal ? $overlap->Periodeawal->format('Y-m-d') : null,
+                        'periode_akhir' => $overlap->Periodeakhir ? $overlap->Periodeakhir->format('Y-m-d') : null,
+                        'bobot'         => $overlap->Bobot,
+                        'status'        => $overlap->Status,
+                    ],
+                ], 422);
+            }
+
             $penugasan->update([
                 'Jabatan'      => $validated['Jabatan'],
                 'Periodeawal'  => $validated['Periodeawal'],
@@ -588,14 +630,29 @@ class PenugasanController extends Controller
     public function uploadExcel(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+            'file'           => 'required|file|mimes:xlsx,xls,csv|max:5120',
+            'id_penugasan'   => 'required|string|max:10',
         ], [
-            'file.required' => 'File wajib diunggah',
-            'file.mimes'    => 'Format file harus xlsx, xls, atau csv',
-            'file.max'      => 'Ukuran file maksimal 5MB',
+            'file.required'         => 'File wajib diunggah',
+            'file.mimes'            => 'Format file harus xlsx, xls, atau csv',
+            'file.max'              => 'Ukuran file maksimal 5MB',
+            'id_penugasan.required' => 'Pilih ID Penugasan terlebih dahulu',
         ]);
 
+        $idPenugasan    = $request->input('id_penugasan');
         $confirmReplace = $request->boolean('confirm_replace', false);
+
+        // Resolve header
+        $header = HeaderPenugasan::where('IDPenugasan', $idPenugasan)->first();
+        if (!$header) {
+            return response()->json([
+                'success' => false,
+                'message' => "ID Penugasan '{$idPenugasan}' tidak ditemukan",
+            ], 422);
+        }
+        $headerCC     = $header->cost_center;
+        $headerNoSurat = $header->NoSurat;
+        $project       = HistoryProyek::where('cost_center', $headerCC)->first();
 
         try {
             $file        = $request->file('file');
@@ -606,24 +663,20 @@ class PenugasanController extends Controller
             $parsedRows = [];
             $errors     = [];
             $duplicates = [];
+            $overlaps   = [];
 
             foreach ($rows as $index => $row) {
                 if ($index === 1) continue; 
 
-                $costCenter    = trim($row['A'] ?? '');
-                $nik           = trim($row['B'] ?? '');
-                $jabatan       = trim($row['C'] ?? '');
-                $periodeAwalR  = trim($row['D'] ?? '');
-                $periodeAkhirR = trim($row['E'] ?? '');
-                $bobotRaw      = $row['F'] ?? '';
-                $statusRaw     = trim($row['G'] ?? '');
+                $nik           = trim($row['A'] ?? '');
+                $jabatan       = trim($row['B'] ?? '');
+                $periodeAwalR  = trim($row['C'] ?? '');
+                $periodeAkhirR = trim($row['D'] ?? '');
+                $bobotRaw      = $row['E'] ?? '';
+                $statusRaw     = trim($row['F'] ?? '');
 
-                if (empty($costCenter) && empty($nik)) continue;
+                if (empty($nik) && empty($jabatan)) continue;
 
-                if (empty($costCenter)) {
-                    $errors[] = "Baris {$index}: Cost Center wajib diisi";
-                    continue;
-                }
                 if (empty($nik)) {
                     $errors[] = "Baris {$index}: NIK wajib diisi";
                     continue;
@@ -641,18 +694,22 @@ class PenugasanController extends Controller
                     continue;
                 }
 
-                // Validate Bobot (must be numeric 0-100)
+                // Validate Bobot
                 if (!is_numeric($bobotRaw)) {
-                    $errors[] = "Baris {$index}: Bobot harus berupa angka (0-100), ditemukan: '{$bobotRaw}'";
+                    $errors[] = "Baris {$index}: Bobot harus berupa angka (0.01-100), ditemukan: '{$bobotRaw}'";
                     continue;
                 }
-                $bobot = intval($bobotRaw);
-                if ($bobot < 0 || $bobot > 100) {
-                    $errors[] = "Baris {$index}: Bobot harus antara 0-100, ditemukan: {$bobot}";
+                $bobot = round(floatval($bobotRaw), 2);
+                if ($bobot <= 0) {
+                    $errors[] = "Baris {$index}: Bobot tidak boleh 0, ditemukan: {$bobot}";
+                    continue;
+                }
+                if ($bobot > 100) {
+                    $errors[] = "Baris {$index}: Bobot tidak boleh lebih dari 100, ditemukan: {$bobot}";
                     continue;
                 }
 
-                // Validate Status (must be A or N)
+                // Validate Status
                 if (empty($statusRaw) || !in_array(strtoupper($statusRaw), ['A', 'N'])) {
                     $errors[] = "Baris {$index}: Status harus 'A' atau 'N', ditemukan: '{$statusRaw}'";
                     continue;
@@ -677,40 +734,53 @@ class PenugasanController extends Controller
                     continue;
                 }
 
-                $project = HistoryProyek::where('cost_center', $costCenter)->first();
-                if (!$project) {
-                    $errors[] = "Baris {$index}: Cost Center '{$costCenter}' tidak ditemukan";
-                    continue;
-                }
-
                 if (!Karyawan::where('nik', $nik)->exists()) {
                     $errors[] = "Baris {$index}: NIK '{$nik}' tidak ditemukan di data karyawan";
                     continue;
                 }
 
-                // Check duplicate: same cost_center + nik + periode_awal
-                $existing = Penugasan::where('cost_center', $costCenter)
+                // 1. Exact duplicate check
+                $existing = Penugasan::where('cost_center', $headerCC)
                     ->where('NIK', $nik)
                     ->whereDate('Periodeawal', $periodeAwal->format('Y-m-d'))
+                    ->whereDate('Periodeakhir', $periodeAkhir->format('Y-m-d'))
+                    ->whereRaw('LOWER(Jabatan) = ?', [strtolower($jabatan)])
                     ->first();
 
                 if ($existing) {
                     $nama = Karyawan::where('nik', $nik)->value('nama') ?? '-';
                     $duplicates[] = [
-                        'row'          => $index,
-                        'cost_center'  => $costCenter,
-                        'nik'          => $nik,
-                        'nama'         => $nama,
-                        'periode_awal' => $periodeAwal->format('d/m/Y'),
-                        'existing_jabatan'      => $existing->Jabatan,
-                        'existing_periode_akhir' => $existing->Periodeakhir ? $existing->Periodeakhir->format('d/m/Y') : '-',
-                        'existing_bobot'        => $existing->Bobot,
+                        'row'            => $index,
+                        'cost_center'    => $headerCC,
+                        'nik'            => $nik,
+                        'nama'           => $nama,
+                        'jabatan'        => $jabatan,
+                        'periode_awal'   => $periodeAwal->format('d/m/Y'),
+                        'periode_akhir'  => $periodeAkhir->format('d/m/Y'),
+                        'existing_bobot' => $existing->Bobot,
+                        'existing_status' => $existing->Status,
                     ];
+                } else {
+                    // 2. Overlap check: same CC + NIK + Jabatan (ci), period overlaps
+                    $overlapRow = Penugasan::where('cost_center', $headerCC)
+                        ->where('NIK', $nik)
+                        ->whereRaw('LOWER(Jabatan) = ?', [strtolower($jabatan)])
+                        ->whereDate('Periodeawal', '<=', $periodeAkhir->format('Y-m-d'))
+                        ->whereDate('Periodeakhir', '>=', $periodeAwal->format('Y-m-d'))
+                        ->first();
+
+                    if ($overlapRow) {
+                        $nama = Karyawan::where('nik', $nik)->value('nama') ?? '-';
+                        $errors[] = "Baris {$index}: Periode bersinggungan — NIK '{$nik}' jabatan '{$jabatan}' sudah ada periode " .
+                            ($overlapRow->Periodeawal ? $overlapRow->Periodeawal->format('d/m/Y') : '?') . ' s/d ' .
+                            ($overlapRow->Periodeakhir ? $overlapRow->Periodeakhir->format('d/m/Y') : '?');
+                        continue;
+                    }
                 }
 
                 $parsedRows[] = [
                     'index'         => $index,
-                    'cost_center'   => $costCenter,
+                    'cost_center'   => $headerCC,
                     'nik'           => $nik,
                     'jabatan'       => $jabatan,
                     'periode_awal'  => $periodeAwal,
@@ -737,82 +807,25 @@ class PenugasanController extends Controller
                 ], 409);
             }
 
-            // Phase 2: import all — always route by cost_center from Excel
+            // Phase 2: import all into the selected header
             DB::beginTransaction();
             $imported = 0;
-            $createdHeaders = [];
-
-            // Resolve IDPenugasan for each unique cost_center
-            $ccToHeader     = [];
-            $norutCounters  = [];
-            $uniqueCCs      = collect($parsedRows)->pluck('cost_center')->unique();
-
-            foreach ($uniqueCCs as $cc) {
-                // Check if a header already exists for this CC
-                $existingHeader = HeaderPenugasan::where('cost_center', $cc)->first();
-
-                if ($existingHeader) {
-                    $ccToHeader[$cc] = [
-                        'IDPenugasan' => $existingHeader->IDPenugasan,
-                        'NoSurat'     => $existingHeader->NoSurat,
-                    ];
-                    $norutCounters[$existingHeader->IDPenugasan] = Penugasan::where('IDPenugasan', $existingHeader->IDPenugasan)->max('Norut') ?? 0;
-                } else {
-                    // Auto-create header for this CC
-                    $newId      = $this->generateIDPenugasan();
-                    $newNoSurat = $this->generateNoSurat();
-                    $project    = HistoryProyek::where('cost_center', $cc)->first();
-
-                    HeaderPenugasan::create([
-                        'IDPenugasan'        => $newId,
-                        'cost_center'        => $cc,
-                        'NoSurat'            => $newNoSurat,
-                        'PejabatTandatangan' => null,
-                    ]);
-
-                    $ccToHeader[$cc] = [
-                        'IDPenugasan' => $newId,
-                        'NoSurat'     => $newNoSurat,
-                    ];
-                    $norutCounters[$newId] = 0;
-
-                    $createdHeaders[] = [
-                        'id'            => $newId,
-                        'text'          => "{$newId} - {$cc} - " . ($project->namaproject ?? '-'),
-                        'IDPenugasan'   => $newId,
-                        'cost_center'   => $cc,
-                        'NoSurat'       => $newNoSurat,
-                        'namaproject'   => $project->namaproject ?? '-',
-                        'dokumen_io'    => $project->dokumen_io ?? '-',
-                    ];
-                }
-            }
+            $norutCounter = Penugasan::where('IDPenugasan', $idPenugasan)->max('Norut') ?? 0;
 
             foreach ($parsedRows as $parsed) {
-                $headerInfo     = $ccToHeader[$parsed['cost_center']];
-                $rowIdPenugasan = $headerInfo['IDPenugasan'];
-                $rowNoSurat     = $headerInfo['NoSurat'];
-
                 if ($parsed['has_existing']) {
                     Penugasan::where('id', $parsed['existing_id'])->update([
-                        'Jabatan'      => $parsed['jabatan'],
-                        'Periodeawal'  => $parsed['periode_awal']->format('Y-m-d'),
-                        'Periodeakhir' => $parsed['periode_akhir']->format('Y-m-d'),
-                        'Bobot'        => $parsed['bobot'],
-                        'Status'       => $parsed['status'],
+                        'Bobot'  => $parsed['bobot'],
+                        'Status' => $parsed['status'],
                     ]);
                 } else {
-                    if (!isset($norutCounters[$rowIdPenugasan])) {
-                        $norutCounters[$rowIdPenugasan] = Penugasan::where('IDPenugasan', $rowIdPenugasan)->max('Norut') ?? 0;
-                    }
-                    $norutCounters[$rowIdPenugasan]++;
-
+                    $norutCounter++;
                     Penugasan::create([
-                        'IDPenugasan'  => $rowIdPenugasan,
+                        'IDPenugasan'  => $idPenugasan,
                         'cost_center'  => $parsed['cost_center'],
-                        'Norut'        => $norutCounters[$rowIdPenugasan],
+                        'Norut'        => $norutCounter,
                         'NIK'          => $parsed['nik'],
-                        'NoSurat'      => $rowNoSurat,
+                        'NoSurat'      => $headerNoSurat,
                         'Dokumen_IO'   => $parsed['dok_io'],
                         'Jabatan'      => $parsed['jabatan'],
                         'Periodeawal'  => $parsed['periode_awal']->format('Y-m-d'),
@@ -842,14 +855,13 @@ class PenugasanController extends Controller
             if (count($errors) > 0) $message .= " " . count($errors) . " baris gagal.";
 
             return response()->json([
-                'success'         => true,
-                'has_errors'      => count($errors) > 0,
-                'has_duplicates'  => false,
-                'message'         => $message,
-                'imported'        => $imported,
-                'replaced'        => $replacedCount,
-                'errors'          => $errors,
-                'created_headers' => $createdHeaders,
+                'success'        => true,
+                'has_errors'     => count($errors) > 0,
+                'has_duplicates' => false,
+                'message'        => $message,
+                'imported'       => $imported,
+                'replaced'       => $replacedCount,
+                'errors'         => $errors,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -865,20 +877,19 @@ class PenugasanController extends Controller
         DOWNLOAD TEMPLATE (XLSX)
     ========================== */
 
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Penugasan');
 
         $headers = [
-            'A1' => 'Cost Center',
-            'B1' => 'NIK',
-            'C1' => 'Jabatan',
-            'D1' => 'Periode Awal',
-            'E1' => 'Periode Akhir',
-            'F1' => 'Bobot (%)',
-            'G1' => 'Status (A/N)',
+            'A1' => 'NIK',
+            'B1' => 'Jabatan',
+            'C1' => 'Periode Awal',
+            'D1' => 'Periode Akhir',
+            'E1' => 'Bobot (%)',
+            'F1' => 'Status (A/N)',
         ];
 
         foreach ($headers as $cell => $value) {
@@ -891,9 +902,9 @@ class PenugasanController extends Controller
         }
 
         $sampleData = [
-            ['KH42601', '3000100', 'Project Manager', '01/01/2026', '31/03/2026', 100, 'A'],
-            ['KH42601', '3090546', 'Engineer',        '01/01/2026', '31/03/2026', 80,  'A'],
-            ['KH42601', '3000100', 'Supervisor',      '01/04/2026', '30/06/2026', 50,  'A'],
+            ['3000100', 'Project Manager', '01/01/2026', '31/03/2026', 100,  'A'],
+            ['3090546', 'Engineer',        '01/01/2026', '31/03/2026', 33.5, 'N'],
+            ['3000100', 'Supervisor',      '01/04/2026', '30/06/2026', 0.5,  'A'],
         ];
 
         $row = 2;
@@ -904,11 +915,10 @@ class PenugasanController extends Controller
             $sheet->setCellValue("D{$row}", $data[3]);
             $sheet->setCellValue("E{$row}", $data[4]);
             $sheet->setCellValue("F{$row}", $data[5]);
-            $sheet->setCellValue("G{$row}", $data[6]);
             $row++;
         }
 
-        foreach (range('A', 'G') as $col) {
+        foreach (range('A', 'F') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -920,7 +930,7 @@ class PenugasanController extends Controller
                 ],
             ],
         ];
-        $sheet->getStyle("A1:G{$lastRow}")->applyFromArray($styleArray);
+        $sheet->getStyle("A1:F{$lastRow}")->applyFromArray($styleArray);
 
         $filename = 'template_penugasan.xlsx';
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);

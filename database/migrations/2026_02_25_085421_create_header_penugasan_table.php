@@ -12,14 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('header_penugasan', function (Blueprint $table) {
-            // Composite PK sesuai spesifikasi
             $table->string('IDPenugasan', 10);
             $table->string('cost_center', 9);
             $table->string('PejabatTandatangan', 30)->nullable();
 
             $table->timestamps();
 
-            // Primary Key komposit
             $table->primary(['IDPenugasan', 'cost_center']);
         });
     }

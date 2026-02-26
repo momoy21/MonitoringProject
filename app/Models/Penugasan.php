@@ -30,6 +30,7 @@ class Penugasan extends Model
     protected $casts = [
         'Periodeawal'  => 'date',
         'Periodeakhir' => 'date',
+        'Bobot'        => 'decimal:2',
         'created_at'   => 'datetime',
         'updated_at'   => 'datetime',
     ];

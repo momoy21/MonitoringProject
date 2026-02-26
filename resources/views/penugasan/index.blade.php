@@ -1,27 +1,22 @@
 <x-layout title="Pengajuan Penugasan">
 
+    <style>
+        /* Fix Select2 border in modal */
+        #penugasanModal .select2-container--bootstrap-5 .select2-selection {
+            border: 1px solid #dee2e6 !important;
+        }
+        #penugasanModal .select2-container--bootstrap-5 .select2-selection--single {
+            height: calc(1.5em + 0.75rem + 2px);
+            padding: 0.375rem 0.75rem;
+        }
+    </style>
+
     <!-- Header Section - Sticky -->
     <div class="sticky-header">
         <div class="row align-items-center">
             <div class="col-md-6">
                 <h4 class="fw-bold mb-2">Pengajuan Penugasan</h4>
                 <p class="mb-0">Kelola pengajuan tim penugasan proyek</p>
-            </div>
-            <div class="col-md-6 text-end">
-                <div class="d-flex align-items-center justify-content-end gap-2">
-                    <!-- Download Template -->
-                    <button type="button" class="btn btn-outline-success" id="btnDownloadTemplate" title="Download Template Excel">
-                        <i class="bx bx-download me-1"></i> Template
-                    </button>
-                    <!-- Upload -->
-                    <button type="button" class="btn btn-outline-info" id="btnUpload" title="Upload Excel">
-                        <i class="bx bx-upload me-1"></i> Upload
-                    </button>
-                    <!-- Tambah -->
-                    <button type="button" class="btn btn-primary" id="btnTambah">
-                        <i class="bx bx-plus me-1"></i> Tambah
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -33,7 +28,7 @@
                     <select id="header_select" class="form-select" style="width: 100%; max-width: 400px;">
                         <option value="">-- Pilih ID Penugasan --</option>
                     </select>
-                    <button type="button" class="btn btn-sm btn-primary" id="btnGenerateId" title="Buat Header Baru">
+                    <button type="button" class="btn btn-primary" id="btnGenerateId" title="Buat Header Baru">
                         <i class="bx bx-plus"></i>
                     </button>
                 </div>
@@ -104,8 +99,8 @@
         </div>
     </div>
 
-    <!-- Search Bar + Tampilkan -->
-    <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2" id="searchBarSection" style="display: none;">
+    <!-- Search Bar + Action Buttons + Tampilkan -->
+    <div class="mt-3 justify-content-between align-items-center flex-wrap gap-2 d-none" id="searchBarSection">
         <div class="input-group" style="max-width: 400px;">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
             <input type="text" id="searchInput" class="form-control" placeholder="Ketik NIK atau Nama untuk mencari..." autocomplete="off">
@@ -114,6 +109,18 @@
             </button>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <!-- Action Buttons -->
+            <button type="button" class="btn btn-outline-success" id="btnDownloadTemplate" title="Download Template Excel">
+                <i class="bx bx-download me-1"></i> Template
+            </button>
+            <button type="button" class="btn btn-outline-info" id="btnUpload" title="Upload Excel">
+                <i class="bx bx-upload me-1"></i> Upload
+            </button>
+            <button type="button" class="btn btn-primary" id="btnTambah">
+                <i class="bx bx-plus me-1"></i> Tambah
+            </button>
+            <span class="text-muted" style="margin: 0 4px;">|</span>
+            <!-- Tampilkan per halaman -->
             <label for="perPageSelect" class="form-label mb-0" style="white-space: nowrap;">Tampilkan:</label>
             <select id="perPageSelect" class="form-select per-page-selector" style="width: auto;">
                 <option value="5">5</option>
@@ -126,8 +133,8 @@
         </div>
     </div>
 
-    <!-- Table Section -->
-    <div class="card mt-3">
+    <!-- Table Section (hidden until header selected) -->
+    <div class="card mt-3 d-none" id="tableSection">
         <div class="table-responsive" style="overflow: visible;">
             <table class="table table-bordered table-striped table-hover mb-0">
                 <thead class="table-light">
@@ -223,20 +230,17 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="form_nik" class="form-label">NIK <span class="text-danger">*</span></label>
                                 <select id="form_nik" class="form-select" style="width: 100%;">
                                     <option value="">-- Pilih NIK --</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="form_nama_karyawan" class="form-label">Nama Karyawan</label>
                                 <input type="text" class="form-control" id="form_nama_karyawan" readonly>
                             </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-4">
                                 <label for="form_jabatan" class="form-label">Jabatan <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="form_jabatan" maxlength="30" placeholder="Contoh: Project Manager">
                             </div>
@@ -253,7 +257,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="form_bobot" class="form-label">Bobot (%) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="form_bobot" min="0" max="100" value="0">
+                                <input type="number" class="form-control" id="form_bobot" min="0.01" max="100" step="0.01" placeholder="Contoh: 33.50">
+                                <small class="text-muted">Minimal 0.01, gunakan titik untuk desimal</small>
                             </div>
                         </div>
                     </form>
@@ -293,10 +298,13 @@
                             <a href="javascript:void(0)" id="btnDownloadTemplateModal">Download template disini</a>.
                             <hr class="my-2">
                             <ul class="mb-0 ps-3" style="font-size: 12px;">
+                                <li><strong>Cost Center</strong> otomatis diambil dari ID Penugasan yang dipilih. Tidak perlu mengisi kolom Cost Center di file Excel.</li>
                                 <li><strong>Status</strong> hanya boleh <strong>A</strong> (Aktif) atau <strong>N</strong> (Non-Aktif). Huruf/angka lain akan ditolak.</li>
-                                <li><strong>Bobot</strong> harus berupa angka <strong>0 - 100</strong>. Tidak boleh huruf atau simbol.</li>
+                                <li><strong>Bobot</strong> harus berupa angka desimal <strong>0.01 - 100</strong>. Gunakan titik sebagai pemisah desimal. Bobot tidak boleh 0.</li>
                                 <li><strong>Format Tanggal</strong>: dd/mm/yyyy (contoh: 01/01/2026)</li>
-                                <li><strong>Cost Center</strong> dan <strong>NIK</strong> harus terdaftar di sistem.</li>
+                                <li><strong>NIK</strong> harus terdaftar di sistem.</li>
+                                <li><strong>Duplikasi</strong>: Data dianggap duplikat jika NIK, Periode Awal, Periode Akhir, dan Jabatan sama.</li>
+                                <li><strong>Periode</strong>: Jabatan sama + NIK sama &mdash; periode tidak boleh bersinggungan.</li>
                             </ul>
                         </div>
                     </form>
