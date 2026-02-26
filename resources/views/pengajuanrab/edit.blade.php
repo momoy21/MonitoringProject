@@ -435,7 +435,7 @@
                                         <i class="bx bx-spreadsheet text-success"></i>
                                         <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div title="{{ basename($pengajuanrab->rab_upload) }}">{{ basename($pengajuanrab->rab_upload) }}</div>
+                                            <a href="{{ Storage::url($pengajuanrab->rab_upload) }}" target="_blank" title="{{ basename($pengajuanrab->rab_upload) }}" class="text-primary d-block text-truncate">{{ basename($pengajuanrab->rab_upload) }}</a>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'rab']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>
@@ -466,7 +466,7 @@
                                         <i class="bx bxs-file-pdf text-danger"></i>
                                         <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div title="{{ basename($pengajuanrab->file_upload) }}">{{ basename($pengajuanrab->file_upload) }}</div>
+                                            <a href="{{ Storage::url($pengajuanrab->file_upload) }}" target="_blank" title="{{ basename($pengajuanrab->file_upload) }}" class="text-primary d-block text-truncate">{{ basename($pengajuanrab->file_upload) }}</a>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'kontrak']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>
@@ -498,7 +498,7 @@
                                         <i class="bx bxs-file text-success"></i>
                                         <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div title="{{ basename($pengajuanrab->peta_risk_upload) }}">{{ basename($pengajuanrab->peta_risk_upload) }}</div>
+                                            <a href="{{ Storage::url($pengajuanrab->peta_risk_upload) }}" target="_blank" title="{{ basename($pengajuanrab->peta_risk_upload) }}" class="text-primary d-block text-truncate">{{ basename($pengajuanrab->peta_risk_upload) }}</a>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'peta_risiko']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>
@@ -529,7 +529,7 @@
                                         <i class="bx bxs-file-pdf text-danger"></i>
                                         <div class="file-name-wrap">
                                             <small>File tersimpan:</small>
-                                            <div title="{{ basename($pengajuanrab->hasil_upload) }}">{{ basename($pengajuanrab->hasil_upload) }}</div>
+                                            <a href="{{ Storage::url($pengajuanrab->hasil_upload) }}" target="_blank" title="{{ basename($pengajuanrab->hasil_upload) }}" class="text-primary d-block text-truncate">{{ basename($pengajuanrab->hasil_upload) }}</a>
                                         </div>
                                         <a href="{{ route('pengajuanrab.download', [$pengajuanrab->nopengajuan, 'hasil']) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-download"></i>
