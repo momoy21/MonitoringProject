@@ -185,7 +185,7 @@
         let sortField = '{{ request('sort_field', 'progress') }}';
         let sortOrder = '{{ request('sort_order', 'asc') }}';
         let sortField2 = '{{ request('sort_field2', 'tgl_input') }}';
-        let sortOrder2 = '{{ request('sort_order2', 'asc') }}';
+        let sortOrder2 = '{{ request('sort_order2', 'desc') }}';
 
         // Search input with debounce
         $('#searchInput').on('input', function() {
@@ -230,11 +230,11 @@
                 // Already primary, toggle order
                 sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
             } else {
-                // Make progress primary, keep tgl_input as secondary
+                // Make progress primary, keep tgl_input as secondary (desc)
                 sortField = 'progress';
                 sortOrder = 'asc';
                 sortField2 = 'tgl_input';
-                sortOrder2 = 'asc';
+                sortOrder2 = 'desc';
             }
             updateSortIcons();
             currentPage = 1;

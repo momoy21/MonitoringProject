@@ -56,7 +56,7 @@ class PencatatanPlenoRABController extends Controller
                 });
             }
 
-            // Sorting - Default: progress ASC, tgl_input ASC (double sort)
+            // Sorting - Default: progress ASC, tgl_input DESC (double sort)
             $sortField = $request->get('sort_field', 'progress');
             $sortField = in_array($sortField, ['tgl_input', 'progress']) ? $sortField : 'progress';
             $sortOrder = $request->get('sort_order', 'asc');
@@ -65,8 +65,8 @@ class PencatatanPlenoRABController extends Controller
             // Secondary sort field
             $sortField2 = $request->get('sort_field2', 'tgl_input');
             $sortField2 = in_array($sortField2, ['tgl_input', 'progress', 'nopengajuan']) ? $sortField2 : 'tgl_input';
-            $sortOrder2 = $request->get('sort_order2', 'asc');
-            $sortOrder2 = in_array($sortOrder2, ['asc', 'desc']) ? $sortOrder2 : 'asc';
+            $sortOrder2 = $request->get('sort_order2', 'desc');
+            $sortOrder2 = in_array($sortOrder2, ['asc', 'desc']) ? $sortOrder2 : 'desc';
 
             $rabProyek = $query->orderBy($sortField, $sortOrder)
                                ->orderBy($sortField2, $sortOrder2)
