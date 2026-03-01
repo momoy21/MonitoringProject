@@ -342,6 +342,12 @@ class PengajuanRABManager {
         if (!form) return;
 
         form.addEventListener('submit', (e) => {
+            // Clean currency format before submitting (remove thousand separators)
+            const nilaiProyekInput = document.getElementById('nilai_proyek');
+            if (nilaiProyekInput && nilaiProyekInput.value) {
+                nilaiProyekInput.value = nilaiProyekInput.value.replace(/\./g, '');
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             const submitSpinner = document.getElementById('submitSpinner');
             const submitIcon = document.getElementById('submitIcon');

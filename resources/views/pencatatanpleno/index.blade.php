@@ -73,14 +73,17 @@
                         <th class="fw-bold text-center" style="width: 50px;">No</th>
                         <th class="fw-bold sortable-header" id="sortTglHeader" style="cursor: pointer;" title="Klik untuk mengurutkan">
                             Tanggal Pengajuan
-                            <i class="bx bx-sort-down ms-1" id="sortIcon"></i>
+                            <i class="bx bx-sort ms-1" id="sortIcon"></i>
                         </th>
                         <th class="fw-bold">Nomor</th>
                         <th class="fw-bold">Cost Center</th>
                         <th class="fw-bold">Nama Proyek</th>
                         <th class="fw-bold">Divisi</th>
                         <th class="fw-bold">Konsumen</th>
-                        <th class="fw-bold text-center">Progress</th>
+                        <th class="fw-bold text-center sortable-header" id="sortProgressHeader" style="cursor: pointer;" title="Klik untuk mengurutkan">
+                            Progress
+                            <i class="bx bx-sort ms-1" id="sortProgressIcon"></i>
+                        </th>
                         <th class="fw-bold text-center">Hasil Pleno</th>
                         <th class="fw-bold text-center" style="width: 100px;">Aksi</th>
                     </tr>
@@ -178,7 +181,11 @@
         let totalPages = {{ $rabProyek->lastPage() }};
         let perPage = {{ request('per_page', 10) }};
         let currentSearch = '{{ request('search') }}';
-        let sortOrder = '{{ request('sort_order', 'desc') }}';
+        // Default: progress ASC, then tgl_input ASC
+        let sortField = '{{ request('sort_field', 'progress') }}';
+        let sortOrder = '{{ request('sort_order', 'asc') }}';
+        let sortField2 = '{{ request('sort_field2', 'tgl_input') }}';
+        let sortOrder2 = '{{ request('sort_order2', 'asc') }}';
 
         // Search input with debounce
         $('#searchInput').on('input', function() {
@@ -202,20 +209,68 @@
 
         // Sort by tanggal pengajuan
         $('#sortTglHeader').on('click', function() {
-            sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
-            updateSortIcon();
+            if (sortField === 'tgl_input') {
+                // Already primary, toggle order
+                sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+            } else {
+                // Make tgl_input primary, keep progress as secondary
+                sortField = 'tgl_input';
+                sortOrder = 'asc';
+                sortField2 = 'progress';
+                sortOrder2 = 'asc';
+            }
+            updateSortIcons();
             currentPage = 1;
             loadData();
         });
 
-        function updateSortIcon() {
-            const icon = $('#sortIcon');
-            if (sortOrder === 'desc') {
-                icon.removeClass('bx-sort-up').addClass('bx-sort-down');
+        // Sort by progress
+        $('#sortProgressHeader').on('click', function() {
+            if (sortField === 'progress') {
+                // Already primary, toggle order
+                sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
             } else {
-                icon.removeClass('bx-sort-down').addClass('bx-sort-up');
+                // Make progress primary, keep tgl_input as secondary
+                sortField = 'progress';
+                sortOrder = 'asc';
+                sortField2 = 'tgl_input';
+                sortOrder2 = 'asc';
+            }
+            updateSortIcons();
+            currentPage = 1;
+            loadData();
+        });
+
+        function updateSortIcons() {
+            // Reset all sort icons
+            $('#sortIcon').removeClass('bx-sort-up bx-sort-down').addClass('bx-sort');
+            $('#sortProgressIcon').removeClass('bx-sort-up bx-sort-down').addClass('bx-sort');
+
+            // Set primary sort icon
+            if (sortField === 'tgl_input') {
+                const icon = $('#sortIcon');
+                icon.removeClass('bx-sort');
+                icon.addClass(sortOrder === 'desc' ? 'bx-sort-down' : 'bx-sort-up');
+            } else if (sortField === 'progress') {
+                const icon = $('#sortProgressIcon');
+                icon.removeClass('bx-sort');
+                icon.addClass(sortOrder === 'desc' ? 'bx-sort-down' : 'bx-sort-up');
+            }
+            
+            // Set secondary sort icon (dimmed)
+            if (sortField2 === 'tgl_input') {
+                const icon = $('#sortIcon');
+                icon.removeClass('bx-sort');
+                icon.addClass(sortOrder2 === 'desc' ? 'bx-sort-down' : 'bx-sort-up');
+            } else if (sortField2 === 'progress') {
+                const icon = $('#sortProgressIcon');
+                icon.removeClass('bx-sort');
+                icon.addClass(sortOrder2 === 'desc' ? 'bx-sort-down' : 'bx-sort-up');
             }
         }
+
+        // Initialize sort icons on page load
+        updateSortIcons();
 
         // Pagination buttons
         $('#firstPageBtn').on('click', function() {
@@ -257,7 +312,10 @@
                     search: currentSearch,
                     per_page: perPage,
                     page: currentPage,
-                    sort_order: sortOrder
+                    sort_field: sortField,
+                    sort_order: sortOrder,
+                    sort_field2: sortField2,
+                    sort_order2: sortOrder2
                 },
                 success: function(response) {
                     spinner.hide();

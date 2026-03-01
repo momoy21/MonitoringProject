@@ -24,6 +24,7 @@ Artisan::command('inspire', function () {
 
 Schedule::command('sap:auto-import')
     ->dailyAt('00:00')
+    ->timezone('Asia/Jakarta')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/sap-auto-import.log'))
     ->onSuccess(function () {
@@ -45,6 +46,7 @@ Schedule::command('sap:auto-import')
 
 Schedule::command('kontrak:check-expiry')
     ->dailyAt('07:00')
+    ->timezone('Asia/Jakarta')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/kontrak-expiry-check.log'))
     ->onSuccess(function () {
