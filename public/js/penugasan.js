@@ -104,6 +104,8 @@ function onHeaderChange() {
         currentHeaderData = {
             IDPenugasan: data.IDPenugasan || data.id,
             cost_center: data.cost_center || '',
+            id_project: data.id_project || '',
+            no_urut: data.no_urut || 0,
             NoSurat: data.NoSurat || '-',
             namaproject: data.namaproject || '-',
             dokumen_io: data.dokumen_io || '-',
@@ -163,9 +165,13 @@ function initCreateCCSelect() {
         var data = $(this).select2('data')[0];
         if (data && data.id) {
             $('#new_namaproject').val(data.namaproject || '-');
+            $('#new_id_project').val(data.id_project || '');
+            $('#new_no_urut').val(data.no_urut || 0);
             $('#newNamaProyekRow').show();
         } else {
             $('#new_namaproject').val('');
+            $('#new_id_project').val('');
+            $('#new_no_urut').val('');
             $('#newNamaProyekRow').hide();
         }
     });
@@ -196,9 +202,13 @@ function initCreateCCSelectFallback() {
         var data = $(this).select2('data')[0];
         if (data && data.id) {
             $('#new_namaproject').val(data.namaproject || '-');
+            $('#new_id_project').val(data.id_project || '');
+            $('#new_no_urut').val(data.no_urut || 0);
             $('#newNamaProyekRow').show();
         } else {
             $('#new_namaproject').val('');
+            $('#new_id_project').val('');
+            $('#new_no_urut').val('');
             $('#newNamaProyekRow').hide();
         }
     });
@@ -232,6 +242,8 @@ function hideCreateHeaderSection() {
         $('#new_nosurat').val('');
         $('#new_cost_center').val(null).trigger('change');
         $('#new_namaproject').val('');
+        $('#new_id_project').val('');
+        $('#new_no_urut').val('');
         $('#newNamaProyekRow').hide();
     });
     $('#header_select').prop('disabled', false);
@@ -241,7 +253,10 @@ function hideCreateHeaderSection() {
 function saveHeader() {
     var idPenugasan = $('#new_idpenugasan').val();
     var noSurat = $('#new_nosurat').val();
-    var costCenter = $('#new_cost_center').val();
+    var ccData = $('#new_cost_center').select2('data')[0];
+    var costCenter = ccData ? (ccData.cost_center || '') : '';
+    var idProject = ccData ? (ccData.id_project || '') : '';
+    var noUrut = ccData ? (ccData.no_urut || 0) : 0;
 
     if (!idPenugasan) {
         swalFront('Peringatan', 'ID Penugasan belum dihasilkan', 'warning');
@@ -261,6 +276,8 @@ function saveHeader() {
             _token: window.csrfToken,
             IDPenugasan: idPenugasan,
             cost_center: costCenter,
+            id_project: idProject,
+            no_urut: noUrut,
             NoSurat: noSurat,
         },
         success: function (response) {
