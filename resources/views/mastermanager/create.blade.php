@@ -90,6 +90,25 @@
                                 <small class="form-text text-muted">Status opsional. Hanya manager dengan status aktif yang dapat ditugaskan ke proyek</small>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="kode_divisi" class="form-label">Divisi</label>
+                                <select class="form-select @error('kode_divisi') is-invalid @enderror"
+                                        id="kode_divisi"
+                                        name="kode_divisi">
+                                    <option value="">-- Pilih Divisi --</option>
+                                    @foreach($divisiList as $divisi)
+                                        <option value="{{ $divisi->kode_divisi }}" {{ old('kode_divisi') == $divisi->kode_divisi ? 'selected' : '' }}>
+                                            {{ $divisi->nama_divisi }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="invalid-feedback" id="kode_divisi-error">
+                                    @error('kode_divisi'){{ $message }}@enderror
+                                </div>
+                                <small class="form-text text-muted">Pilih divisi tempat manager bekerja</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

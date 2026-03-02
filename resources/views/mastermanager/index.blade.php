@@ -54,6 +54,7 @@
                     <tr>
                         <th class="fw-bold">Nomor Induk Karyawan</th>
                         <th class="fw-bold">Nama Manager</th>
+                        <th class="fw-bold text-center">Divisi</th>
                         <th class="fw-bold">Status</th>
                         <th class="fw-bold">Aksi</th>
                     </tr>
@@ -70,6 +71,15 @@
                             <div class="truncate-text" title="{{ $item->nama }}">
                                 {{ $item->nama }}
                             </div>
+                        </td>
+                        <td class="text-center">
+                            @if($item->divisi)
+                                <span class="badge bg-info" title="{{ $item->divisi->nama_divisi }}">
+                                    {{ $item->kode_divisi }}
+                                </span>
+                            @else
+                                -
+                            @endif
                         </td>
                         <td onclick="event.stopPropagation();">
                             <span class="badge {{ $item->status == 'A' ? 'bg-success' : 'bg-secondary' }}">
@@ -93,7 +103,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="text-center py-4">
+                        <td colspan="5" class="text-center py-4">
                             <div class="d-flex flex-column align-items-center">
                                 <i class="bx bx-search-alt-2 mb-2 empty-state-icon" style="font-size: 48px;"></i>
                                 <p class="mb-0 empty-state-text">Tidak ada data manager</p>

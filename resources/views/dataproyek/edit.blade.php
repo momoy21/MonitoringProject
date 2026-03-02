@@ -351,7 +351,7 @@
                     <h6 class="mb-3"><i class="bx bx-user-check me-2"></i>Status & Penanggung Jawab</h6>
                     <div class="row">
                         <!-- Penanggung Jawab -->
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="penanggung_jawab" class="form-label">Penanggung Jawab</label>
                                 <select class="form-select @error('penanggung_jawab') is-invalid @enderror"
@@ -359,6 +359,8 @@
                                     <option value="">-- Pilih Manager --</option>
                                     @foreach($managers as $manager)
                                         <option value="{{ $manager->nik }}"
+                                                data-kode-divisi="{{ $manager->kode_divisi }}"
+                                                data-nama-divisi="{{ $manager->divisi->nama_divisi ?? '' }}"
                                                 {{ old('penanggung_jawab', $project->penanggung_jawab) == $manager->nik ? 'selected' : '' }}>
                                             {{ $manager->nama }}
                                         </option>
@@ -367,6 +369,21 @@
                                 @error('penanggung_jawab')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+                        </div>
+
+                        <!-- Divisi (Auto-filled) -->
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="divisi_display" class="form-label">Divisi</label>
+                                <div id="divisi_badge_container" class="form-control-plaintext">
+                                    @if($project->kode_divisi)
+                                        <span class="badge bg-info" title="{{ $project->divisi->nama_divisi ?? '' }}">{{ $project->kode_divisi }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </div>
+                                <input type="hidden" name="kode_divisi" id="kode_divisi" value="{{ old('kode_divisi', $project->kode_divisi) }}">
                             </div>
                         </div>
 
@@ -504,5 +521,25 @@
         <script src="{{ asset('js/file-preview.js') }}"></script>
 
         <script src="{{ asset('js/dataproyek.js') }}"></script>
+        <script>
+        $(document).ready(function() {
+            // Auto-fill divisi when penanggung_jawab is selected
+            $('#penanggung_jawab').on('change', function() {
+                const selectedOption = $(this).find('option:selected');
+                const kodeDivisi = selectedOption.data('kode-divisi') || '';
+                const namaDivisi = selectedOption.data('nama-divisi') || '';
+
+                $('#kode_divisi').val(kodeDivisi);
+
+                if (kodeDivisi) {
+                    $('#divisi_badge_container').html(
+                        '<span class="badge bg-info" title="' + namaDivisi + '">' + kodeDivisi + '</span>'
+                    );
+                } else {
+                    $('#divisi_badge_container').html('<span class="text-muted">-</span>');
+                }
+            });
+        });
+        </script>
     @endpush
 </x-layout>

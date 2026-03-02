@@ -351,7 +351,7 @@ class ManagerManager {
         if (data.length === 0) {
             tbody.append(`
                 <tr>
-                    <td colspan="4" class="text-center py-4">
+                    <td colspan="5" class="text-center py-4">
                         <div class="d-flex flex-column align-items-center">
                             <i class="bx bx-search-alt-2 mb-2 empty-state-icon" style="font-size: 48px;"></i>
                             <p class="mb-0 empty-state-text">Tidak ada data manager</p>
@@ -368,6 +368,7 @@ class ManagerManager {
                 : '<span class="badge bg-secondary">Non Aktif</span>';
 
             const namaDisplay = item.nama || '';
+            const divisiDisplay = item.divisi ? item.divisi.nama_divisi : '-';
 
             const row = `
                 <tr class="editable-row" ondblclick="editManager('${item.nik}')" title="Double-click untuk edit" style="cursor: pointer;">
@@ -380,6 +381,9 @@ class ManagerManager {
                         <div class="truncate-text" title="${this.escapeHtml(namaDisplay)}">
                             ${this.escapeHtml(namaDisplay)}
                         </div>
+                    </td>
+                    <td class="text-center">
+                        ${item.divisi ? `<span class="badge bg-info" title="${this.escapeHtml(item.divisi.nama_divisi)}">${this.escapeHtml(item.kode_divisi)}</span>` : '-'}
                     </td>
                     <td onclick="event.stopPropagation();">${statusBadge}</td>
                     <td class="text-center" onclick="event.stopPropagation();">
@@ -585,6 +589,7 @@ function viewManager(nik) {
                 const statusText = manager.status === 'A' ? 'Aktif' : 'Non Aktif';
                 const statusBadge = manager.status === 'A' ? 'bg-success' : 'bg-secondary';
                 const namaDisplay = manager.nama || '-';
+                const divisiDisplay = manager.divisi ? manager.divisi.nama_divisi : '-';
 
                 const content = `
                     <div class="modal-info-section">
@@ -595,6 +600,7 @@ function viewManager(nik) {
                                     <table class="table table-sm">
                                         <tr><td>Nomor Induk Karyawan:</td><td><strong>${manager.nik}</strong></td></tr>
                                         <tr><td>Nama Manager:</td><td><strong>${namaDisplay}</strong></td></tr>
+                                        <tr><td>Divisi:</td><td><strong>${divisiDisplay}</strong></td></tr>
                                         <tr><td>Status:</td><td><span class="badge ${statusBadge}">${statusText}</span></td></tr>
                                     </table>
                                 </div>

@@ -150,7 +150,7 @@ class DataProyekController extends Controller
             'dataPeluang' => DataPeluang::whereIn('status', ['D', 'I'])->orderBy('peluang')->get(),
             'bidangJasa' => $bidangJasa,
             'kondisiProyek' => KondisiProyek::active()->orderBy('desc_kondisi_proyek')->get(),
-            'managers' => MasterManager::where('status', 'A')->orderBy('nama')->get(),
+            'managers' => MasterManager::with('divisi')->where('status', 'A')->orderBy('nama')->get(),
             'costCenter' => $costCenter,
             'jarakOptions' => [
                 1 => 'Jarak 5KM - 10KM',
@@ -208,6 +208,7 @@ class DataProyekController extends Controller
             'finish_kontrak' => 'required|date|after:start_kontrak',
             'tgl_expire' => 'nullable|date',
             'penanggung_jawab' => 'nullable|exists:master_manager,nik',
+            'kode_divisi' => 'nullable|exists:master_divisi,kode_divisi',
             'nilai_proyek' => 'nullable|numeric|min:0',
             'status' => 'required|in:O,I,C,P,F',
             'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:25600',
@@ -341,6 +342,7 @@ class DataProyekController extends Controller
             'finish_kontrak' => 'required|date|after:start_kontrak',
             'tgl_expire' => 'nullable|date',
             'penanggung_jawab' => 'nullable|exists:master_manager,nik',
+            'kode_divisi' => 'nullable|exists:master_divisi,kode_divisi',
             'nilai_proyek' => 'nullable|numeric|min:0',
             'status' => 'required|in:O,I,C,P,F',
             'dokumen_kontrak' => 'nullable|file|mimes:docx,doc,pdf,xlsx,xls,pptx,ppt,jpg,jpeg,png|max:25600',
@@ -521,11 +523,11 @@ class DataProyekController extends Controller
     public function edit(string $idProject)
     {
         // Try to find in main table first, then history
-        $project = DataProyek::where('id_project', $idProject)->first();
+        $project = DataProyek::with('divisi')->where('id_project', $idProject)->first();
         $isHistory = false;
 
         if (!$project) {
-            $project = HistoryProyek::where('id_project', $idProject)->first();
+            $project = HistoryProyek::with('divisi')->where('id_project', $idProject)->first();
             $isHistory = true;
         }
 
@@ -562,7 +564,7 @@ class DataProyekController extends Controller
                 'project' => $project,
                 'parentProject' => $parentProject,
                 'jarakDisplay' => $jarakDisplay,
-                'managers' => MasterManager::where('status', 'A')->orderBy('nama')->get(),
+                'managers' => MasterManager::with('divisi')->where('status', 'A')->orderBy('nama')->get(),
                 'statusOptions' => [
                     'O' => 'Open',
                     'I' => 'InProgress',
@@ -601,7 +603,7 @@ class DataProyekController extends Controller
             'dataPeluang' => DataPeluang::whereIn('status', ['D', 'I'])->orderBy('peluang')->get(),
             'bidangJasa' => $bidangJasaQuery->get(),
             'kondisiProyek' => KondisiProyek::active()->orderBy('desc_kondisi_proyek')->get(),
-            'managers' => MasterManager::where('status', 'A')->orderBy('nama')->get(),
+            'managers' => MasterManager::with('divisi')->where('status', 'A')->orderBy('nama')->get(),
             'jarakOptions' => [
                 1 => 'Jarak 5KM - 10KM',
                 2 => 'Jarak 21KM - 30KM',
@@ -632,7 +634,8 @@ class DataProyekController extends Controller
     public function editHistory(Request $request, string $idProject, int $norut)
     {
         // Find history project by composite key (norut, id_project)
-        $project = HistoryProyek::where('id_project', $idProject)
+        $project = HistoryProyek::with('divisi')
+            ->where('id_project', $idProject)
             ->where('norut', $norut)
             ->first();
 
@@ -667,7 +670,7 @@ class DataProyekController extends Controller
             'project' => $project,
             'parentProject' => $parentProject,
             'jarakDisplay' => $jarakDisplay,
-            'managers' => MasterManager::where('status', 'A')->orderBy('nama')->get(),
+            'managers' => MasterManager::with('divisi')->where('status', 'A')->orderBy('nama')->get(),
             'statusOptions' => [
                 'O' => 'Open',
                 'I' => 'InProgress',
@@ -866,6 +869,7 @@ class DataProyekController extends Controller
             'finish_kontrak' => 'required|date|after:start_kontrak',
             'tgl_expire' => 'nullable|date',
             'penanggung_jawab' => 'nullable|exists:master_manager,nik',
+            'kode_divisi' => 'nullable|exists:master_divisi,kode_divisi',
             'nilai_proyek' => 'nullable|numeric|min:0',
             'status' => 'required|in:O,I,C,P,F',
             'keterangan' => 'nullable|in:1,2',
@@ -1185,7 +1189,7 @@ class DataProyekController extends Controller
             'dataPeluang' => DataPeluang::whereIn('status', ['D', 'I'])->orderBy('peluang')->get(),
             'bidangJasa' => BidangJasa::active()->orderBy('desc_bidjasa')->get(),
             'kondisiProyek' => KondisiProyek::active()->orderBy('desc_kondisi_proyek')->get(),
-            'managers' => MasterManager::where('status', 'A')->orderBy('nama')->get()
+            'managers' => MasterManager::with('divisi')->where('status', 'A')->orderBy('nama')->get()
         ];
     }
 

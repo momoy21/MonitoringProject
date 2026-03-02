@@ -33,6 +33,7 @@ class DataProyek extends Model
         'finish_kontrak',
         'tgl_expire',
         'penanggung_jawab',
+        'kode_divisi',
         'nilai_proyek',
         'status',
         'kontrak_status',
@@ -84,6 +85,11 @@ class DataProyek extends Model
     public function manager(): BelongsTo
     {
         return $this->belongsTo(MasterManager::class, 'penanggung_jawab', 'nik');
+    }
+
+    public function divisi(): BelongsTo
+    {
+        return $this->belongsTo(MasterDivisi::class, 'kode_divisi', 'kode_divisi');
     }
 
     public function historyProyek(): HasMany

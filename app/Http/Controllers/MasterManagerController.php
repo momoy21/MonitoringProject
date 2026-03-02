@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MasterManager;
+use App\Models\MasterDivisi;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ class MasterManagerController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = MasterManager::query();
+            $query = MasterManager::with('divisi');
 
             // Handle search
             if ($request->filled('search')) {
@@ -60,7 +61,8 @@ class MasterManagerController extends Controller
     public function create()
     {
         try {
-            return view('mastermanager.create');
+            $divisiList = MasterDivisi::active()->orderBy('nama_divisi')->get();
+            return view('mastermanager.create', compact('divisiList'));
         } catch (\Exception $e) {
             return redirect()->route('mastermanager.index')->with('error', 'Terjadi kesalahan saat membuka form tambah.');
         }
@@ -84,6 +86,11 @@ class MasterManagerController extends Controller
             'status' => [
                 'nullable',
                 'in:A,N'
+            ],
+            'kode_divisi' => [
+                'nullable',
+                'string',
+                'exists:master_divisi,kode_divisi'
             ]
         ], [
             'nik.required' => 'NIK harus diisi.',
@@ -91,7 +98,8 @@ class MasterManagerController extends Controller
             'nik.regex' => 'NIK hanya boleh berisi huruf dan angka.',
             'nik.unique' => 'NIK sudah terdaftar.',
             'nama.max' => 'Nama manager maksimal 100 karakter.',
-            'status.in' => 'Status tidak valid.'
+            'status.in' => 'Status tidak valid.',
+            'kode_divisi.exists' => 'Divisi tidak valid.'
         ]);
 
         try {
@@ -130,7 +138,7 @@ class MasterManagerController extends Controller
     public function show(string $nik, Request $request)
     {
         try {
-            $manager = MasterManager::where('nik', $nik)->firstOrFail();
+            $manager = MasterManager::with('divisi')->where('nik', $nik)->firstOrFail();
 
             if ($request->ajax()) {
                 return response()->json([
@@ -158,7 +166,8 @@ class MasterManagerController extends Controller
     {
         try {
             $manager = MasterManager::where('nik', $nik)->firstOrFail();
-            return view('mastermanager.edit', compact('manager'));
+            $divisiList = MasterDivisi::active()->orderBy('nama_divisi')->get();
+            return view('mastermanager.edit', compact('manager', 'divisiList'));
 
         } catch (\Exception $e) {
             return redirect()->route('mastermanager.index')
@@ -191,10 +200,16 @@ class MasterManagerController extends Controller
             'status' => [
                 'nullable',
                 'in:A,N'
+            ],
+            'kode_divisi' => [
+                'nullable',
+                'string',
+                'exists:master_divisi,kode_divisi'
             ]
         ], [
             'nama.max' => 'Nama manager maksimal 100 karakter.',
-            'status.in' => 'Status tidak valid.'
+            'status.in' => 'Status tidak valid.',
+            'kode_divisi.exists' => 'Divisi tidak valid.'
         ]);
 
         try {

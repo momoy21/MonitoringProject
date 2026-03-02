@@ -17,8 +17,15 @@ class MasterManager extends Model
     protected $fillable = [
         'nik',
         'nama',
-        'status'
+        'status',
+        'kode_divisi'
     ];
+
+    // Relationship with MasterDivisi
+    public function divisi()
+    {
+        return $this->belongsTo(MasterDivisi::class, 'kode_divisi', 'kode_divisi');
+    }
 
     // Scope
     public function scopeActive($query)
