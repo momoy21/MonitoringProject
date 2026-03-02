@@ -15,6 +15,8 @@ class HeaderPenugasan extends Model
     protected $fillable = [
         'IDPenugasan',
         'cost_center',
+        'id_project',
+        'no_urut',
         'NoSurat',
         'PejabatTandatangan',
     ];
@@ -26,6 +28,7 @@ class HeaderPenugasan extends Model
 
     public function proyek()
     {
-        return $this->belongsTo(HistoryProyek::class, 'cost_center', 'cost_center');
+        return $this->belongsTo(HistoryProyek::class, 'id_project', 'id_project')
+                    ->where('history_proyek.norut', $this->no_urut);
     }
 }

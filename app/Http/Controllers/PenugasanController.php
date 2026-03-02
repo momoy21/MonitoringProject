@@ -53,20 +53,24 @@ class PenugasanController extends Controller
     public function getInitialData()
     {
         $costCenters = Cache::remember('penugasan_cost_centers', 300, function () {
-            return HistoryProyek::select('cost_center', 'namaproject', 'dokumen_io')
+            return HistoryProyek::select('cost_center', 'id_project', 'norut', 'namaproject', 'dokumen_io')
                 ->whereNotNull('cost_center')
                 ->where('cost_center', '!=', '')
+                ->whereNotIn('status', ['C', 'F'])
                 ->orderBy('cost_center')
-                ->distinct()
                 ->get()
                 ->map(function ($item) {
                     $costCenter  = $item->cost_center ?? '-';
+                    $idProject   = $item->id_project ?? '';
+                    $noUrut      = $item->norut ?? 0;
                     $namaProject = $item->namaproject ?? '-';
                     $dokumenIO   = $item->dokumen_io ?? '-';
                     return [
-                        'id'           => $costCenter,
+                        'id'           => "{$costCenter}|{$idProject}|{$noUrut}",
                         'text'         => "{$costCenter} - {$namaProject}",
                         'cost_center'  => $costCenter,
+                        'id_project'   => $idProject,
+                        'no_urut'      => $noUrut,
                         'namaproject'  => $namaProject,
                         'dokumen_io'   => $dokumenIO,
                     ];
@@ -88,10 +92,15 @@ class PenugasanController extends Controller
         });
 
         // Headers from header_penugasan
-        $headers = HeaderPenugasan::leftJoin('history_proyek', 'header_penugasan.cost_center', '=', 'history_proyek.cost_center')
+        $headers = HeaderPenugasan::leftJoin('history_proyek', function ($join) {
+                $join->on('header_penugasan.id_project', '=', 'history_proyek.id_project')
+                     ->on('header_penugasan.no_urut', '=', 'history_proyek.norut');
+            })
             ->select(
                 'header_penugasan.IDPenugasan',
                 'header_penugasan.cost_center',
+                'header_penugasan.id_project',
+                'header_penugasan.no_urut',
                 'header_penugasan.NoSurat',
                 'header_penugasan.PejabatTandatangan',
                 'history_proyek.namaproject',
@@ -105,6 +114,8 @@ class PenugasanController extends Controller
                     'text'          => "{$item->IDPenugasan} - {$item->cost_center} - " . ($item->namaproject ?? '-'),
                     'IDPenugasan'   => $item->IDPenugasan,
                     'cost_center'   => $item->cost_center,
+                    'id_project'    => $item->id_project ?? '',
+                    'no_urut'       => $item->no_urut ?? 0,
                     'NoSurat'       => $item->NoSurat ?? '-',
                     'namaproject'   => $item->namaproject ?? '-',
                     'dokumen_io'    => $item->dokumen_io ?? '-',
@@ -124,10 +135,15 @@ class PenugasanController extends Controller
 
     public function getHeaders()
     {
-        $headers = HeaderPenugasan::leftJoin('history_proyek', 'header_penugasan.cost_center', '=', 'history_proyek.cost_center')
+        $headers = HeaderPenugasan::leftJoin('history_proyek', function ($join) {
+                $join->on('header_penugasan.id_project', '=', 'history_proyek.id_project')
+                     ->on('header_penugasan.no_urut', '=', 'history_proyek.norut');
+            })
             ->select(
                 'header_penugasan.IDPenugasan',
                 'header_penugasan.cost_center',
+                'header_penugasan.id_project',
+                'header_penugasan.no_urut',
                 'header_penugasan.NoSurat',
                 'header_penugasan.PejabatTandatangan',
                 'history_proyek.namaproject',
@@ -141,6 +157,8 @@ class PenugasanController extends Controller
                     'text'          => "{$item->IDPenugasan} - {$item->cost_center} - " . ($item->namaproject ?? '-'),
                     'IDPenugasan'   => $item->IDPenugasan,
                     'cost_center'   => $item->cost_center,
+                    'id_project'    => $item->id_project ?? '',
+                    'no_urut'       => $item->no_urut ?? 0,
                     'NoSurat'       => $item->NoSurat ?? '-',
                     'namaproject'   => $item->namaproject ?? '-',
                     'dokumen_io'    => $item->dokumen_io ?? '-',
@@ -159,10 +177,12 @@ class PenugasanController extends Controller
         $validated = $request->validate([
             'IDPenugasan'  => 'required|string|max:10',
             'cost_center'  => 'required|string|max:9',
+            'id_project'   => 'required|string|max:10',
+            'no_urut'      => 'required|integer',
             'NoSurat'      => 'required|string|max:50',
         ]);
 
-        // Check if header already exists
+        // Check if header already exists for this IDPenugasan + cost_center
         $exists = HeaderPenugasan::where('IDPenugasan', $validated['IDPenugasan'])
             ->where('cost_center', $validated['cost_center'])
             ->exists();
@@ -174,12 +194,16 @@ class PenugasanController extends Controller
             ], 422);
         }
 
-        $project = HistoryProyek::where('cost_center', $validated['cost_center'])->first();
+        $project = HistoryProyek::where('id_project', $validated['id_project'])
+            ->where('norut', $validated['no_urut'])
+            ->first();
 
         try {
             $header = HeaderPenugasan::create([
                 'IDPenugasan'        => $validated['IDPenugasan'],
                 'cost_center'        => $validated['cost_center'],
+                'id_project'         => $validated['id_project'],
+                'no_urut'            => $validated['no_urut'],
                 'NoSurat'            => $validated['NoSurat'],
                 'PejabatTandatangan' => null,
             ]);
@@ -192,6 +216,8 @@ class PenugasanController extends Controller
                     'text'          => "{$header->IDPenugasan} - {$header->cost_center} - " . ($project->namaproject ?? '-'),
                     'IDPenugasan'   => $header->IDPenugasan,
                     'cost_center'   => $header->cost_center,
+                    'id_project'    => $header->id_project,
+                    'no_urut'       => $header->no_urut,
                     'NoSurat'       => $header->NoSurat,
                     'namaproject'   => $project->namaproject ?? '-',
                     'dokumen_io'    => $project->dokumen_io ?? '-',
@@ -214,9 +240,10 @@ class PenugasanController extends Controller
     {
         $search = $request->get('search', '');
 
-        $query = HistoryProyek::select('cost_center', 'namaproject', 'dokumen_io')
+        $query = HistoryProyek::select('cost_center', 'id_project', 'norut', 'namaproject', 'dokumen_io')
             ->whereNotNull('cost_center')
-            ->where('cost_center', '!=', '');
+            ->where('cost_center', '!=', '')
+            ->whereNotIn('status', ['C', 'F']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -226,16 +253,20 @@ class PenugasanController extends Controller
             });
         }
 
-        $projects = $query->orderBy('cost_center')->distinct()->limit(50)->get();
+        $projects = $query->orderBy('cost_center')->limit(50)->get();
 
         $results = $projects->map(function ($item) {
             $costCenter  = $item->cost_center ?? '-';
+            $idProject   = $item->id_project ?? '';
+            $noUrut      = $item->norut ?? 0;
             $namaProject = $item->namaproject ?? '-';
             $dokumenIO   = $item->dokumen_io ?? '-';
             return [
-                'id'           => $costCenter,
+                'id'           => "{$costCenter}|{$idProject}|{$noUrut}",
                 'text'         => "{$costCenter} - {$namaProject}",
                 'cost_center'  => $costCenter,
+                'id_project'   => $idProject,
+                'no_urut'      => $noUrut,
                 'namaproject'  => $namaProject,
                 'dokumen_io'   => $dokumenIO,
             ];
@@ -652,7 +683,9 @@ class PenugasanController extends Controller
         }
         $headerCC     = $header->cost_center;
         $headerNoSurat = $header->NoSurat;
-        $project       = HistoryProyek::where('cost_center', $headerCC)->first();
+        $project       = HistoryProyek::where('id_project', $header->id_project)
+            ->where('norut', $header->no_urut)
+            ->first();
 
         try {
             $file        = $request->file('file');

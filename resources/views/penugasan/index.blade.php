@@ -74,6 +74,8 @@
                                        style="background-color: #e9ecef; font-weight: 600;">
                             </div>
                         </div>
+                        <input type="hidden" id="new_id_project" value="">
+                        <input type="hidden" id="new_no_urut" value="">
                     </div>
                 </div>
             </div>
