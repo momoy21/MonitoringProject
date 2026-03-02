@@ -87,7 +87,7 @@ class KontrakNotificationService
 
             // TODO: Email feature disabled for now - uncomment when ready
             // Send pending emails
-            $result['emails_sent'] = $this->sendPendingEmails();
+            //$result['emails_sent'] = $this->sendPendingEmails();
             $result['emails_sent'] = 0; // Disabled
 
         } catch (\Exception $e) {
