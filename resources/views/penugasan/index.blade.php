@@ -83,20 +83,29 @@
 
         <!-- Header Info (shown when header selected) -->
         <div class="row mt-2" id="headerInfoSection" style="display: none;">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label mb-1 small fw-semibold">No Surat</label>
                 <input type="text" class="form-control form-control-sm" id="info_nosurat" readonly
                        style="background-color: #e9ecef; font-weight: 600;">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label mb-1 small fw-semibold">Cost Centre</label>
                 <input type="text" class="form-control form-control-sm" id="info_costcenter" readonly
                        style="background-color: #e9ecef; font-weight: 600;">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label mb-1 small fw-semibold">Nama Proyek</label>
                 <input type="text" class="form-control form-control-sm" id="info_namaproject" readonly
                        style="background-color: #e9ecef; font-weight: 600;">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1 small fw-semibold">Pengusul</label>
+                <input type="text" class="form-control form-control-sm" id="info_pengusul" readonly
+                       style="background-color: #e9ecef; font-weight: 600;">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1 small fw-semibold">Status</label>
+                <div id="info_status_badge" class="mt-1"></div>
             </div>
         </div>
     </div>
@@ -111,6 +120,14 @@
             </button>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <!-- Approve & Preview Buttons -->
+            <button type="button" class="btn btn-success" id="btnApprove" title="Approve Penugasan" style="display: none;">
+                <i class="bx bx-check-circle me-1"></i> Approve
+            </button>
+            <button type="button" class="btn btn-info" id="btnPreview" title="Preview Memo Dinas">
+                <i class="bx bx-file me-1"></i> Preview
+            </button>
+            <span class="text-muted" style="margin: 0 4px;">|</span>
             <!-- Action Buttons -->
             <button type="button" class="btn btn-outline-success" id="btnDownloadTemplate" title="Download Template Excel">
                 <i class="bx bx-download me-1"></i> Template
@@ -400,6 +417,9 @@
         destroy: "{{ route('penugasan.destroy') }}",
         upload: "{{ route('penugasan.upload') }}",
         downloadTemplate: "{{ route('penugasan.downloadTemplate') }}",
+        checkCanApprove: "{{ route('penugasan.checkCanApprove') }}",
+        approveHeader: "{{ route('penugasan.approveHeader') }}",
+        preview: "{{ route('penugasan.preview') }}",
     };
     window.csrfToken = "{{ csrf_token() }}";
 </script>

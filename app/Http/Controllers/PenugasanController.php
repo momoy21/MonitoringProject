@@ -103,6 +103,8 @@ class PenugasanController extends Controller
                 'header_penugasan.no_urut',
                 'header_penugasan.NoSurat',
                 'header_penugasan.PejabatTandatangan',
+                'header_penugasan.Pengusul',
+                'header_penugasan.Status',
                 'history_proyek.namaproject',
                 'history_proyek.dokumen_io'
             )
@@ -117,6 +119,8 @@ class PenugasanController extends Controller
                     'id_project'    => $item->id_project ?? '',
                     'no_urut'       => $item->no_urut ?? 0,
                     'NoSurat'       => $item->NoSurat ?? '-',
+                    'Pengusul'      => $item->Pengusul ?? '-',
+                    'Status'        => $item->Status ?? 'P',
                     'namaproject'   => $item->namaproject ?? '-',
                     'dokumen_io'    => $item->dokumen_io ?? '-',
                 ];
@@ -146,6 +150,8 @@ class PenugasanController extends Controller
                 'header_penugasan.no_urut',
                 'header_penugasan.NoSurat',
                 'header_penugasan.PejabatTandatangan',
+                'header_penugasan.Pengusul',
+                'header_penugasan.Status',
                 'history_proyek.namaproject',
                 'history_proyek.dokumen_io'
             )
@@ -160,6 +166,8 @@ class PenugasanController extends Controller
                     'id_project'    => $item->id_project ?? '',
                     'no_urut'       => $item->no_urut ?? 0,
                     'NoSurat'       => $item->NoSurat ?? '-',
+                    'Pengusul'      => $item->Pengusul ?? '-',
+                    'Status'        => $item->Status ?? 'P',
                     'namaproject'   => $item->namaproject ?? '-',
                     'dokumen_io'    => $item->dokumen_io ?? '-',
                 ];
@@ -198,6 +206,9 @@ class PenugasanController extends Controller
             ->where('norut', $validated['no_urut'])
             ->first();
 
+        // Get current user name as Pengusul
+        $pengusul = auth()->user()->name ?? null;
+
         try {
             $header = HeaderPenugasan::create([
                 'IDPenugasan'        => $validated['IDPenugasan'],
@@ -206,6 +217,8 @@ class PenugasanController extends Controller
                 'no_urut'            => $validated['no_urut'],
                 'NoSurat'            => $validated['NoSurat'],
                 'PejabatTandatangan' => null,
+                'Pengusul'           => $pengusul,
+                'Status'             => 'P', // Status Pengajuan
             ]);
 
             return response()->json([
@@ -219,6 +232,8 @@ class PenugasanController extends Controller
                     'id_project'    => $header->id_project,
                     'no_urut'       => $header->no_urut,
                     'NoSurat'       => $header->NoSurat,
+                    'Pengusul'      => $header->Pengusul,
+                    'Status'        => $header->Status,
                     'namaproject'   => $project->namaproject ?? '-',
                     'dokumen_io'    => $project->dokumen_io ?? '-',
                 ],
@@ -228,6 +243,146 @@ class PenugasanController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan header: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /* =========================
+        CHECK CAN APPROVE (AJAX)
+    ========================== */
+
+    public function checkCanApprove(Request $request)
+    {
+        $validated = $request->validate([
+            'cost_center' => 'required|string|max:9',
+            'id_project'  => 'required|string|max:10',
+            'no_urut'     => 'required|integer',
+        ]);
+
+        $currentUserEmail = auth()->user()->email ?? '';
+
+        // Get history_proyek data first to check kode_divisi
+        $proyekData = DB::table('history_proyek')
+            ->where('cost_center', $validated['cost_center'])
+            ->where('norut', $validated['no_urut'])
+            ->where('id_project', $validated['id_project'])
+            ->select('kode_divisi', 'namaproject')
+            ->first();
+
+        // Get manager data from master_manager
+        $managerFromMM = null;
+        if ($proyekData && $proyekData->kode_divisi) {
+            $managerFromMM = DB::table('master_manager')
+                ->where('kode_divisi', $proyekData->kode_divisi)
+                ->select('nik', 'nama', 'kode_divisi')
+                ->first();
+        }
+
+        // Get user data if manager found
+        $userData = null;
+        if ($managerFromMM && $managerFromMM->nama) {
+            $userData = DB::table('users')
+                ->where('name', $managerFromMM->nama)
+                ->select('id', 'name', 'email')
+                ->first();
+        }
+
+        $canApprove = false;
+        $managerName = null;
+
+        if ($userData && $userData->email === $currentUserEmail) {
+            $canApprove = true;
+            $managerName = $userData->name;
+        }
+
+        // Return with debug info
+        return response()->json([
+            'success'      => true,
+            'can_approve'  => $canApprove,
+            'manager_name' => $managerName,
+            'current_user' => $currentUserEmail,
+            'debug' => [
+                'proyek_kode_divisi' => $proyekData->kode_divisi ?? null,
+                'proyek_nama'        => $proyekData->namaproject ?? null,
+                'manager_nik'        => $managerFromMM->nik ?? null,
+                'manager_nama'       => $managerFromMM->nama ?? null,
+                'user_found_email'   => $userData->email ?? null,
+                'user_found_name'    => $userData->name ?? null,
+            ],
+        ]);
+    }
+
+    /* =========================
+        APPROVE HEADER (AJAX)
+    ========================== */
+
+    public function approveHeader(Request $request)
+    {
+        $validated = $request->validate([
+            'IDPenugasan' => 'required|string|max:10',
+            'cost_center' => 'required|string|max:9',
+            'id_project'  => 'required|string|max:10',
+            'no_urut'     => 'required|integer',
+        ]);
+
+        $currentUserEmail = auth()->user()->email ?? '';
+
+        // Check if current user is the manager for this project
+        $managerData = DB::table('history_proyek as hp')
+            ->leftJoin('master_manager as mm', 'hp.kode_divisi', '=', 'mm.kode_divisi')
+            ->leftJoin('users as u', 'u.name', '=', 'mm.nama')
+            ->where('hp.cost_center', $validated['cost_center'])
+            ->where('hp.norut', $validated['no_urut'])
+            ->where('hp.id_project', $validated['id_project'])
+            ->select('u.email', 'u.name as nama_pengusul')
+            ->first();
+
+        if (!$managerData || $managerData->email !== $currentUserEmail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak untuk approve penugasan ini. Hanya manager proyek yang dapat melakukan approve.'
+            ], 403);
+        }
+
+        try {
+            $header = HeaderPenugasan::where('IDPenugasan', $validated['IDPenugasan'])
+                ->where('cost_center', $validated['cost_center'])
+                ->first();
+
+            if (!$header) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Header penugasan tidak ditemukan'
+                ], 404);
+            }
+
+            if ($header->Status === 'A') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Header penugasan sudah di-approve sebelumnya'
+                ], 422);
+            }
+
+            // Update status to Approved and set Pengusul to manager name
+            $header->update([
+                'Status'   => 'A',
+                'Pengusul' => $managerData->nama_pengusul,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Header penugasan berhasil di-approve',
+                'data'    => [
+                    'IDPenugasan' => $header->IDPenugasan,
+                    'Status'      => $header->Status,
+                    'Pengusul'    => $header->Pengusul,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error approving header penugasan: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal approve header: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -339,7 +494,6 @@ class PenugasanController extends Controller
             $query = Penugasan::where('penugasan.IDPenugasan', $idPenugasan)
                 ->leftJoin('karyawan', 'penugasan.NIK', '=', 'karyawan.nik')
                 ->select(
-                    'penugasan.id',
                     'penugasan.IDPenugasan',
                     'penugasan.cost_center',
                     'penugasan.Norut',
@@ -461,10 +615,11 @@ class PenugasanController extends Controller
                         'duplicate' => true,
                         'message'   => 'Data duplikat ditemukan',
                         'existing'  => [
-                            'id'            => $existing->id,
+                            'IDPenugasan'   => $existing->IDPenugasan,
+                            'cost_center'   => $existing->cost_center,
+                            'Norut'         => $existing->Norut,
                             'nik'           => $existing->NIK,
                             'nama'          => $nama,
-                            'cost_center'   => $existing->cost_center,
                             'jabatan'       => $existing->Jabatan,
                             'periode_awal'  => $existing->Periodeawal ? $existing->Periodeawal->format('Y-m-d') : null,
                             'periode_akhir' => $existing->Periodeakhir ? $existing->Periodeakhir->format('Y-m-d') : null,
@@ -554,7 +709,10 @@ class PenugasanController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'id'           => 'required|integer',
+            'IDPenugasan'  => 'required|string|max:10',
+            'cost_center'  => 'required|string|max:9',
+            'Norut'        => 'required|integer',
+            'NIK'          => 'required|string|max:9',
             'Jabatan'      => 'required|string|max:30',
             'Periodeawal'  => 'required|date',
             'Periodeakhir' => 'required|date',
@@ -572,7 +730,20 @@ class PenugasanController extends Controller
         try {
             DB::beginTransaction();
 
-            $penugasan = Penugasan::findOrFail($validated['id']);
+            $penugasan = Penugasan::findByCompositeKey(
+                $validated['IDPenugasan'],
+                $validated['cost_center'],
+                $validated['Norut'],
+                $validated['NIK']
+            );
+
+            if (!$penugasan) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data penugasan tidak ditemukan'
+                ], 404);
+            }
 
             $newStart = Carbon::parse($validated['Periodeawal']);
             $newEnd   = Carbon::parse($validated['Periodeakhir']);
@@ -581,7 +752,12 @@ class PenugasanController extends Controller
             $overlap = Penugasan::where('cost_center', $penugasan->cost_center)
                 ->where('NIK', $penugasan->NIK)
                 ->whereRaw('LOWER(Jabatan) = ?', [strtolower($validated['Jabatan'])])
-                ->where('id', '!=', $penugasan->id)
+                ->where(function($q) use ($penugasan) {
+                    $q->where('IDPenugasan', '!=', $penugasan->IDPenugasan)
+                      ->orWhere('cost_center', '!=', $penugasan->cost_center)
+                      ->orWhere('Norut', '!=', $penugasan->Norut)
+                      ->orWhere('NIK', '!=', $penugasan->NIK);
+                })
                 ->whereDate('Periodeawal', '<=', $newEnd)
                 ->whereDate('Periodeakhir', '>=', $newStart)
                 ->first();
@@ -634,12 +810,26 @@ class PenugasanController extends Controller
     public function destroy(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|integer',
+            'IDPenugasan' => 'required|string|max:10',
+            'cost_center' => 'required|string|max:9',
+            'Norut'       => 'required|integer',
+            'NIK'         => 'required|string|max:9',
         ]);
 
         try {
-            $penugasan = Penugasan::findOrFail($validated['id']);
-            $penugasan->delete();
+            $deleted = Penugasan::deleteByCompositeKey(
+                $validated['IDPenugasan'],
+                $validated['cost_center'],
+                $validated['Norut'],
+                $validated['NIK']
+            );
+
+            if (!$deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data penugasan tidak ditemukan'
+                ], 404);
+            }
 
             return response()->json([
                 'success' => true,
@@ -812,17 +1002,20 @@ class PenugasanController extends Controller
                 }
 
                 $parsedRows[] = [
-                    'index'         => $index,
-                    'cost_center'   => $headerCC,
-                    'nik'           => $nik,
-                    'jabatan'       => $jabatan,
-                    'periode_awal'  => $periodeAwal,
-                    'periode_akhir' => $periodeAkhir,
-                    'bobot'         => $bobot,
-                    'status'        => $status,
-                    'dok_io'        => $project->dokumen_io ?? null,
-                    'has_existing'  => $existing ? true : false,
-                    'existing_id'   => $existing ? $existing->id : null,
+                    'index'                  => $index,
+                    'cost_center'            => $headerCC,
+                    'nik'                    => $nik,
+                    'jabatan'                => $jabatan,
+                    'periode_awal'           => $periodeAwal,
+                    'periode_akhir'          => $periodeAkhir,
+                    'bobot'                  => $bobot,
+                    'status'                 => $status,
+                    'dok_io'                 => $project->dokumen_io ?? null,
+                    'has_existing'           => $existing ? true : false,
+                    'existing_IDPenugasan'   => $existing ? $existing->IDPenugasan : null,
+                    'existing_cost_center'   => $existing ? $existing->cost_center : null,
+                    'existing_Norut'         => $existing ? $existing->Norut : null,
+                    'existing_NIK'           => $existing ? $existing->NIK : null,
                 ];
             }
 
@@ -847,10 +1040,14 @@ class PenugasanController extends Controller
 
             foreach ($parsedRows as $parsed) {
                 if ($parsed['has_existing']) {
-                    Penugasan::where('id', $parsed['existing_id'])->update([
-                        'Bobot'  => $parsed['bobot'],
-                        'Status' => $parsed['status'],
-                    ]);
+                    Penugasan::where('IDPenugasan', $parsed['existing_IDPenugasan'])
+                        ->where('cost_center', $parsed['existing_cost_center'])
+                        ->where('Norut', $parsed['existing_Norut'])
+                        ->where('NIK', $parsed['existing_NIK'])
+                        ->update([
+                            'Bobot'  => $parsed['bobot'],
+                            'Status' => $parsed['status'],
+                        ]);
                 } else {
                     $norutCounter++;
                     Penugasan::create([
@@ -1010,5 +1207,93 @@ class PenugasanController extends Controller
         } catch (\Exception $e) {
             throw new \Exception("Cannot parse date: {$value}");
         }
+    }
+
+    /* =========================
+        PREVIEW SURAT PENUGASAN
+    ========================== */
+
+    public function preview(Request $request)
+    {
+        $validated = $request->validate([
+            'IDPenugasan' => 'required|string|max:10',
+        ]);
+
+        // Get header data
+        $header = HeaderPenugasan::where('IDPenugasan', $validated['IDPenugasan'])->first();
+
+        if (!$header) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Header penugasan tidak ditemukan'
+            ], 404);
+        }
+
+        // Get project data
+        $project = HistoryProyek::where('id_project', $header->id_project)
+            ->where('norut', $header->no_urut)
+            ->first();
+
+        // Get all penugasan details
+        $details = Penugasan::where('IDPenugasan', $validated['IDPenugasan'])
+            ->leftJoin('karyawan', 'penugasan.NIK', '=', 'karyawan.nik')
+            ->select(
+                'penugasan.Norut',
+                'penugasan.NIK',
+                'penugasan.Jabatan',
+                'penugasan.Periodeawal',
+                'penugasan.Periodeakhir',
+                'penugasan.Bobot',
+                'penugasan.Status',
+                'karyawan.nama as nama_karyawan'
+            )
+            ->orderBy('penugasan.Norut')
+            ->get();
+
+        // Get manager data for signature
+        $managerData = DB::table('history_proyek as hp')
+            ->leftJoin('master_manager as mm', 'hp.kode_divisi', '=', 'mm.kode_divisi')
+            ->where('hp.cost_center', $header->cost_center)
+            ->where('hp.norut', $header->no_urut)
+            ->where('hp.id_project', $header->id_project)
+            ->select('mm.nama as manager_name', 'mm.nik as manager_nik')
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'header' => [
+                    'IDPenugasan'   => $header->IDPenugasan,
+                    'NoSurat'       => $header->NoSurat,
+                    'cost_center'   => $header->cost_center,
+                    'Pengusul'      => $header->Pengusul,
+                    'Status'        => $header->Status,
+                    'created_at'    => $header->created_at ? $header->created_at->format('d F Y') : '-',
+                ],
+                'project' => [
+                    'namaproject'   => $project->namaproject ?? '-',
+                    'dokumen_io'    => $project->dokumen_io ?? '-',
+                    'lokasi_proyek' => $project->lokasi_proyek ?? '-',
+                    'no_kontrak'    => $project->no_kontrak ?? '-',
+                ],
+                'details' => $details->map(function ($item) {
+                    return [
+                        'no'            => $item->Norut,
+                        'nik'           => $item->NIK,
+                        'nama'          => $item->nama_karyawan ?? '-',
+                        'jabatan'       => $item->Jabatan,
+                        'periode_awal'  => $item->Periodeawal ? Carbon::parse($item->Periodeawal)->format('d/m/Y') : '-',
+                        'periode_akhir' => $item->Periodeakhir ? Carbon::parse($item->Periodeakhir)->format('d/m/Y') : '-',
+                        'bobot'         => $item->Bobot,
+                        'status'        => $item->Status,
+                    ];
+                }),
+                'manager' => [
+                    'nama' => $managerData->manager_name ?? '-',
+                    'nik'  => $managerData->manager_nik ?? '-',
+                ],
+                'barcode_data' => $header->Pengusul ?? $header->IDPenugasan,
+            ],
+        ]);
     }
 }

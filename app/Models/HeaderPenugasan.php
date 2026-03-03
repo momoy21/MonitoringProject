@@ -19,6 +19,19 @@ class HeaderPenugasan extends Model
         'no_urut',
         'NoSurat',
         'PejabatTandatangan',
+        'Pengusul',
+        'Status',
+    ];
+
+    /**
+     * Status constants
+     */
+    public const STATUS_PENGAJUAN = 'P';
+    public const STATUS_APPROVE = 'A';
+
+    public const STATUS_OPTIONS = [
+        'P' => 'Pengajuan',
+        'A' => 'Approved',
     ];
 
     public function penugasan()
@@ -30,5 +43,21 @@ class HeaderPenugasan extends Model
     {
         return $this->belongsTo(HistoryProyek::class, 'id_project', 'id_project')
                     ->where('history_proyek.norut', $this->no_urut);
+    }
+
+    /**
+     * Check if the header is in Pengajuan status
+     */
+    public function isPengajuan(): bool
+    {
+        return $this->Status === self::STATUS_PENGAJUAN;
+    }
+
+    /**
+     * Check if the header is Approved
+     */
+    public function isApproved(): bool
+    {
+        return $this->Status === self::STATUS_APPROVE;
     }
 }

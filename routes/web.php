@@ -103,6 +103,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/destroy', [PenugasanController::class, 'destroy'])->name('destroy');
         Route::post('/upload', [PenugasanController::class, 'uploadExcel'])->name('upload');
         Route::get('/download-template', [PenugasanController::class, 'downloadTemplate'])->name('downloadTemplate');
+        Route::post('/check-can-approve', [PenugasanController::class, 'checkCanApprove'])->name('checkCanApprove');
+        Route::post('/approve-header', [PenugasanController::class, 'approveHeader'])->name('approveHeader');
+        Route::get('/preview', [PenugasanController::class, 'preview'])->name('preview');
     });
 
     // ===================================================================

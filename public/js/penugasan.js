@@ -16,7 +16,7 @@ let currentHeaderData = null;
 let currentPage = 1;
 let currentPerPage = 10;
 let currentSearch = '';
-let deleteTargetId = null;
+let deleteTargetCompositeKey = null;
 
 // Caches (populated once on page load)
 let cachedCostCenters = [];
@@ -107,10 +107,13 @@ function onHeaderChange() {
             id_project: data.id_project || '',
             no_urut: data.no_urut || 0,
             NoSurat: data.NoSurat || '-',
+            Pengusul: data.Pengusul || '-',
+            Status: data.Status || 'P',
             namaproject: data.namaproject || '-',
             dokumen_io: data.dokumen_io || '-',
         };
         showHeaderInfo();
+        checkCanApprove();
         currentPage = 1;
         currentSearch = '';
         $('#searchInput').val('');
@@ -130,6 +133,17 @@ function showHeaderInfo() {
     $('#info_nosurat').val(currentHeaderData.NoSurat);
     $('#info_costcenter').val(currentHeaderData.cost_center);
     $('#info_namaproject').val(currentHeaderData.namaproject);
+    $('#info_pengusul').val(currentHeaderData.Pengusul);
+    
+    // Display status badge
+    var statusHtml = '';
+    if (currentHeaderData.Status === 'A') {
+        statusHtml = '<span class="badge bg-success">Approved</span>';
+    } else {
+        statusHtml = '<span class="badge bg-warning text-dark">Pengajuan</span>';
+    }
+    $('#info_status_badge').html(statusHtml);
+    
     $('#headerInfoSection').show();
     $('#searchBarSection').removeClass('d-none').addClass('d-flex');
     $('#tableSection').removeClass('d-none');
@@ -138,6 +152,10 @@ function showHeaderInfo() {
 function hideHeaderInfo() {
     $('#info_nosurat').val('');
     $('#info_costcenter').val('');
+    $('#info_namaproject').val('');
+    $('#info_pengusul').val('');
+    $('#info_status_badge').html('');
+    $('#btnApprove').hide();
     $('#info_namaproject').val('');
     $('#headerInfoSection').hide();
     $('#searchBarSection').removeClass('d-flex').addClass('d-none');
@@ -506,6 +524,12 @@ function bindEvents() {
     // Delete confirmation
     $('#confirmDeleteBtn').on('click', doDelete);
 
+    // Approve button
+    $('#btnApprove').on('click', doApprove);
+
+    // Preview button
+    $('#btnPreview').on('click', showPreview);
+
     // Pagination
     $('#firstPageBtn').on('click', function () { currentPage = 1; loadData(); });
     $('#prevPageBtn').on('click', function () { if (currentPage > 1) { currentPage--; loadData(); } });
@@ -574,8 +598,18 @@ function renderTable(data) {
         var tr = document.createElement('tr');
         tr.className = 'editable-row';
         tr.title = 'Double-click untuk edit';
-        var rowId = item.id;
-        tr.setAttribute('data-id', rowId);
+        // Composite key components
+        var compositeKey = {
+            IDPenugasan: item.IDPenugasan || '',
+            cost_center: item.cost_center || '',
+            Norut: item.Norut || 0,
+            NIK: item.NIK || ''
+        };
+        var compositeKeyStr = JSON.stringify(compositeKey);
+        tr.setAttribute('data-composite-key', compositeKeyStr);
+        tr.setAttribute('data-id-penugasan', item.IDPenugasan || '');
+        tr.setAttribute('data-cost-center', item.cost_center || '');
+        tr.setAttribute('data-norut', item.Norut || 0);
         tr.setAttribute('data-nik', item.NIK || '');
         tr.setAttribute('data-nama', item.nama_karyawan || '');
         tr.setAttribute('data-jabatan', item.Jabatan || '');
@@ -583,13 +617,15 @@ function renderTable(data) {
         tr.setAttribute('data-periode-akhir', item.Periodeakhir || '');
         tr.setAttribute('data-bobot', item.Bobot || 0);
         tr.setAttribute('data-status', item.Status || 'A');
-        tr.setAttribute('data-id-penugasan', item.IDPenugasan || '');
         tr.setAttribute('data-no-surat', item.NoSurat || '');
-        tr.ondblclick = (function (id) { return function () { editPenugasan(id); }; })(rowId);
+        tr.ondblclick = (function (key) { return function () { editPenugasanByKey(key); }; })(compositeKey);
 
         var statusBadge = item.Status === 'A'
             ? '<span class="badge bg-success">Aktif</span>'
             : '<span class="badge bg-secondary">Non-Aktif</span>';
+
+        // Encode composite key for onclick handlers
+        var encodedKey = encodeURIComponent(compositeKeyStr);
 
         tr.innerHTML =
             '<td class="text-center">' + (startNo + index) + '</td>' +
@@ -604,10 +640,10 @@ function renderTable(data) {
             '<div class="dropdown position-static">' +
             '<button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"><i class="bx bx-dots-vertical-rounded"></i></button>' +
             '<ul class="dropdown-menu dropdown-menu-end shadow border-0">' +
-            '<li><a class="dropdown-item py-2" href="javascript:void(0);" onclick="viewDetail(' + rowId + ')"><i class="bx bx-show me-2 text-info"></i> Lihat Detail</a></li>' +
-            '<li><a class="dropdown-item py-2" href="javascript:void(0);" onclick="editPenugasan(' + rowId + ')"><i class="bx bx-edit me-2 text-warning"></i> Edit</a></li>' +
+            '<li><a class="dropdown-item py-2" href="javascript:void(0);" onclick="viewDetailByKey(decodeURIComponent(\'' + encodedKey + '\'))"><i class="bx bx-show me-2 text-info"></i> Lihat Detail</a></li>' +
+            '<li><a class="dropdown-item py-2" href="javascript:void(0);" onclick="editPenugasanByKey(JSON.parse(decodeURIComponent(\'' + encodedKey + '\')))"><i class="bx bx-edit me-2 text-warning"></i> Edit</a></li>' +
             '<li><hr class="dropdown-divider"></li>' +
-            '<li><a class="dropdown-item py-2 text-danger" href="javascript:void(0);" onclick="deletePenugasan(' + rowId + ')"><i class="bx bx-trash me-2"></i> Hapus</a></li>' +
+            '<li><a class="dropdown-item py-2 text-danger" href="javascript:void(0);" onclick="deletePenugasanByKey(JSON.parse(decodeURIComponent(\'' + encodedKey + '\')))"><i class="bx bx-trash me-2"></i> Hapus</a></li>' +
             '</ul>' +
             '</div>' +
             '</td>';
@@ -692,11 +728,25 @@ function openAddModal() {
 }
 
 function editPenugasan(id) {
+    // Legacy function - find row by old id attribute (for backwards compatibility)
     var $row = $('tr[data-id="' + id + '"]');
+    if (!$row.length) return;
+    var compositeKey = JSON.parse($row.attr('data-composite-key') || '{}');
+    editPenugasanByKey(compositeKey);
+}
+
+/**
+ * Edit Penugasan by composite key
+ */
+function editPenugasanByKey(compositeKey) {
+    if (!compositeKey || !compositeKey.IDPenugasan) return;
+    
+    var $row = $('tr[data-id-penugasan="' + compositeKey.IDPenugasan + '"][data-cost-center="' + compositeKey.cost_center + '"][data-norut="' + compositeKey.Norut + '"][data-nik="' + compositeKey.NIK + '"]');
     if (!$row.length) return;
 
     $('#form_mode').val('edit');
-    $('#form_id').val(id);
+    // Store composite key in hidden fields
+    $('#form_id').val(JSON.stringify(compositeKey));
     $('#modalTitle').text('Edit Penugasan');
 
     // Fill from current header
@@ -735,11 +785,25 @@ function editPenugasan(id) {
  * Lihat Detail — opens modal in read-only mode (all fields disabled, no Simpan button)
  */
 function viewDetail(id) {
+    // Legacy function - for backwards compatibility
     var $row = $('tr[data-id="' + id + '"]');
+    if (!$row.length) return;
+    var compositeKey = JSON.parse($row.attr('data-composite-key') || '{}');
+    viewDetailByKey(JSON.stringify(compositeKey));
+}
+
+/**
+ * View Detail by composite key (receives JSON string)
+ */
+function viewDetailByKey(compositeKeyStr) {
+    var compositeKey = typeof compositeKeyStr === 'string' ? JSON.parse(compositeKeyStr) : compositeKeyStr;
+    if (!compositeKey || !compositeKey.IDPenugasan) return;
+    
+    var $row = $('tr[data-id-penugasan="' + compositeKey.IDPenugasan + '"][data-cost-center="' + compositeKey.cost_center + '"][data-norut="' + compositeKey.Norut + '"][data-nik="' + compositeKey.NIK + '"]');
     if (!$row.length) return;
 
     $('#form_mode').val('view');
-    $('#form_id').val(id);
+    $('#form_id').val(JSON.stringify(compositeKey));
     $('#modalTitle').text('Lihat Detail Penugasan');
 
     // Fill from current header
@@ -835,7 +899,17 @@ function saveData() {
 
     var url;
     if (mode === 'edit') {
-        data.id = $('#form_id').val();
+        // Parse composite key from form_id (stored as JSON string)
+        var compositeKey = {};
+        try {
+            compositeKey = JSON.parse($('#form_id').val() || '{}');
+        } catch (e) {
+            compositeKey = {};
+        }
+        data.IDPenugasan = compositeKey.IDPenugasan || '';
+        data.cost_center = compositeKey.cost_center || costCenter;
+        data.Norut = compositeKey.Norut || 0;
+        data.NIK = compositeKey.NIK || nik;
         data._method = 'PUT';
         url = window.routes.update;
     } else {
@@ -957,17 +1031,29 @@ function resetSimpanButton() {
    DELETE — optimistic row removal
    ═══════════════════════════════════════════ */
 function deletePenugasan(id) {
-    deleteTargetId = id;
+    // Legacy function - for backwards compatibility
+    var $row = $('tr[data-id="' + id + '"]');
+    if (!$row.length) return;
+    var compositeKey = JSON.parse($row.attr('data-composite-key') || '{}');
+    deletePenugasanByKey(compositeKey);
+}
+
+/**
+ * Delete by composite key
+ */
+function deletePenugasanByKey(compositeKey) {
+    if (!compositeKey || !compositeKey.IDPenugasan) return;
+    deleteTargetCompositeKey = compositeKey;
     $('#deleteConfirmModal').modal('show');
 }
 
 function doDelete() {
-    if (!deleteTargetId) return;
+    if (!deleteTargetCompositeKey) return;
 
-    var targetId = deleteTargetId;
+    var compositeKey = deleteTargetCompositeKey;
 
     // Optimistic: hide row immediately
-    var $row = $('tr[data-id="' + targetId + '"]');
+    var $row = $('tr[data-id-penugasan="' + compositeKey.IDPenugasan + '"][data-cost-center="' + compositeKey.cost_center + '"][data-norut="' + compositeKey.Norut + '"][data-nik="' + compositeKey.NIK + '"]');
     $row.fadeOut(150);
 
     $('#deleteConfirmModal').modal('hide');
@@ -978,12 +1064,18 @@ function doDelete() {
         data: {
             _token: window.csrfToken,
             _method: 'DELETE',
-            id: targetId
+            IDPenugasan: compositeKey.IDPenugasan,
+            cost_center: compositeKey.cost_center,
+            Norut: compositeKey.Norut,
+            NIK: compositeKey.NIK
         },
         success: function (response) {
             if (response.success) {
                 lastLoadedData = lastLoadedData.filter(function (item) {
-                    return item.id !== parseInt(targetId);
+                    return !(item.IDPenugasan === compositeKey.IDPenugasan && 
+                             item.cost_center === compositeKey.cost_center && 
+                             item.Norut === compositeKey.Norut && 
+                             item.NIK === compositeKey.NIK);
                 });
                 $row.remove();
                 Swal.fire({
@@ -1223,4 +1315,477 @@ function formatBobot(value) {
     // Show up to 2 decimal places, trim trailing zeros
     var formatted = num.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
     return formatted + '%';
+}
+
+/* ═══════════════════════════════════════════
+   CHECK CAN APPROVE - verify if current user can approve
+   ═══════════════════════════════════════════ */
+function checkCanApprove() {
+    if (!currentHeaderData) {
+        $('#btnApprove').hide();
+        return;
+    }
+
+    // If already approved, hide the button
+    if (currentHeaderData.Status === 'A') {
+        $('#btnApprove').hide();
+        return;
+    }
+
+    $.ajax({
+        url: window.routes.checkCanApprove,
+        method: 'POST',
+        data: {
+            _token: window.csrfToken,
+            cost_center: currentHeaderData.cost_center,
+            id_project: currentHeaderData.id_project,
+            no_urut: currentHeaderData.no_urut,
+        },
+        success: function (response) {
+            // DEBUG: Log full response to console
+            console.log('=== CHECK CAN APPROVE DEBUG ===');
+            console.log('Response:', response);
+            console.log('Current User Email:', response.current_user);
+            console.log('Can Approve:', response.can_approve);
+            if (response.debug) {
+                console.log('--- Debug Info ---');
+                console.log('Proyek Kode Divisi:', response.debug.proyek_kode_divisi);
+                console.log('Proyek Nama:', response.debug.proyek_nama);
+                console.log('Manager NIK:', response.debug.manager_nik);
+                console.log('Manager Nama:', response.debug.manager_nama);
+                console.log('User Found Email:', response.debug.user_found_email);
+                console.log('User Found Name:', response.debug.user_found_name);
+                console.log('Email Match:', response.debug.user_found_email === response.current_user);
+            }
+            console.log('================================');
+
+            if (response.success && response.can_approve) {
+                $('#btnApprove').show();
+            } else {
+                $('#btnApprove').hide();
+            }
+        },
+        error: function (xhr) {
+            console.log('checkCanApprove ERROR:', xhr.responseText);
+            $('#btnApprove').hide();
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════
+   DO APPROVE - approve the header
+   ═══════════════════════════════════════════ */
+function doApprove() {
+    if (!currentHeaderData) {
+        Swal.fire('Peringatan', 'Pilih ID Penugasan terlebih dahulu', 'warning');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Konfirmasi Approve',
+        text: 'Apakah Anda yakin ingin meng-approve penugasan ini?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Approve',
+        cancelButtonText: 'Batal'
+    }).then(function (result) {
+        if (result.isConfirmed) {
+            $('#btnApprove').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Processing...');
+
+            $.ajax({
+                url: window.routes.approveHeader,
+                method: 'POST',
+                data: {
+                    _token: window.csrfToken,
+                    IDPenugasan: currentHeaderData.IDPenugasan,
+                    cost_center: currentHeaderData.cost_center,
+                    id_project: currentHeaderData.id_project,
+                    no_urut: currentHeaderData.no_urut,
+                },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Berhasil',
+                            text: response.message || 'Penugasan berhasil di-approve',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        // Update status in currentHeaderData
+                        currentHeaderData.Status = 'A';
+                        currentHeaderData.Pengusul = response.data.Pengusul || currentHeaderData.Pengusul;
+                        
+                        // Update UI
+                        $('#info_pengusul').val(currentHeaderData.Pengusul);
+                        $('#info_status_badge').html('<span class="badge bg-success">Approved</span>');
+                        $('#btnApprove').hide();
+
+                        // Refresh cached headers
+                        refreshHeaders();
+                    } else {
+                        Swal.fire('Gagal', response.message || 'Gagal approve penugasan', 'error');
+                    }
+                },
+                error: function (xhr) {
+                    var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan';
+                    Swal.fire('Gagal', msg || 'Terjadi kesalahan', 'error');
+                },
+                complete: function () {
+                    $('#btnApprove').prop('disabled', false).html('<i class="bx bx-check-circle me-1"></i> Approve');
+                }
+            });
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════
+   REFRESH HEADERS - reload headers dropdown after approve
+   ═══════════════════════════════════════════ */
+function refreshHeaders() {
+    $.ajax({
+        url: window.routes.getHeaders,
+        method: 'GET',
+        success: function (resp) {
+            cachedHeaders = resp || [];
+            // Update select2 data
+            var $sel = $('#header_select');
+            var currentVal = $sel.val();
+            $sel.empty().append('<option value=""></option>');
+            cachedHeaders.forEach(function (item) {
+                var opt = new Option(item.text, item.id, false, item.id === currentVal);
+                $(opt).data('data', item);
+                $sel.append(opt);
+            });
+            $sel.trigger('change.select2');
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════
+   SHOW PREVIEW - generate and show preview modal
+   ═══════════════════════════════════════════ */
+function showPreview() {
+    if (!currentHeaderData) {
+        Swal.fire('Peringatan', 'Pilih ID Penugasan terlebih dahulu', 'warning');
+        return;
+    }
+
+    $('#btnPreview').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Loading...');
+
+    $.ajax({
+        url: window.routes.preview,
+        method: 'GET',
+        data: {
+            IDPenugasan: currentHeaderData.IDPenugasan,
+        },
+        success: function (response) {
+            if (response.success) {
+                openPreviewModal(response.data);
+            } else {
+                Swal.fire('Gagal', response.message || 'Gagal memuat preview', 'error');
+            }
+        },
+        error: function (xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan';
+            Swal.fire('Gagal', msg || 'Terjadi kesalahan', 'error');
+        },
+        complete: function () {
+            $('#btnPreview').prop('disabled', false).html('<i class="bx bx-file me-1"></i> Preview');
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════
+   OPEN PREVIEW MODAL - display preview in a new window
+   ═══════════════════════════════════════════ */
+function openPreviewModal(data) {
+    var header = data.header || {};
+    var project = data.project || {};
+    var details = data.details || [];
+    var manager = data.manager || {};
+
+    // Logo paths
+    var headerLogoPath = '/storage/md_penugasan/KIT header penugasan.png';
+    var footerLogoPath = '/storage/md_penugasan/KIT footer penugasan.png';
+
+    // QR Code data - dummy for now (just contains ID Penugasan)
+    var qrContent = 'PENUGASAN:' + header.IDPenugasan + '|' + (header.NoSurat || '') + '|' + (manager.nama || '');
+
+    // Generate table rows
+    var tableRows = '';
+    details.forEach(function (item, index) {
+        var statusText = item.status === 'A' ? 'Aktif' : (item.status === 'N' ? 'Non-Aktif' : item.status);
+        tableRows += '<tr>' +
+            '<td class="cell-center">' + (index + 1) + '</td>' +
+            '<td class="cell-left">' + escapeHtml(item.nama) + '</td>' +
+            '<td class="cell-left">' + escapeHtml(item.jabatan) + '</td>' +
+            '<td class="cell-center">' + statusText + '</td>' +
+            '</tr>';
+    });
+
+    // Format date to Indonesian format
+    var formatTanggal = header.created_at || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    // Build the preview HTML (matching PDF format exactly)
+    var html = '<!DOCTYPE html>' +
+        '<html><head>' +
+        '<meta charset="UTF-8">' +
+        '<title>Memo Dinas - ' + escapeHtml(header.NoSurat) + '</title>' +
+        '<style>' +
+        '@page { size: A4; margin: 10mm 15mm 25mm 15mm; }' +
+        '* { box-sizing: border-box; }' +
+        'body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; margin: 0; padding: 0; line-height: 1.5; color: #000; }' +
+        '.page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 10mm 20mm 35mm 20mm; background: #fff; position: relative; }' +
+        
+        /* Header */
+        '.header-section { margin-bottom: 20px; }' +
+        '.header-logo { text-align: left; }' +
+        '.header-logo img { max-width: 240px; height: auto; }' +
+        
+        /* Memo Title */
+        '.memo-title { text-align: center; margin: 15px 0 20px 0; padding: 8px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; }' +
+        '.memo-title h1 { margin: 0; font-size: 14pt; font-weight: bold; letter-spacing: 2px; }' +
+        
+        /* Letter Info */
+        '.letter-info { margin-bottom: 15px; font-size: 11pt; }' +
+        '.letter-info-table { width: 100%; border: none; border-collapse: collapse; }' +
+        '.letter-info-table td { padding: 3px 0; vertical-align: top; }' +
+        '.letter-info-label { width: 100px; }' +
+        '.letter-info-colon { width: 15px; text-align: center; }' +
+        
+        /* Content */
+        '.content { margin: 15px 0; font-size: 11pt; text-align: justify; }' +
+        '.content p { margin: 0 0 10px 0; }' +
+        
+        /* Data Table */
+        '.data-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 10pt; }' +
+        '.data-table th { background-color: #e8e8e8; border: 1px solid #000; padding: 8px 6px; text-align: center; font-weight: bold; }' +
+        '.data-table td { border: 1px solid #000; padding: 6px 8px; }' +
+        '.cell-center { text-align: center; }' +
+        '.cell-left { text-align: left; }' +
+        
+        /* Closing */
+        '.closing { margin: 15px 0; font-size: 11pt; text-align: justify; }' +
+        '.closing p { margin: 0; }' +
+        
+        /* Signature Section */
+        '.signature-section { margin-top: 25px; overflow: hidden; }' +
+        '.signature-right { float: right; width: 200px; text-align: center; }' +
+        '.signature-right p { margin: 2px 0; font-size: 11pt; }' +
+        '.qr-container { margin-bottom: 5px; }' +
+        '.qr-container img { width: 70px; height: 70px; }' +
+        '.manager-name { font-weight: bold; text-decoration: underline; margin-top: 5px !important; }' +
+        '.manager-title { font-size: 10pt; color: #333; }' +
+        
+        /* Footer */
+        '.footer-section { position: absolute; bottom: 10mm; left: 20mm; right: 20mm; }' +
+        '.footer-content { display: table; width: 100%; }' +
+        '.footer-left { display: table-cell; width: 65%; vertical-align: top; font-size: 8pt; line-height: 1.4; color: #333; }' +
+        '.footer-right { display: table-cell; width: 35%; vertical-align: middle; text-align: right; }' +
+        '.footer-right img { max-height: 50px; height: auto; }' +
+        
+        /* Print Styles */
+        '@media print { ' +
+        '  body { margin: 0; padding: 0; }' +
+        '  .page { width: 100%; min-height: auto; padding: 10mm 15mm 30mm 15mm; margin: 0; }' +
+        '  .no-print { display: none !important; }' +
+        '  .footer-section { position: fixed; bottom: 10mm; left: 15mm; right: 15mm; }' +
+        '}' +
+        
+        /* Screen Styles */
+        '@media screen { ' +
+        '  body { background: #f0f0f0; padding: 20px; }' +
+        '  .page { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }' +
+        '}' +
+        '</style>' +
+        '<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"><\/script>' +
+        '</head><body>' +
+        
+        /* Print Buttons */
+        '<div class="no-print" style="max-width:210mm;margin:0 auto 15px auto;padding:12px 20px;background:#fff;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1);">' +
+        '<button onclick="window.print()" style="padding:10px 25px;cursor:pointer;background:#0d6efd;color:#fff;border:none;border-radius:5px;font-size:14px;margin-right:10px;"><b>🖨️ Cetak</b></button>' +
+        '<button onclick="window.close()" style="padding:10px 25px;cursor:pointer;background:#6c757d;color:#fff;border:none;border-radius:5px;font-size:14px;"><b>✕ Tutup</b></button>' +
+        '</div>' +
+        
+        '<div class="page">' +
+        
+        /* Header Logo - LEFT aligned */
+        '<div class="header-section">' +
+        '<div class="header-logo">' +
+        '<img src="' + headerLogoPath + '" alt="PT Krakatau Information Technology" onerror="this.parentElement.innerHTML=\'<span style=font-weight:bold;font-size:14pt;>PT KRAKATAU INFORMATION TECHNOLOGY</span>\'">' +
+        '</div>' +
+        '</div>' +
+        
+        /* MEMO - DINAS Title */
+        '<div class="memo-title">' +
+        '<h1>MEMO - DINAS</h1>' +
+        '</div>' +
+        
+        /* Letter Info - Table format */
+        '<div class="letter-info">' +
+        '<table class="letter-info-table">' +
+        '<tr>' +
+        '<td class="letter-info-label">No</td>' +
+        '<td class="letter-info-colon">:</td>' +
+        '<td>' + escapeHtml(header.NoSurat) + '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td class="letter-info-label">Tanggal</td>' +
+        '<td class="letter-info-colon">:</td>' +
+        '<td>' + escapeHtml(formatTanggal) + '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td class="letter-info-label">Kepada</td>' +
+        '<td class="letter-info-colon">:</td>' +
+        '<td>Seluruh Karyawan Yang Ditugaskan</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td class="letter-info-label">Dari</td>' +
+        '<td class="letter-info-colon">:</td>' +
+        '<td>' + escapeHtml(manager.nama) + ' - Manager</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td class="letter-info-label">Perihal</td>' +
+        '<td class="letter-info-colon">:</td>' +
+        '<td><b>Penugasan Proyek ' + escapeHtml(project.namaproject) + '</b></td>' +
+        '</tr>' +
+        '</table>' +
+        '</div>' +
+        
+        /* Opening Content */
+        '<div class="content">' +
+        '<p>Sehubungan dengan pekerjaan pada proyek <b>' + escapeHtml(project.namaproject) + '</b> dengan Instruksi Operasi nomor <b>' + escapeHtml(project.dokumen_io) + '</b>, maka dengan ini menugaskan nama-nama sebagai berikut:</p>' +
+        '</div>' +
+        
+        /* Data Table */
+        '<table class="data-table">' +
+        '<thead>' +
+        '<tr>' +
+        '<th style="width:40px;">NO</th>' +
+        '<th>NAMA</th>' +
+        '<th style="width:150px;">JABATAN</th>' +
+        '<th style="width:70px;">STATUS</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>' + tableRows + '</tbody>' +
+        '</table>' +
+        
+        /* Closing */
+        '<div class="closing">' +
+        '<p>Demikian memo dinas ini dibuat untuk dapat dilaksanakan dengan sebaik-baiknya dan penuh tanggung jawab.</p>' +
+        '</div>' +
+        
+        /* Signature Section */
+        '<div class="signature-section">' +
+        '<div class="signature-right">' +
+        '<div class="qr-container" id="qrcode"></div>' +
+        '<p class="manager-name">' + escapeHtml(manager.nama) + '</p>' +
+        '<p class="manager-title">Manager</p>' +
+        '</div>' +
+        '<div style="clear:both;"></div>' +
+        '</div>' +
+        
+        /* Footer Section - Address LEFT, Logo RIGHT */
+        '<div class="footer-section">' +
+        '<div class="footer-content">' +
+        '<div class="footer-left">' +
+        '<b>PT Krakatau Information Technology</b><br>' +
+        'Gd. Krakatau Steel Lt. 7, Jl. Jend. Gatot Subroto Kav. 54 Jakarta Selatan 12950<br>' +
+        'Telp. +62 21 5200732 Fax. +62 21 5200690<br>' +
+        'Jl. Raya Anyer Km. 3 Cilegon 42441 Banten<br>' +
+        'Telp. +62 254 8317021 Fax. +62 254 8317022<br>' +
+        'URL: http://www.krakatau-it.co.id' +
+        '</div>' +
+        '<div class="footer-right">' +
+        '<img src="' + footerLogoPath + '" alt="ISO Certification" onerror="this.style.display=\'none\'">' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        
+        '</div>' + /* end .page */
+        
+        /* QR Code Script */
+        '<script>' +
+        'document.addEventListener("DOMContentLoaded", function() {' +
+        '  try {' +
+        '    var qr = qrcode(0, "M");' +
+        '    qr.addData("' + qrContent + '");' +
+        '    qr.make();' +
+        '    document.getElementById("qrcode").innerHTML = qr.createImgTag(2, 4);' +
+        '  } catch(e) {' +
+        '    console.log("QR Error:", e);' +
+        '    document.getElementById("qrcode").innerHTML = "<div style=width:70px;height:70px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:8px;color:#999;>QR Code</div>";' +
+        '  }' +
+        '});' +
+        '<\/script>' +
+        '</body></html>';
+
+    // Open in new window
+    var win = window.open('', '_blank', 'width=900,height=700');
+    
+    // Check if popup was blocked
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+        // Fallback: open in iframe modal
+        openPreviewInModal(html);
+        return;
+    }
+    
+    win.document.write(html);
+    win.document.close();
+}
+
+/* ═══════════════════════════════════════════
+   FALLBACK: Open preview in modal if popup blocked
+   ═══════════════════════════════════════════ */
+function openPreviewInModal(html) {
+    // Remove existing modal if any
+    $('#previewModal').remove();
+    
+    var modalHtml = 
+        '<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">' +
+        '  <div class="modal-dialog modal-xl modal-dialog-scrollable">' +
+        '    <div class="modal-content">' +
+        '      <div class="modal-header">' +
+        '        <h5 class="modal-title">Preview Surat Penugasan</h5>' +
+        '        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+        '      </div>' +
+        '      <div class="modal-body p-0">' +
+        '        <iframe id="previewIframe" style="width:100%;height:75vh;border:none;"></iframe>' +
+        '      </div>' +
+        '      <div class="modal-footer">' +
+        '        <button type="button" class="btn btn-primary" onclick="printPreviewIframe()"><i class="bx bx-printer me-1"></i> Cetak</button>' +
+        '        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>' +
+        '      </div>' +
+        '    </div>' +
+        '  </div>' +
+        '</div>';
+    
+    $('body').append(modalHtml);
+    
+    var modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+    
+    // Write content to iframe after modal is shown
+    $('#previewModal').on('shown.bs.modal', function () {
+        var iframe = document.getElementById('previewIframe');
+        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        // Remove the no-print buttons from iframe version
+        var cleanHtml = html.replace(/<div class="no-print"[^>]*>[\s\S]*?<\/div>/, '');
+        iframeDoc.open();
+        iframeDoc.write(cleanHtml);
+        iframeDoc.close();
+    });
+}
+
+/* ═══════════════════════════════════════════
+   Print iframe content
+   ═══════════════════════════════════════════ */
+function printPreviewIframe() {
+    var iframe = document.getElementById('previewIframe');
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+    }
 }
